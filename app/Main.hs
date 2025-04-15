@@ -7,11 +7,7 @@ import Network.Wreq (getWith, defaults, params, param, responseBody)
 import Control.Lens
 import Data.Text.Internal (Text)
 import Data.Aeson.Lens (_String, key)
-import Text.Regex.TDFA
-import Text.Regex.TDFA.Text ()
-import qualified Text.Parsec as P
 import qualified Data.Text as T
-import Data.Maybe
 
 
 data Inputargs = Inputargs
@@ -51,11 +47,6 @@ requestAlbumPage page = do
     let opts = defaults & params .~ urlParams & param "page" .~ [page]
     r <- getWith opts wikipediaApiUrl
     return $ r ^. responseBody . key "parse" . key "wikitext" . key "*" . _String
-
-findRatingsInAlbumPageWithRegex :: Text -> Text
-findRatingsInAlbumPageWithRegex pageText =
-    pageText =~ myRegex :: Text
-    where myRegex = "{{Music ratings" :: Text
 
 findTemplateInAlbumPage :: Text -> Maybe Text
 findTemplateInAlbumPage pageText =
