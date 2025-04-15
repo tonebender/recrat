@@ -33,8 +33,7 @@ main :: IO ()
 main = do
     inputargs <- execParser myDescription
     wikitext <- requestAlbumPage (optAlbum inputargs)
-    let templ = findRatingsInAlbumPage wikitext
-    putStrLn $ show $ templ
+    putStrLn $ show $ getRatingsInAlbumPage wikitext
 
 
 wikipediaApiUrl :: String
@@ -48,21 +47,31 @@ requestAlbumPage page = do
     r <- getWith opts wikipediaApiUrl
     return $ r ^. responseBody . key "parse" . key "wikitext" . key "*" . _String
 
-findTemplateInAlbumPage :: Text -> Maybe Text
-findTemplateInAlbumPage pageText =
+
+-- Look for the starting string for Music ratings or Album ratings
+-- in the wiki text and return it if found; Nothing if none found.
+getRatingTag :: Text -> Maybe Text
+getRatingTag wikiText =
     let music = "{{Music ratings\n"
         album = "{{Album ratings\n" in
-    if T.isInfixOf music pageText then
+    if T.isInfixOf music wikiText then
         Just music
-        else if T.isInfixOf album pageText then
+        else if T.isInfixOf album wikiText then
         Just album
         else Nothing
 
-findRatingsInAlbumPage :: Text -> Maybe [Text]
-findRatingsInAlbumPage pageText =
-    let template = findTemplateInAlbumPage pageText in
-    case template of
-        Just t -> Just $ take 1 $ drop 1 $ T.splitOn t pageText
-        Nothing -> Nothing
 
--- Then split on the next "}}\n" which should be exclusively the end of ratings block
+-- Get the ratings block out of the wiki text, starting
+-- with the Music/Album tag and ending with "}}\n";
+-- return Nothing if failed.
+getRatingsInAlbumPage :: Text -> Maybe Text
+getRatingsInAlbumPage wikiText =
+    case getRatingTag wikiText of
+        Nothing -> Nothing
+        Just tag -> let xs = drop 1 $ T.splitOn tag wikiText in
+            case xs of
+                [] -> Nothing
+                x:_ -> let a = take 1 $ T.splitOn "}}\n" x in
+                    case a of
+                        [] -> Nothing
+                        b:_ -> Just b
