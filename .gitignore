@@ -1,0 +1,7 @@
+*.swp
+*.swo
+tags
+build/
+dist/
+dist-newstyle/
+musicratings_exile.txt
