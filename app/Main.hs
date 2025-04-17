@@ -32,20 +32,27 @@ myDescription = info (myParser <**> helper)
 main :: IO ()
 main = do
     inputargs <- execParser myDescription
-    wikitext <- requestAlbumPage (optAlbum inputargs)
-    putStrLn $ show $ getRatingsInAlbumPage wikitext
+    let albumTitle = optAlbum inputargs
+    wikitext <- requestAlbumPage albumTitle
+    case wikitext of
+        Nothing -> do putStrLn $ show $ T.concat ["Failed to fetch wikipedia page for '", albumTitle, "'"]
+        Just wiki -> do
+            let ratings = getRatingsInAlbumPage wiki
+            case ratings of
+                Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
+                Just rats -> putStrLn $ show $ getReviews rats
 
 
 wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
--- TODO: Fix error handling / handling of Maybe
-requestAlbumPage :: Text -> IO (Text)
+-- TODO: Handle several results, like different http response codes etc.
+requestAlbumPage :: Text -> IO (Maybe Text)
 requestAlbumPage page = do
     let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "wikitext"), ("redirects", "1") ]
     let opts = defaults & params .~ urlParams & param "page" .~ [page]
     r <- getWith opts wikipediaApiUrl
-    return $ r ^. responseBody . key "parse" . key "wikitext" . key "*" . _String
+    return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
 
 
 -- Look for the starting string for Music ratings or Album ratings
@@ -75,3 +82,7 @@ getRatingsInAlbumPage wikiText =
                     case a of
                         [] -> Nothing
                         b:_ -> Just b
+
+
+getReviews :: Text -> [Text]
+getReviews rev = T.lines rev
