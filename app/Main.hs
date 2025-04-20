@@ -8,6 +8,9 @@ import Control.Lens
 import Data.Text.Internal (Text)
 import Data.Aeson.Lens (_String, key)
 import qualified Data.Text as T
+import qualified Text.Parsec as Parsec
+import qualified Text.Parsec.Text as Parsec.Text
+import Control.Monad.Identity (Identity)
 
 
 data Inputargs = Inputargs
@@ -33,22 +36,25 @@ main :: IO ()
 main = do
     inputargs <- execParser myDescription
     let albumTitle = optAlbum inputargs
-    wikitext <- requestAlbumPage albumTitle
+    wikitext <- requestWikipage albumTitle
     case wikitext of
-        Nothing -> do putStrLn $ show $ T.concat ["Failed to fetch wikipedia page for '", albumTitle, "'"]
-        Just wiki -> do
-            let ratings = getRatingsInAlbumPage wiki
+        Nothing -> do putStrLn $ show $ "Failed to fetch wikipedia page for '" <> albumTitle <> "'"
+        Just w -> do
+            let ratings = getRatingsInAlbumPage w
             case ratings of
                 Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
-                Just rats -> putStrLn $ show $ getReviews rats
-
+                Just rats -> do
+                    let result = Parsec.parse (Parsec.char '|') "(source)" $ getReviews rats
+                    case result of
+                        Right _ -> putStrLn "Parse success!"
+                        Left err -> putStrLn $ "Parse error:" ++ show err
 
 wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
 -- TODO: Handle several results, like different http response codes etc.
-requestAlbumPage :: Text -> IO (Maybe Text)
-requestAlbumPage page = do
+requestWikipage :: Text -> IO (Maybe Text)
+requestWikipage page = do
     let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "wikitext"), ("redirects", "1") ]
     let opts = defaults & params .~ urlParams & param "page" .~ [page]
     r <- getWith opts wikipediaApiUrl
@@ -84,5 +90,6 @@ getRatingsInAlbumPage wikiText =
                         b:_ -> Just b
 
 
-getReviews :: Text -> [Text]
-getReviews rev = T.lines rev
+getReviews :: Text -> Text -- [Text]
+getReviews rev = rev
+-- getReviews rev = T.lines rev
