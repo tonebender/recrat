@@ -9,8 +9,6 @@ import Data.Text.Internal (Text)
 import Data.Aeson.Lens (_String, key)
 import qualified Data.Text as T
 import qualified Text.Parsec as Parsec
-import qualified Text.Parsec.Text as Parsec.Text
-import Control.Monad.Identity (Identity)
 
 
 data Inputargs = Inputargs
@@ -44,7 +42,7 @@ main = do
             case ratings of
                 Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
                 Just rats -> do
-                    let result = Parsec.parse (Parsec.char '|') "(source)" $ getReviews rats
+                    let result = Parsec.parse (Parsec.char '|') "(source)" rats
                     case result of
                         Right _ -> putStrLn "Parse success!"
                         Left err -> putStrLn $ "Parse error:" ++ show err
@@ -75,7 +73,7 @@ getRatingTag wikiText =
 
 
 -- Get the ratings block out of the wiki text, starting
--- with the Music/Album tag and ending with "}}\n";
+-- with the Music/Album tag (see above) and ending with "}}\n";
 -- return Nothing if failed.
 getRatingsInAlbumPage :: Text -> Maybe Text
 getRatingsInAlbumPage wikiText =
@@ -89,7 +87,21 @@ getRatingsInAlbumPage wikiText =
                         [] -> Nothing
                         b:_ -> Just b
 
+data Rating = Rating
+    { score :: Int
+    , title :: Text
+    , ref :: Text }
 
-getReviews :: Text -> Text -- [Text]
-getReviews rev = rev
--- getReviews rev = T.lines rev
+reviewParser :: Parsec.Parsec Text () Rating
+reviewParser = do
+    _ <- Parsec.char '|'
+    Parsec.spaces
+    _ <- Parsec.string "rev"
+    _ <- Parsec.many1 Parsec.digit
+    Parsec.spaces
+    _ <- Parsec.char '='
+    Parsec.spaces
+    score <- Parsec.manyTill (Parsec.oneOf "0123456789ABC{}/") (Parsec.char '<')
+    return Rating { score = 4
+        , title = "Test title"
+        , ref = "http://hello.com" }
