@@ -88,20 +88,16 @@ getRatingsInAlbumPage wikiText =
                         b:_ -> Just b
 
 data Rating = Rating
-    { score :: Int
+    { percentage :: Int
+    , originalScore :: Text
     , title :: Text
     , ref :: Text }
 
 reviewParser :: Parsec.Parsec Text () Rating
 reviewParser = do
-    _ <- Parsec.char '|'
-    Parsec.spaces
-    _ <- Parsec.string "rev"
-    _ <- Parsec.many1 Parsec.digit
-    Parsec.spaces
-    _ <- Parsec.char '='
-    Parsec.spaces
+    Parsec.char '|' >> Parsec.spaces >> Parsec.string "rev" >> Parsec.many1 Parsec.digit >> Parsec.spaces >> Parsec.char '=' >> Parsec.spaces
     score <- Parsec.manyTill (Parsec.oneOf "0123456789ABC{}/") (Parsec.char '<')
-    return Rating { score = 4
+    return Rating { percentage = 50
+        , originalScore = T.pack score
         , title = "Test title"
         , ref = "http://hello.com" }
