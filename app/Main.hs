@@ -8,7 +8,7 @@ import Control.Lens
 import Data.Text.Internal (Text)
 import Data.Aeson.Lens (_String, key)
 import qualified Data.Text as T
-import qualified Text.Parsec as Parsec
+import qualified Text.Parsec as P
 
 
 data Inputargs = Inputargs
@@ -42,9 +42,9 @@ main = do
             case ratings of
                 Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
                 Just rats -> do
-                    let result = Parsec.parse (Parsec.char '|') "(source)" rats
+                    let result = P.parse reviewParser "(source)" rats
                     case result of
-                        Right _ -> putStrLn "Parse success!"
+                        Right r -> putStrLn $ show $ title r <> originalScore r
                         Left err -> putStrLn $ "Parse error:" ++ show err
 
 wikipediaApiUrl :: String
@@ -93,11 +93,13 @@ data Rating = Rating
     , title :: Text
     , ref :: Text }
 
-reviewParser :: Parsec.Parsec Text () Rating
+reviewParser :: P.Parsec Text () Rating
 reviewParser = do
-    Parsec.char '|' >> Parsec.spaces >> Parsec.string "rev" >> Parsec.many1 Parsec.digit >> Parsec.spaces >> Parsec.char '=' >> Parsec.spaces
-    score <- Parsec.manyTill (Parsec.oneOf "0123456789ABC{}/") (Parsec.char '<')
+    P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
+    titl <- P.manyTill (P.noneOf "\n") P.endOfLine
+    P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.string "Score" >> P.spaces >> P.char '=' >> P.spaces
+    score <- P.many1 $ P.noneOf "<"
     return Rating { percentage = 50
         , originalScore = T.pack score
-        , title = "Test title"
+        , title = T.pack titl
         , ref = "http://hello.com" }
