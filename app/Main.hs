@@ -42,8 +42,8 @@ main = do
             case ratings of
                 Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
                 Just rats -> do
-                    let result = P.parse reviewParser "(source)" rats
-                    case result of
+                    let rev = P.parse reviewParser "(source)" rats
+                    case rev of
                         Right r -> putStrLn $ show $ title r <> originalScore r
                         Left err -> putStrLn $ "Parse error:" ++ show err
 
@@ -87,19 +87,27 @@ getRatingsInAlbumPage wikiText =
                         [] -> Nothing
                         b:_ -> Just b
 
-data Rating = Rating
+data Review_ = Review_
     { percentage :: Int
     , originalScore :: Text
     , title :: Text
-    , ref :: Text }
+    , ref :: Text
+    }
 
-reviewParser :: P.Parsec Text () Rating
+reviewParser :: P.Parsec Text () Review_
 reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
     titl <- P.manyTill (P.noneOf "\n") P.endOfLine
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.string "Score" >> P.spaces >> P.char '=' >> P.spaces
-    score <- P.many1 $ P.noneOf "<"
-    return Rating { percentage = 50
+    score <- ratingParser
+    return score
+
+
+ratingParser :: P.Parsec Text () Review_
+ratingParser = do
+    score <- (P.string "{{Rating") <|> P.string "8"
+    return Review_ { percentage = 50
         , originalScore = T.pack score
-        , title = T.pack titl
-        , ref = "http://hello.com" }
+        , title = ""
+        , ref = ""
+        }
