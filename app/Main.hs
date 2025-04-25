@@ -141,17 +141,22 @@ scoreAsFragmentParser = do
 scoreAsLetterParser :: P.Parsec Text () Score
 scoreAsLetterParser = do
     letter <- P.oneOf "ABCDE"
+    let l = case letter of
+         'E' -> 2
+         'D' -> 5
+         'C' -> 8
+         'B' -> 11
+         'A' -> 14
+         _ -> 0
+    -- sign <- (P.oneOf "+-−") <|> return 'x'
     sign <- P.optionMaybe (P.oneOf "+-−")
-    s <- case sign of
-       Just sg -> case sg of
-                    '+' -> (1)
-                    '-' -> (-1)
-                    '−' -> (-1)
-                    _ -> 0
-       Nothing -> return ()
+    let s = case sign of
+         Just '+' -> 1
+         Just _ -> (-1)
+         Nothing -> 0
     return Score { percentage = 50
-        , score = 10
-        , maxi = 10
+        , score = l + s
+        , maxi = 15
         , title = ""
         , ref = ""
         }
