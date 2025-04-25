@@ -44,7 +44,7 @@ main = do
                 Just rats -> do
                     let rev = P.parse reviewParser "(source)" rats
                     case rev of
-                        Right r -> putStrLn $ show $ title r <> originalScore r
+                        Right r -> putStrLn $ show $ title r
                         Left err -> putStrLn $ "Parse error:" ++ show err
 
 wikipediaApiUrl :: String
@@ -87,27 +87,71 @@ getRatingsInAlbumPage wikiText =
                         [] -> Nothing
                         b:_ -> Just b
 
-data Review_ = Review_
+data Score = Score
     { percentage :: Int
-    , originalScore :: Text
+    , score :: Int
+    , maxi :: Int
     , title :: Text
     , ref :: Text
     }
 
-reviewParser :: P.Parsec Text () Review_
+reviewParser :: P.Parsec Text () Score
 reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
     titl <- P.manyTill (P.noneOf "\n") P.endOfLine
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.string "Score" >> P.spaces >> P.char '=' >> P.spaces
-    score <- ratingParser
-    return score
+    scr <- scoreParser
+    return scr
 
 
-ratingParser :: P.Parsec Text () Review_
-ratingParser = do
-    score <- (P.string "{{Rating") <|> P.string "8"
-    return Review_ { percentage = 50
-        , originalScore = T.pack score
+scoreParser :: P.Parsec Text () Score
+scoreParser = do
+    return =<< scoreInRatingTemplParser
+
+-- TODO: Change read to readMaybe or so
+-- Parser for scores that look like this: {{Rating|3.5|5}}
+scoreInRatingTemplParser :: P.Parsec Text () Score
+scoreInRatingTemplParser = do
+    _ <- (P.string "{{Rating|") <|> P.string "{{rating|"
+    scr <- P.many1 $ P.digit <|> P.char '.'
+    _ <- P.char '|'
+    mx <- P.many1 P.digit
+    _ <- P.string "}}" >> P.endOfLine
+    return Score { percentage = read scr
+        , score = read scr
+        , maxi = read mx
+        , title = ""
+        , ref = ""
+        }
+
+-- Parser for scores that look like this: 5.5/10
+scoreAsFragmentParser :: P.Parsec Text () Score
+scoreAsFragmentParser = do
+    scr <- P.many1 $ P.digit <|> P.char '.'
+    _ <- P.char '/'
+    mx <- P.many1 $ P.digit <|> P.char '.'
+    return Score { percentage = read scr
+        , score = read scr
+        , maxi = read mx
+        , title = ""
+        , ref = ""
+        }
+
+-- Parser for scores that looke like this: A+
+scoreAsLetterParser :: P.Parsec Text () Score
+scoreAsLetterParser = do
+    letter <- P.oneOf "ABCDE"
+    sign <- P.optionMaybe (P.oneOf "+-−")
+    s <- case sign of
+       Just sg -> case sg of
+                    '+' -> (1)
+                    '-' -> (-1)
+                    '−' -> (-1)
+                    _ -> 0
+       Nothing -> return ()
+    return Score { percentage = 50
+        , score = 10
+        , maxi = 10
         , title = ""
         , ref = ""
         }
