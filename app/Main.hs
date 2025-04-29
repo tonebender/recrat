@@ -44,7 +44,7 @@ main = do
                 Just rats -> do
                     let rev = P.parse reviewParser "(source)" rats
                     case rev of
-                        Right r -> putStrLn $ show $ title r
+                        Right r -> putStrLn $ show $ score r
                         Left err -> putStrLn $ "Parse error:" ++ show err
 
 wikipediaApiUrl :: String
@@ -100,13 +100,8 @@ reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
     titl <- P.manyTill (P.noneOf "\n") P.endOfLine
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.string "Score" >> P.spaces >> P.char '=' >> P.spaces
-    scr <- scoreParser
+    scr <- scoreInRatingTemplParser
     return scr
-
-
-scoreParser :: P.Parsec Text () Score
-scoreParser = do
-    return =<< scoreInRatingTemplParser
 
 -- TODO: Change read to readMaybe or so
 -- Parser for scores that look like this: {{Rating|3.5|5}}
@@ -116,7 +111,7 @@ scoreInRatingTemplParser = do
     scr <- P.many1 $ P.digit <|> P.char '.'
     _ <- P.char '|'
     mx <- P.many1 P.digit
-    _ <- P.string "}}" >> P.endOfLine
+    _ <- P.string "}}" -- >> P.endOfLine
     return Score { percentage = read scr
         , score = read scr
         , maxi = read mx
@@ -160,3 +155,10 @@ scoreAsLetterParser = do
         , title = ""
         , ref = ""
         }
+
+-- Parser for the <ref> element that follows all scores
+refParser :: P.Parsec Text () Text
+refParser = do
+    _ <- P.string "<ref "
+    -- refContent <- P.manyTill $ P.string "</ref>"
+    return "Ref"
