@@ -30,23 +30,6 @@ myDescription = info (myParser <**> helper)
       <> header "album-ratings - find ratings for music albums" )
 
 
-main :: IO ()
-main = do
-    inputargs <- execParser myDescription
-    let albumTitle = optAlbum inputargs
-    wikitext <- requestWikipage albumTitle
-    case wikitext of
-        Nothing -> do putStrLn $ show $ "Failed to fetch wikipedia page for '" <> albumTitle <> "'"
-        Just w -> do
-            let ratings = getRatingsInAlbumPage w
-            case ratings of
-                Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
-                Just rats -> do
-                    let rev = P.parse reviewParser "(source)" rats
-                    case rev of
-                        Right r -> putStrLn $ show r
-                        Left err -> putStrLn $ "Parse error:" ++ show err
-
 wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
@@ -58,6 +41,8 @@ requestWikipage page = do
     r <- getWith opts wikipediaApiUrl
     return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
 
+
+-- TODO: Replace getRatingTag and getRatingsInAlbumPage with parsers
 
 -- Look for the starting string for Music ratings or Album ratings
 -- in the wiki text and return it if found; Nothing if none found.
@@ -95,22 +80,22 @@ data Score = Score
     , ref :: Text
     } deriving (Show)
 
-reviewParser :: P.Parsec Text () Score
-reviewParser = do
+reviewParser :: P.Parsec Text () [Score]
+reviewParser = P.many $ do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
-    titl <- P.manyTill (P.noneOf "\n") P.endOfLine
+    titl <- P.manyTill P.anyChar P.endOfLine
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.string "Score" >> P.spaces >> P.char '=' >> P.spaces
     scr <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
-    reff <- refParser
-    let newScore = Score (percentage scr) (score scr) (maxi scr) (T.pack titl) (T.pack reff)
-    return newScore
+    reftag <- refParser
+    return $ Score (percentage scr) (score scr) (maxi scr) (T.pack titl) (T.pack reftag)
 
+-- TODO: Make these sub parsers return something shorter than Score?
 -- TODO: Change read to readMaybe or so
 -- Parser for scores that look like this: {{Rating|3.5|5}}
 scoreInRatingTemplParser :: P.Parsec Text () Score
 scoreInRatingTemplParser = do
     _ <- (P.string "{{Rating|") <|> P.string "{{rating|"
-    scr <- P.many1 $ P.digit <|> P.char '.'
+    scr <- P.many1 (P.digit <|> P.char '.')
     _ <- P.char '|'
     mx <- P.many1 P.digit
     _ <- P.string "}}" -- >> P.endOfLine
@@ -158,6 +143,38 @@ scoreAsLetterParser = do
         , ref = ""
         }
 
--- Parser for the <ref> element that follows all scores
+-- Parser that gets everything inside <ref></ref> that follows all scores
 refParser :: P.Parsec Text () String
-refParser = (<>) <$> P.string "<ref" <*> P.manyTill P.anyChar P.endOfLine
+refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>')) *> P.manyTill P.anyChar (P.string "</ref>") <* P.endOfLine
+
+
+-- main :: IO ()
+-- main = do
+--     inputargs <- execParser myDescription
+--     let albumTitle = optAlbum inputargs
+--     wikitext <- requestWikipage albumTitle
+--     case wikitext of
+--         Nothing -> do putStrLn $ show $ "Failed to fetch wikipedia page for '" <> albumTitle <> "'"
+--         Just w -> do
+--             let ratings = getRatingsInAlbumPage w
+--             case ratings of
+--                 Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
+--                 Just rats -> do
+--                     let rev = P.parse reviewParser "(source)" rats
+--                     case rev of
+--                         Right r -> putStrLn $ show r
+--                         Left err -> putStrLn $ "Parse error:" ++ show err
+
+main :: IO ()
+main = do
+    mock <- readFile "mock_rocks.txt"
+    let ratings = getRatingsInAlbumPage (T.pack mock)
+    case ratings of
+        Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
+        Just rats -> do
+            let rev = P.parse reviewParser "(source)" rats
+            case rev of
+                Right r -> do
+                    putStrLn $ show r
+                    putStrLn $ show $ length r
+                Left err -> putStrLn $ "Parse error:" ++ show err
