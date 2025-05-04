@@ -73,7 +73,7 @@ getRatingsInAlbumPage wikiText =
                         b:_ -> Just b
 
 data Score = Score
-    { percentage :: Double
+    { percentage :: Int
     , score :: Double
     , maxi :: Double
     , title :: Text
@@ -87,8 +87,9 @@ reviewParser = P.many $ do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.string "Score" >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
     reftag <- refParser
-    return $ Score (scr / maxScr) scr maxScr (T.pack titl) (T.pack reftag)
+    return $ Score (scr / maxScr) (score scr) (maxi scr) (T.pack titl) (T.pack reftag)
 
+-- TODO: Make these sub parsers return something shorter than Score?
 -- TODO: Change read to readMaybe or so
 -- Parser for scores that look like this: {{Rating|3.5|5}}
 scoreInRatingTemplParser :: P.Parsec Text () (Double, Double)
@@ -97,7 +98,7 @@ scoreInRatingTemplParser = do
     scr <- P.many1 (P.digit <|> P.char '.')
     _ <- P.char '|'
     mx <- P.many1 P.digit
-    _ <- P.string "}}"
+    _ <- P.string "}}" -- >> P.endOfLine
     return (read scr, read mx)
 
 -- Parser for scores that look like this: 5.5/10
