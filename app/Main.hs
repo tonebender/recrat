@@ -9,6 +9,8 @@ import Data.Text.Internal (Text)
 import Data.Aeson.Lens (_String, key)
 import qualified Data.Text as T
 import qualified Text.Parsec as P
+import Text.Read
+import Data.Maybe
 
 
 data Inputargs = Inputargs
@@ -72,45 +74,51 @@ getRatingsInAlbumPage wikiText =
                         [] -> Nothing
                         b:_ -> Just b
 
-data Score = Score
-    { percentage :: Double
+-- Type for one review
+data Rating = Rating
+    { ratio :: Double
     , score :: Double
-    , maxi :: Double
+    , maxScore :: Double
     , title :: Text
     , ref :: Text
     } deriving (Show)
 
-reviewParser :: P.Parsec Text () [Score]
+-- Parser for all reviews on a wikipedia page, where each consists of "| rev3 = Allmusic\n| rev3Score = ...",
+-- where the ensuing score is parsed by any of the three score parsers below.
+-- All the Maybe stuff is used to handle any failed string-to-number conversion.
+reviewParser :: P.Parsec Text () [Maybe Rating]
 reviewParser = P.many $ do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
-    titl <- P.manyTill P.anyChar P.endOfLine
-    P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.string "Score" >> P.spaces >> P.char '=' >> P.spaces
+    title' <- P.manyTill P.anyChar P.endOfLine
+    P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
     reftag <- refParser
-    return $ Score (scr / maxScr) scr maxScr (T.pack titl) (T.pack reftag)
+    case (scr, maxScr) of
+        (Just scr', Just maxScr') -> return $ Just $ Rating (scr' / maxScr') scr' maxScr' (T.pack title') (T.pack reftag)
+        (_, _) -> return Nothing
 
--- TODO: Change read to readMaybe or so
 -- Parser for scores that look like this: {{Rating|3.5|5}}
-scoreInRatingTemplParser :: P.Parsec Text () (Double, Double)
+scoreInRatingTemplParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreInRatingTemplParser = do
-    _ <- (P.string "{{Rating|") <|> P.string "{{rating|"
+    _ <- P.try (P.string "{{Rating|") <|> (P.string "{{rating|")
     scr <- P.many1 (P.digit <|> P.char '.')
     _ <- P.char '|'
     mx <- P.many1 P.digit
     _ <- P.string "}}"
-    return (read scr, read mx)
+    return (readMaybe scr, readMaybe mx)
 
 -- Parser for scores that look like this: 5.5/10
-scoreAsFragmentParser :: P.Parsec Text () (Double, Double)
+scoreAsFragmentParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreAsFragmentParser = do
     scr <- P.many1 $ P.digit <|> P.char '.'
     _ <- P.char '/'
     mx <- P.many1 $ P.digit <|> P.char '.'
-    return (read scr, read mx)
+    return (readMaybe scr, readMaybe mx)
 
+-- TODO: Change the scale to 1-10 where C- to A+ are 2 to 10 and E- to D+ are 1
 -- Parser for letter scores, from E- to A+, which we
 -- translate to a number between 1 and 15
-scoreAsLetterParser :: P.Parsec Text () (Double, Double)
+scoreAsLetterParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreAsLetterParser = do
     letter <- P.oneOf "ABCDE"
     let l = case letter of
@@ -125,40 +133,42 @@ scoreAsLetterParser = do
          Just '+' -> 1
          Just _ -> (-1)
          Nothing -> 0
-    return (l + s, 15)
+    return (Just (l + s), Just 15)
 
 -- Parser that gets everything inside <ref></ref> that follows all scores
 refParser :: P.Parsec Text () String
 refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>')) *> P.manyTill P.anyChar (P.string "</ref>") <* P.endOfLine
 
 
--- main :: IO ()
--- main = do
---     inputargs <- execParser myDescription
---     let albumTitle = optAlbum inputargs
---     wikitext <- requestWikipage albumTitle
---     case wikitext of
---         Nothing -> do putStrLn $ show $ "Failed to fetch wikipedia page for '" <> albumTitle <> "'"
---         Just w -> do
---             let ratings = getRatingsInAlbumPage w
---             case ratings of
---                 Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
---                 Just rats -> do
---                     let rev = P.parse reviewParser "(source)" rats
---                     case rev of
---                         Right r -> putStrLn $ show r
---                         Left err -> putStrLn $ "Parse error:" ++ show err
+getAverageScore :: [Rating] -> Double
+getAverageScore ratings = (sum [ratio s | s <- ratings]) / (fromIntegral (length ratings))
 
 main :: IO ()
 main = do
-    mock <- readFile "mock_rocks.txt"
-    let ratings = getRatingsInAlbumPage (T.pack mock)
-    case ratings of
-        Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
-        Just rats -> do
-            let rev = P.parse reviewParser "(source)" rats
-            case rev of
-                Right r -> do
-                    putStrLn $ show r
-                    putStrLn $ show $ length r
-                Left err -> putStrLn $ "Parse error:" ++ show err
+    inputargs <- execParser myDescription
+    let albumTitle = optAlbum inputargs
+    wikitext <- requestWikipage albumTitle
+    case wikitext of
+        Nothing -> do putStrLn $ show $ "Failed to fetch wikipedia page for '" <> albumTitle <> "'"
+        Just w -> do
+            let ratings = getRatingsInAlbumPage w
+            case ratings of
+                Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
+                Just rats -> do
+                    let rev = P.parse reviewParser "(source)" rats
+                    case rev of
+                        Right r -> putStrLn $ "Average score for '" <> show albumTitle <> "': " <> (show $ getAverageScore $ catMaybes r)
+                        Left err -> putStrLn $ "Parse error:" ++ show err
+
+-- main :: IO ()
+-- main = do
+--     mock <- readFile "mock_rocks.txt"
+--     let ratings = getRatingsInAlbumPage (T.pack mock)
+--     case ratings of
+--         Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
+--         Just rats -> do
+--             let rev = P.parse reviewParser "(source)" rats
+--             case rev of
+--                 Right r -> do
+--                     putStrLn $ show $ getAverageScore $ catMaybes r
+--                 Left err -> putStrLn $ "Parse error:" ++ show err
