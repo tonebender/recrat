@@ -83,11 +83,19 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
--- Parser for all reviews on a wikipedia page, where each consists of "| rev3 = Allmusic\n| rev3Score = ...",
+-- TODO: Create subparsers for reviews and all the other shit like "noprose" etc. and let the latter
+-- stuff generate Nothing in the list
+
+-- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines
+-- returning Maybe Rating for the parsed reviews, and Nothing for ignored lines
+musicRatingsParser :: P.Parsec Text () [Maybe Rating]
+musicRatingsParser = P.many $ P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)
+
+-- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = Allmusic\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.
 -- All the Maybe stuff is used to handle any failed string-to-number conversion.
-reviewParser :: P.Parsec Text () [Maybe Rating]
-reviewParser = P.many $ do
+reviewParser :: P.Parsec Text () (Maybe Rating)
+reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
     title' <- P.manyTill P.anyChar P.endOfLine
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
