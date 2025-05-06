@@ -83,17 +83,15 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
--- TODO: Create subparsers for reviews and all the other shit like "noprose" etc. and let the latter
--- stuff generate Nothing in the list
-
--- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines
--- returning Maybe Rating for the parsed reviews, and Nothing for ignored lines
+-- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
+-- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
+-- list. Note that for now only reviews (including ref tags) and title are saved; stuff like
+-- aggregate reviews are skipped.
 musicRatingsParser :: P.Parsec Text () [Maybe Rating]
 musicRatingsParser = P.many $ P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)
 
 -- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = Allmusic\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.
--- All the Maybe stuff is used to handle any failed string-to-number conversion.
 reviewParser :: P.Parsec Text () (Maybe Rating)
 reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
@@ -123,25 +121,24 @@ scoreAsFragmentParser = do
     mx <- P.many1 $ P.digit <|> P.char '.'
     return (readMaybe scr, readMaybe mx)
 
--- TODO: Change the scale to 1-10 where C- to A+ are 2 to 10 and E- to D+ are 1
--- Parser for letter scores, from E- to A+, which we
--- translate to a number between 1 and 15
+-- Parser for letter scores, where E- to D+ are translated to 1
+-- and C- to A+ becomes 2 to 10.
 scoreAsLetterParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreAsLetterParser = do
     letter <- P.oneOf "ABCDE"
-    let l = case letter of
-         'E' -> 2
-         'D' -> 5
-         'C' -> 8
-         'B' -> 11
-         'A' -> 14
-         _ -> 0
     sign <- P.optionMaybe (P.oneOf "+-−")
     let s = case sign of
          Just '+' -> 1
          Just _ -> (-1)
          Nothing -> 0
-    return (Just (l + s), Just 15)
+    let scr = case letter of
+         'E' -> 1
+         'D' -> 1
+         'C' -> 3 + s
+         'B' -> 6 + s
+         'A' -> 9 + s
+         _ -> 0
+    return (Just scr, Just 10)
 
 -- Parser that gets everything inside <ref></ref> that follows all scores
 refParser :: P.Parsec Text () String
@@ -163,7 +160,7 @@ main = do
             case ratings of
                 Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
                 Just rats -> do
-                    let rev = P.parse reviewParser "(source)" rats
+                    let rev = P.parse musicRatingsParser "(source)" rats
                     case rev of
                         Right r -> putStrLn $ "Average score for '" <> show albumTitle <> "': " <> (show $ getAverageScore $ catMaybes r)
                         Left err -> putStrLn $ "Parse error:" ++ show err
