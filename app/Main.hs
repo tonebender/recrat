@@ -14,15 +14,23 @@ import Data.Maybe
 
 
 data Inputargs = Inputargs
-    { optAlbum :: Text }
+    { optAlbum :: Text
+    , optArtist :: Text
+    }
 
 -- Parser for command line arguments
 myParser :: Parser Inputargs
 myParser = Inputargs
     <$> strOption
         (long "title"
+        <> value ""
         <> metavar "ALBUMTITLE"
         <> help "The album title to get ratings for")
+    <*> strOption
+        (long "artist"
+        <> value ""
+        <> metavar "ARTIST"
+        <> help "A music artist (or group) whose discography to list")
 
 -- Help text and info for command line
 myDescription :: ParserInfo Inputargs
@@ -36,6 +44,11 @@ wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
 -- TODO: Handle several results, like different http response codes etc.
+
+searchWikiForArtist :: Text -> IO (Maybe Text)
+searchWikiForArtist searchQuery = do
+    return Nothing
+
 requestWikipage :: Text -> IO (Maybe Text)
 requestWikipage page = do
     let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "wikitext"), ("redirects", "1") ]
@@ -44,7 +57,7 @@ requestWikipage page = do
     return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
 
 
--- TODO: Replace getRatingTag and getRatingsInAlbumPage with parsers
+-- TODO: Maybe replace getRatingTag and getRatingsInAlbumPage with parsers
 
 -- Look for the starting string for Music ratings or Album ratings
 -- in the wiki text and return it if found; Nothing if none found.
@@ -62,8 +75,8 @@ getRatingTag wikiText =
 -- Get the ratings block out of the wiki text, starting
 -- with the Music/Album tag (see above) and ending with "}}\n";
 -- return Nothing if failed.
-getRatingsInAlbumPage :: Text -> Maybe Text
-getRatingsInAlbumPage wikiText =
+getRatingsBlockInAlbumPage :: Text -> Maybe Text
+getRatingsBlockInAlbumPage wikiText =
     case getRatingTag wikiText of
         Nothing -> Nothing
         Just tag -> let xs = drop 1 $ T.splitOn tag wikiText in
@@ -148,6 +161,7 @@ refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>
 getAverageScore :: [Rating] -> Double
 getAverageScore ratings = (sum [ratio s | s <- ratings]) / (fromIntegral (length ratings))
 
+
 main :: IO ()
 main = do
     inputargs <- execParser myDescription
@@ -156,7 +170,7 @@ main = do
     case wikitext of
         Nothing -> do putStrLn $ show $ "Failed to fetch wikipedia page for '" <> albumTitle <> "'"
         Just w -> do
-            let ratings = getRatingsInAlbumPage w
+            let ratings = getRatingsBlockInAlbumPage w
             case ratings of
                 Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
                 Just rats -> do
