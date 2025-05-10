@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module RatingParser (
-    getRatingsBlockInAlbumPage
-    , musicRatingsParser
-    , getAverageScore
+    showAlbumRatings
 ) where
 
 import Options.Applicative
@@ -11,6 +9,7 @@ import qualified Text.Parsec as P
 import qualified Data.Text as T
 import Data.Text.Internal (Text)
 import Text.Read
+import Data.Maybe
 
 
 -- Type for one review
@@ -22,9 +21,23 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
--- getAlbumRatings :: Text -> IO ([Rating])
--- getAlbumRatings = do
---     return ()
+-- TODO: Not finished...
+-- Get the album ratings from a wikipedia page text and display the average score
+-- showAlbumRatings :: Text -> Text -> IO ()
+-- showAlbumRatings wikipage albumTitle = do
+showAlbumRatings :: IO ()
+showAlbumRatings = do -- albumTitle = do
+    wikip <- readFile "mock_rubber.txt"
+    let ratingsBlock = getRatingsBlockInAlbumPage $ T.pack wikip
+    case ratingsBlock of
+         Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
+         Just rats -> do
+             putStrLn $ show rats
+             let rev = P.parse musicRatingsParser "(source)" rats
+             case rev of
+                 -- Right r -> putStrLn $ "Average score for '" <> show albumTitle <> "': " <> (show $ getAverageScore $ catMaybes r)
+                 Right r -> putStrLn $ "Average score for album:" <> (show $ getAverageScore $ catMaybes r)
+                 Left err -> putStrLn $ "Parse error:" ++ show err
 
 -- TODO: Maybe replace getRatingTag and getRatingsInAlbumPage with parsers
 
@@ -51,10 +64,10 @@ getRatingsBlockInAlbumPage wikiText =
         Just tag -> let xs = drop 1 $ T.splitOn tag wikiText in
             case xs of
                 [] -> Nothing
-                x:_ -> let a = take 1 $ T.splitOn "}}\n" x in
+                x:_ -> let a = take 1 $ T.splitOn "\n}}\n" x in
                     case a of
                         [] -> Nothing
-                        b:_ -> Just b
+                        b:_ -> Just (b <> "\n")
 
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
@@ -71,7 +84,8 @@ reviewParser = do
     title' <- P.manyTill P.anyChar P.endOfLine
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
-    reftag <- refParser
+    reftag <- P.try refParser
+    _ <- P.endOfLine
     case (scr, maxScr) of
         (Just scr', Just maxScr') -> return $ Just $ Rating (scr' / maxScr') scr' maxScr' (T.pack title') (T.pack reftag)
         (_, _) -> return Nothing
@@ -113,9 +127,11 @@ scoreAsLetterParser = do
          _ -> 0
     return (Just scr, Just 10)
 
+-- TODO: Implement parsing of <ref />
 -- Parser that gets everything inside <ref></ref> that follows all scores
+-- (does not parse the newline after the ref)
 refParser :: P.Parsec Text () String
-refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>')) *> P.manyTill P.anyChar (P.string "</ref>") <* P.endOfLine
+refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>')) *> P.manyTill P.anyChar (P.string "</ref>")
 
 
 getAverageScore :: [Rating] -> Double

@@ -8,8 +8,6 @@ import Network.Wreq (getWith, defaults, params, param, responseBody)
 import Control.Lens
 import Data.Text.Internal (Text)
 import Data.Aeson.Lens (_String, key)
-import Data.Maybe
-import qualified Text.Parsec as P (parse)
 
 -- This app's modules
 import RatingParser
@@ -36,8 +34,8 @@ myParser = Inputargs
         <> help "A music artist (or group) whose discography to list")
 
 -- Help text and info for command line
-myDescription :: ParserInfo Inputargs
-myDescription = info (myParser <**> helper)
+appDescription :: ParserInfo Inputargs
+appDescription = info (myParser <**> helper)
     ( fullDesc
       <> progDesc "Lists music albums by artist and rating"
       <> header "album-ratings - find ratings for music albums" )
@@ -60,22 +58,19 @@ requestWikiParse page = do
     return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
 
 
+-- main :: IO ()
+-- main = do
+--     inputargs <- execParser appDescription
+--     let albumTitle = optAlbum inputargs
+--     wikitext <- requestWikiParse albumTitle
+--     case wikitext of
+--         Nothing -> do putStrLn $ show $ "Failed to fetch wikipedia page for '" <> albumTitle <> "'"
+--         Just w -> do
+--                showAlbumRatings w albumTitle
+
 main :: IO ()
 main = do
-    inputargs <- execParser myDescription
-    let albumTitle = optAlbum inputargs
-    wikitext <- requestWikiParse albumTitle
-    case wikitext of
-        Nothing -> do putStrLn $ show $ "Failed to fetch wikipedia page for '" <> albumTitle <> "'"
-        Just w -> do
-            let ratings = getRatingsBlockInAlbumPage w
-            case ratings of
-                Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
-                Just rats -> do
-                    let rev = P.parse musicRatingsParser "(source)" rats
-                    case rev of
-                        Right r -> putStrLn $ "Average score for '" <> show albumTitle <> "': " <> (show $ getAverageScore $ catMaybes r)
-                        Left err -> putStrLn $ "Parse error:" ++ show err
+    showAlbumRatings
 
 -- main :: IO ()
 -- main = do
