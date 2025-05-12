@@ -9,7 +9,7 @@
 |rev4 = ''[[The Daily Telegraph]]''
 |rev4score = {{Rating|5|5}}<ref>{{cite news|first=Neil|last=McCormick|title=The Beatles – Rubber Soul, review|url=https://www.telegraph.co.uk/culture/music/the-beatles/6150441/The-Beatles-Rubber-Soul-review.html|newspaper=[[The Daily Telegraph]]|date=7 September 2009|access-date=8 November 2019|archive-url=https://web.archive.org/web/20190402015039/https://www.telegraph.co.uk/culture/music/the-beatles/6150441/The-Beatles-Rubber-Soul-review.html|archive-date=2 April 2019|url-status=live}}</ref>
 | rev5 = ''[[Encyclopedia of Popular Music]]''
-| rev5Score = {{Rating|5|5}}{{sfn|Larkin|2006|p=489}}
+| rev5Score = {{Rating|5|5}}<ref>blabla</ref>
 | rev6      = ''[[MusicHound|MusicHound Rock]]''
 | rev6Score = 4/5{{sfn|Graff|Durchholz|1999|p=88}}
 | rev7 = ''[[Paste (magazine)|Paste]]''

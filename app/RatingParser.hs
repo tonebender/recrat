@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module RatingParser (
-    showAlbumRatings
+    getAlbumRatings
 ) where
 
 import Options.Applicative
@@ -21,23 +21,40 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
+showAlbumRatings :: [Maybe Rating] -> IO ()
+showAlbumRatings [] = return ()
+showAlbumRatings (Nothing:xs) = do
+    putStrLn "-Nothing-"
+    putStrLn ""
+    showAlbumRatings xs
+showAlbumRatings (Just x:xs) = do
+    putStrLn $ show x
+    putStrLn ""
+    showAlbumRatings xs
+    
 -- TODO: Not finished...
 -- Get the album ratings from a wikipedia page text and display the average score
--- showAlbumRatings :: Text -> Text -> IO ()
--- showAlbumRatings wikipage albumTitle = do
-showAlbumRatings :: IO ()
-showAlbumRatings = do -- albumTitle = do
+-- getAlbumRatings :: Text -> Text -> IO ()
+-- getAlbumRatingswikipage albumTitle = do
+getAlbumRatings :: IO ()
+getAlbumRatings = do -- albumTitle = do
     wikip <- readFile "mock_rubber.txt"
     let ratingsBlock = getRatingsBlockInAlbumPage $ T.pack wikip
     case ratingsBlock of
          Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
          Just rats -> do
-             putStrLn $ show rats
              let rev = P.parse musicRatingsParser "(source)" rats
              case rev of
-                 -- Right r -> putStrLn $ "Average score for '" <> show albumTitle <> "': " <> (show $ getAverageScore $ catMaybes r)
-                 Right r -> putStrLn $ "Average score for album:" <> (show $ getAverageScore $ catMaybes r)
+                 Right r -> showAlbumRatings $ r
                  Left err -> putStrLn $ "Parse error:" ++ show err
+
+--     wikip <- readFile "mock_rubber.txt"
+--     let rev = P.parse musicRParser "(source)" $ T.pack wikip
+--     case rev of
+--         -- Right r -> putStrLn $ "Average score for '" <> show albumTitle <> "': " <> (show $ getAverageScore $ catMaybes r)
+--         -- Right r -> putStrLn $ "Average score for album:" <> (show $ getAverageScore $ catMaybes r)
+--         Right r -> showAlbumRatings $ r
+--         Left err -> putStrLn $ "Parse error:" ++ show err
 
 -- TODO: Maybe replace getRatingTag and getRatingsInAlbumPage with parsers
 
@@ -71,10 +88,17 @@ getRatingsBlockInAlbumPage wikiText =
 
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
--- list. Note that for now only reviews (including ref tags) and title are saved; stuff like
+-- list. Note that for now only reviews (including ref tags when found) and title are saved; stuff like
 -- aggregate reviews are skipped.
 musicRatingsParser :: P.Parsec Text () [Maybe Rating]
 musicRatingsParser = P.many $ P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)
+
+musicRParser :: P.Parsec Text () [Maybe Rating]
+musicRParser = do
+    _ <- P.manyTill P.anyChar (P.string "{{Music ratings\n" <|> P.string "{{Album ratings\n")
+    -- TODO: Check that we actually got one of the template strings before getting revs
+    revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}\n")
+    return revs
 
 -- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = Allmusic\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.
@@ -84,10 +108,10 @@ reviewParser = do
     title' <- P.manyTill P.anyChar P.endOfLine
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
-    reftag <- P.try refParser
-    _ <- P.endOfLine
+    -- reftag <- P.try refParser
+    -- _ <- P.endOfLine
     case (scr, maxScr) of
-        (Just scr', Just maxScr') -> return $ Just $ Rating (scr' / maxScr') scr' maxScr' (T.pack title') (T.pack reftag)
+        (Just scr', Just maxScr') -> return $ Just $ Rating (scr' / maxScr') scr' maxScr' (T.pack title') (T.pack "")
         (_, _) -> return Nothing
 
 -- Parser for scores that look like this: {{Rating|3.5|5}}
@@ -127,9 +151,8 @@ scoreAsLetterParser = do
          _ -> 0
     return (Just scr, Just 10)
 
--- TODO: Implement parsing of <ref />
--- Parser that gets everything inside <ref></ref> that follows all scores
--- (does not parse the newline after the ref)
+-- Parser that gets everything inside <ref></ref> that follows all scores.
+-- Does not parse the newline after the ref. Also does not parse <ref /> tags.
 refParser :: P.Parsec Text () String
 refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>')) *> P.manyTill P.anyChar (P.string "</ref>")
 

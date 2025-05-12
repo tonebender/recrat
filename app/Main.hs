@@ -70,7 +70,7 @@ requestWikiParse page = do
 
 main :: IO ()
 main = do
-    showAlbumRatings
+    getAlbumRatings
 
 -- main :: IO ()
 -- main = do
