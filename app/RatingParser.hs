@@ -2,6 +2,9 @@
 
 module RatingParser (
     getAlbumRatings
+    , refParser
+    , noteParser
+    , refSingle
 ) where
 
 import Options.Applicative
@@ -108,10 +111,10 @@ reviewParser = do
     title' <- P.manyTill P.anyChar P.endOfLine
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
-    -- reftag <- P.try refParser
-    -- _ <- P.endOfLine
+    _ <- P.optionMaybe noteParser
+    reftag <- (P.try refParser) <|> refSingle <|> (P.string "\n")
     case (scr, maxScr) of
-        (Just scr', Just maxScr') -> return $ Just $ Rating (scr' / maxScr') scr' maxScr' (T.pack title') (T.pack "")
+        (Just scr', Just maxScr') -> return $ Just $ Rating (scr' / maxScr') scr' maxScr' (T.pack title') (T.pack reftag)
         (_, _) -> return Nothing
 
 -- Parser for scores that look like this: {{Rating|3.5|5}}
@@ -151,11 +154,17 @@ scoreAsLetterParser = do
          _ -> 0
     return (Just scr, Just 10)
 
--- Parser that gets everything inside <ref></ref> that follows all scores.
--- Does not parse the newline after the ref. Also does not parse <ref /> tags.
+-- Parser that gets everything inside <ref></ref> that follows most scores
 refParser :: P.Parsec Text () String
-refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>')) *> P.manyTill P.anyChar (P.string "</ref>")
+refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>')) *> P.manyTill P.anyChar (P.string "</ref>") <* P.endOfLine
 
+-- Parser for single ref elements, <ref />
+refSingle :: P.Parsec Text () String
+refSingle = (P.string "<ref") *> P.manyTill P.anyChar (P.try (P.string "/>")) <* P.endOfLine
+
+-- Parser for note such as {{sfn|Graff|Durchholz|1999|p=88}}
+noteParser :: P.Parsec Text () String
+noteParser = P.string "{{" *> P.manyTill P.anyChar (P.string "}}") 
 
 getAverageScore :: [Rating] -> Double
 getAverageScore ratings = (sum [ratio s | s <- ratings]) / (fromIntegral (length ratings))
