@@ -71,16 +71,3 @@ requestWikiParse page = do
 main :: IO ()
 main = do
     getAlbumRatings
-
--- main :: IO ()
--- main = do
---     mock <- readFile "mock_rocks.txt"
---     let ratings = getRatingsInAlbumPage (T.pack mock)
---     case ratings of
---         Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
---         Just rats -> do
---             let rev = P.parse reviewParser "(source)" rats
---             case rev of
---                 Right r -> do
---                     putStrLn $ show $ getAverageScore $ catMaybes r
---                 Left err -> putStrLn $ "Parse error:" ++ show err

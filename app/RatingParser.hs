@@ -28,11 +28,9 @@ showAlbumRatings :: [Maybe Rating] -> IO ()
 showAlbumRatings [] = return ()
 showAlbumRatings (Nothing:xs) = do
     putStrLn "-Nothing-"
-    putStrLn ""
     showAlbumRatings xs
 showAlbumRatings (Just x:xs) = do
-    putStrLn $ show x
-    putStrLn ""
+    putStrLn $ show (title x) ++ ": " ++ show (ratio x)
     showAlbumRatings xs
     
 -- TODO: Not finished...
@@ -42,76 +40,48 @@ showAlbumRatings (Just x:xs) = do
 getAlbumRatings :: IO ()
 getAlbumRatings = do -- albumTitle = do
     wikip <- readFile "mock_rubber.txt"
-    let ratingsBlock = getRatingsBlockInAlbumPage $ T.pack wikip
-    case ratingsBlock of
-         Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
-         Just rats -> do
-             let rev = P.parse musicRatingsParser "(source)" rats
-             case rev of
-                 Right r -> showAlbumRatings $ r
-                 Left err -> putStrLn $ "Parse error:" ++ show err
+    let rev = P.parse musicRatingsParser "(source)" $ T.pack wikip
+    case rev of
+        -- Right r -> putStrLn $ "Average score for '" <> show albumTitle <> "': " <> (show $ getAverageScore $ catMaybes r)
+        -- Right r -> putStrLn $ "Average score for album:" <> (show $ getAverageScore $ catMaybes r)
+        Right r -> showAlbumRatings $ r
+        Left err -> putStrLn $ "Parse error:" ++ show err
 
---     wikip <- readFile "mock_rubber.txt"
---     let rev = P.parse musicRParser "(source)" $ T.pack wikip
---     case rev of
---         -- Right r -> putStrLn $ "Average score for '" <> show albumTitle <> "': " <> (show $ getAverageScore $ catMaybes r)
---         -- Right r -> putStrLn $ "Average score for album:" <> (show $ getAverageScore $ catMaybes r)
---         Right r -> showAlbumRatings $ r
---         Left err -> putStrLn $ "Parse error:" ++ show err
-
--- TODO: Maybe replace getRatingTag and getRatingsInAlbumPage with parsers
-
--- Look for the starting string for Music ratings or Album ratings
--- in the wiki text and return it if found; Nothing if none found.
-getRatingTag :: Text -> Maybe Text
-getRatingTag wikiText =
-    let music = "{{Music ratings\n"
-        album = "{{Album ratings\n" in
-    if T.isInfixOf music wikiText then
-        Just music
-        else if T.isInfixOf album wikiText then
-        Just album
-        else Nothing
+--    wikip <- readFile "mock_rubber.txt"
+--    let ratingsBlock = getRatingsBlockInAlbumPage $ T.pack wikip
+--    case ratingsBlock of
+--         Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
+--         Just rats -> do
+--             let rev = P.parse musicRatingsParser "(source)" rats
+--             case rev of
+--                 Right r -> showAlbumRatings $ r
+--                 Left err -> putStrLn $ "Parse error:" ++ show err
 
 
--- Get the ratings block out of the wiki text, starting
--- with the Music/Album tag (see above) and ending with "}}\n";
--- return Nothing if failed.
-getRatingsBlockInAlbumPage :: Text -> Maybe Text
-getRatingsBlockInAlbumPage wikiText =
-    case getRatingTag wikiText of
-        Nothing -> Nothing
-        Just tag -> let xs = drop 1 $ T.splitOn tag wikiText in
-            case xs of
-                [] -> Nothing
-                x:_ -> let a = take 1 $ T.splitOn "\n}}\n" x in
-                    case a of
-                        [] -> Nothing
-                        b:_ -> Just (b <> "\n")
+-- TODO: Check presence of ratings block?
+--    if T.isInfixOf music wikiText then
 
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
 -- list. Note that for now only reviews (including ref tags when found) and title are saved; stuff like
 -- aggregate reviews are skipped.
 musicRatingsParser :: P.Parsec Text () [Maybe Rating]
-musicRatingsParser = P.many $ P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)
-
-musicRParser :: P.Parsec Text () [Maybe Rating]
-musicRParser = do
-    _ <- P.manyTill P.anyChar (P.string "{{Music ratings\n" <|> P.string "{{Album ratings\n")
+musicRatingsParser = do
+    _ <- P.manyTill P.anyChar ((P.try (P.string "{{Music ratings\n")) <|> P.string "{{Album ratings\n")
     -- TODO: Check that we actually got one of the template strings before getting revs
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}\n")
     return revs
 
--- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = Allmusic\n| rev3Score = ...",
+-- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.
 reviewParser :: P.Parsec Text () (Maybe Rating)
 reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
-    title' <- P.manyTill P.anyChar P.endOfLine
+    -- In the title, '' around it are optional, but [[ ]] is not
+    title' <- P.optional (P.string "''") *> P.string "[[" *> P.manyTill P.anyChar (P.try (P.string "|" <|> P.string "]]")) <* P.manyTill P.anyChar (P.string "\n")
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
-    _ <- P.optionMaybe noteParser
+    _ <- P.optional noteParser
     reftag <- (P.try refParser) <|> refSingle <|> (P.string "\n")
     case (scr, maxScr) of
         (Just scr', Just maxScr') -> return $ Just $ Rating (scr' / maxScr') scr' maxScr' (T.pack title') (T.pack reftag)
