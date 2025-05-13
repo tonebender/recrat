@@ -1,5 +1,6 @@
 ===Retrospective assessment===
-{{Music ratings
+{{Blablabla}}
+{{Album ratings
 |rev1 = [[AllMusic]]
 |rev1score = {{Rating|5|5}}<ref name="Unterberger/AM">{{cite web|url=http://www.allmusic.com/album/rubber-soul-mw0000192940|last=Unterberger|first=Richie|title=The Beatles ''Rubber Soul''|publisher=[[AllMusic]]|access-date=8 June 2018|archive-url=https://web.archive.org/web/20180605042558/https://www.allmusic.com/album/rubber-soul-mw0000192940|archive-date=5 June 2018|url-status=live}}</ref>
 | rev2 = ''[[Blender (magazine)|Blender]]''

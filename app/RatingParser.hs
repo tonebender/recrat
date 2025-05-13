@@ -68,7 +68,7 @@ getAlbumRatings = do -- albumTitle = do
 -- aggregate reviews are skipped.
 musicRatingsParser :: P.Parsec Text () [Maybe Rating]
 musicRatingsParser = do
-    _ <- P.manyTill P.anyChar ((P.try (P.string "{{Music ratings\n")) <|> P.string "{{Album ratings\n")
+    _ <- P.manyTill P.anyChar ((P.try (P.string "{{Music ratings\n")) <|> ((P.try (P.string "{{Album ratings\n"))))
     -- TODO: Check that we actually got one of the template strings before getting revs
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}\n")
     return revs
