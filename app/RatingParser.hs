@@ -42,9 +42,10 @@ getAlbumRatings = do -- albumTitle = do
     wikip <- readFile "mock_rubber.txt"
     let rev = P.parse musicRatingsParser "(source)" $ T.pack wikip
     case rev of
-        -- Right r -> putStrLn $ "Average score for '" <> show albumTitle <> "': " <> (show $ getAverageScore $ catMaybes r)
-        -- Right r -> putStrLn $ "Average score for album:" <> (show $ getAverageScore $ catMaybes r)
-        Right r -> showAlbumRatings $ r
+        Right r -> do
+            showAlbumRatings $ r
+            putStrLn $ (show (length r)) ++ " ratings"
+            putStrLn $ "Average score: " ++ (show $ getAverageScore $ catMaybes r)
         Left err -> putStrLn $ "Parse error:" ++ show err
 
 --    wikip <- readFile "mock_rubber.txt"
