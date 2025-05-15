@@ -47,20 +47,6 @@ wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
 -- TODO: Handle several results, like different http response codes etc.
 
-requestWikiSearch :: Text -> IO [Value]
-requestWikiSearch searchQuery = do
-    let urlParams = [ ("action", "query"), ("format", "json"), ("list", "search") ]
-    let opts = defaults & params .~ urlParams & param "srsearch" .~ [searchQuery]
-    r <- getWith opts wikipediaApiUrl
-    -- return $ r ^. responseBody ^.. _Value . key "query" . key "search" . values
-    return $ r ^. responseBody ^.. key "query" . key "search" . values
-    --
-    -- https://haskell-docs.netlify.app/packages/lens/#json
-    -- Example of getting number value:
-    -- r ^. responseBody ^.. _Value . key "query" . key "search" . nth 0 . cosmos . _Number & head
-    -- Example of how to get pageid of first search hit:
-    -- r ^. responseBody ^.. _Value . key "query" . key "search" . nth 0 . key "pageid"
-
 requestWikiParse :: Text -> IO (Maybe Text)
 requestWikiParse page = do
     let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "wikitext"), ("redirects", "1") ]
@@ -68,29 +54,42 @@ requestWikiParse page = do
     r <- getWith opts wikipediaApiUrl
     return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
 
+requestWikiSearch :: Text -> IO (Maybe Value)
+requestWikiSearch searchQuery = do
+    let urlParams = [ ("action", "query"), ("format", "json"), ("list", "search") ]
+    let opts = defaults & params .~ urlParams & param "srsearch" .~ [searchQuery]
+    r <- getWith opts wikipediaApiUrl
+    return $ r ^? responseBody . key "query" . key "search"
+    -- Get the Just from the above returned and then apply ^.. values to get [Value]
+    -- or apply ..^ nth 0 . key "pageid" and so on
+    --
+    -- https://haskell-docs.netlify.app/packages/lens/#json
+    -- Example of getting number value:
+    -- r ^. responseBody ^.. _Value . key "query" . key "search" . nth 0 . cosmos . _Number & head
+    -- Example of how to get pageid of first search hit:
+    -- r ^. responseBody ^.. _Value . key "query" . key "search" . nth 0 . key "pageid"
+
+findDiscography :: [Value] -> Integer
+findDiscography [] = 0
+findDiscography (x:xs) = 0
+-- TODO: Apply ^.. values and give as arg to this function, and let it map through them (x:xs ...) to find
+-- the page that has "discography" in it (maybe literally artist ++ " discography")
+
 
 main :: IO ()
 main = do
     inputargs <- execParser appDescription
     let albumTitle = optAlbum inputargs
     let artist = optArtist inputargs
-    case (albumTitle, artist) of
+    case (albumTitle, artist) of  -- TODO: Maybe if-statement is better?
         (alb, "") -> do
                wikitext <- requestWikiParse alb
                case wikitext of
-                   Nothing -> do putStrLn $ show $ "Failed to fetch wikipedia page for '" <> alb <> "'"
-                   Just w -> do
-                       getAlbumRatings w albumTitle
+                   Nothing -> putStrLn $ show $ "Failed to fetch wikipedia page for '" <> alb <> "'"
+                   Just w -> getAlbumRatings w albumTitle
         ("", art) -> do
-               putStrLn $ "Getting " ++ (show art)
                wikires <- requestWikiSearch art
-               putStrLn $ show wikires
-               -- case wikires of
-               --     Nothing -> do putStrLn $ show $ "Search request to wikipedia failed for '" <> art <> "'"
-               --     Just w -> do
-               --         putStrLn $ show w
-        (_, _) -> do putStrLn "Missing args"
-
--- main :: IO ()
--- main = do
---     getAlbumRatings
+               case wikires of
+                   Nothing -> putStrLn $ show $ "Search request to wikipedia failed for '" <> art <> "'"
+                   Just w -> putStrLn $ show w
+        (_, _) -> putStrLn "Missing args"
