@@ -35,14 +35,15 @@ showAlbumRatings (Just x:xs) = do
     
 -- TODO: Not finished...
 -- Get the album ratings from a wikipedia page text and display the average score
--- getAlbumRatings :: Text -> Text -> IO ()
--- getAlbumRatingswikipage albumTitle = do
-getAlbumRatings :: IO ()
-getAlbumRatings = do -- albumTitle = do
-    wikip <- readFile "mock_rubber.txt"
-    let rev = P.parse musicRatingsParser "(source)" $ T.pack wikip
+-- getAlbumRatings :: IO ()
+-- getAlbumRatings = do
+getAlbumRatings :: Text -> Text -> IO ()
+getAlbumRatings wikip albumTitle = do
+    -- wikip <- readFile "mock_rubber.txt"
+    let rev = P.parse musicRatingsParser "(source)" $ wikip
     case rev of
         Right r -> do
+            putStrLn $ show albumTitle
             showAlbumRatings $ r
             putStrLn $ (show (length r)) ++ " ratings"
             putStrLn $ "Average score: " ++ (show $ getAverageScore $ catMaybes r)
