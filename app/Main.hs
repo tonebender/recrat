@@ -9,6 +9,7 @@ import Control.Lens
 import Data.Text.Internal (Text)
 import Data.Aeson.Lens -- (_String, key)
 import Data.Aeson
+import Data.Scientific
 
 -- This app's modules
 import RatingParser
@@ -54,14 +55,15 @@ requestWikiParse page = do
     r <- getWith opts wikipediaApiUrl
     return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
 
+-- See https://www.mediawiki.org/w/api.php?action=help&modules=query%2Bsearch for parameters documentation
 requestWikiSearch :: Text -> IO (Maybe Value)
 requestWikiSearch searchQuery = do
-    let urlParams = [ ("action", "query"), ("format", "json"), ("list", "search") ]
+    let urlParams = [ ("action", "query"), ("format", "json"), ("list", "search"), ("srprop", "redirecttitle") ]
     let opts = defaults & params .~ urlParams & param "srsearch" .~ [searchQuery]
     r <- getWith opts wikipediaApiUrl
     return $ r ^? responseBody . key "query" . key "search"
     -- Get the Just from the above returned and then apply ^.. values to get [Value]
-    -- or apply ..^ nth 0 . key "pageid" and so on
+    -- or apply ^. nth 0 . key "pageid" and so on
     --
     -- https://haskell-docs.netlify.app/packages/lens/#json
     -- Example of getting number value:
@@ -69,9 +71,12 @@ requestWikiSearch searchQuery = do
     -- Example of how to get pageid of first search hit:
     -- r ^. responseBody ^.. _Value . key "query" . key "search" . nth 0 . key "pageid"
 
-findDiscography :: [Value] -> Integer
-findDiscography [] = 0
-findDiscography (x:xs) = 0
+findDiscography :: [Value] -> [Text]  -- [[Scientific]]
+findDiscography [] = []
+findDiscography (x:xs) =
+    (x ^. key "title" . _String) : findDiscography xs
+    -- (x ^.. key "pageid" . _Number) : findDiscography xs   -- Don't know why ._Number needs ^.. instead of ^.
+    --
 -- TODO: Apply ^.. values and give as arg to this function, and let it map through them (x:xs ...) to find
 -- the page that has "discography" in it (maybe literally artist ++ " discography")
 
@@ -80,16 +85,16 @@ main :: IO ()
 main = do
     inputargs <- execParser appDescription
     let albumTitle = optAlbum inputargs
-    let artist = optArtist inputargs
-    case (albumTitle, artist) of  -- TODO: Maybe if-statement is better?
-        (alb, "") -> do
-               wikitext <- requestWikiParse alb
+    let artistName = optArtist inputargs
+    case (albumTitle, artistName) of  -- TODO: Maybe if-statement is better?
+        (album, "") -> do
+               wikitext <- requestWikiParse album
                case wikitext of
-                   Nothing -> putStrLn $ show $ "Failed to fetch wikipedia page for '" <> alb <> "'"
+                   Nothing -> putStrLn $ show $ "Failed to fetch wikipedia page for '" <> album <> "'"
                    Just w -> getAlbumRatings w albumTitle
-        ("", art) -> do
-               wikires <- requestWikiSearch art
-               case wikires of
-                   Nothing -> putStrLn $ show $ "Search request to wikipedia failed for '" <> art <> "'"
-                   Just w -> putStrLn $ show w
-        (_, _) -> putStrLn "Missing args"
+        ("", artist) -> do
+               wikiresults <- requestWikiSearch artist
+               case wikiresults of
+                   Nothing -> putStrLn $ show $ "Search request to wikipedia failed for '" <> artist <> "'"
+                   Just wr -> putStrLn $ show $ findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
+        (_, _) -> putStrLn "No album title or artist/band specified."
