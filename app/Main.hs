@@ -14,6 +14,7 @@ import Data.Maybe (listToMaybe)
 
 -- This app's modules
 import Ratings
+import Artist
 
 
 -- Type for command line args
