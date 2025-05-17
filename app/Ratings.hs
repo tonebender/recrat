@@ -1,10 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module RatingParser (
+module Ratings (
     getAlbumRatings
-    , refParser
-    , noteParser
-    , refSingle
 ) where
 
 import Options.Applicative

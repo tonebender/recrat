@@ -13,7 +13,7 @@ import Data.Aeson
 import Data.Maybe (listToMaybe)
 
 -- This app's modules
-import RatingParser
+import Ratings
 
 
 -- Type for command line args
@@ -52,7 +52,7 @@ wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 requestWikiParse :: Text -> Text -> IO (Maybe Text)
 requestWikiParse pageprop val = do
     let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "wikitext"), ("redirects", "1"), (pageprop, val) ]
-    let opts = defaults & params .~ urlParams -- & param "page" .~ [val]
+    let opts = defaults & params .~ urlParams
     r <- getWith opts wikipediaApiUrl
     return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
 

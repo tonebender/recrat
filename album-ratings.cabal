@@ -63,7 +63,7 @@ executable album-ratings
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules:    RatingParser
+    other-modules:    Ratings
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
