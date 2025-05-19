@@ -36,9 +36,8 @@ printRatings (Just x:xs) = do
     printRatings xs
 
 -- TODO: Not finished...
+-- TODO: Get title from actual page (use parser for this?)
 -- Get the album ratings from a wikipedia page text and display the average score
--- getAndPrintAlbumRatings :: IO ()
--- getAndPrintAlbumRatings = do
 getAndPrintAlbumRatings :: Text -> Text -> IO ()
 getAndPrintAlbumRatings wikip albumTitle = do
     -- wikip <- readFile "mock_rubber.txt"
@@ -47,7 +46,7 @@ getAndPrintAlbumRatings wikip albumTitle = do
         Right r -> do
             print albumTitle
             printRatings $ r
-            putStrLn $ (show (length r)) ++ " ratings"
+            putStrLn $ show (length (catMaybes r)) ++ " ratings"
             putStrLn $ "Average score: " ++ (show $ getAverageScore $ catMaybes r)
         Left err -> putStrLn $ "Parse error:" ++ show err
 

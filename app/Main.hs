@@ -50,6 +50,9 @@ wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
 -- TODO: Handle several results, like different http response codes etc.
 
+-- Make a request to the Wikimedia Action API on Wikipedia, asking it to give us
+-- the contents of the specified wiki page.
+-- pageprop can be "page" for the page name, or "pageid" for the page ID number
 requestWikiParse :: Text -> Text -> IO (Maybe Text)
 requestWikiParse pageprop val = do
     let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "wikitext"), ("redirects", "1"), (pageprop, val) ]
@@ -57,6 +60,7 @@ requestWikiParse pageprop val = do
     r <- getWith opts wikipediaApiUrl
     return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
 
+-- Make a request to the Wikimedia Action API on Wikipedia, asking it to search for the supplied query
 -- See https://www.mediawiki.org/w/api.php?action=help&modules=query%2Bsearch for parameters documentation
 requestWikiSearch :: Text -> IO (Maybe Value)
 requestWikiSearch searchQuery = do
@@ -90,10 +94,18 @@ main = do
     let artistName = optArtist inputargs
     case (albumTitle, artistName) of
         (album, "") -> do
-               wikitext <- requestWikiParse "page" album  -- TODO: Add searching before parsing
-               case wikitext of
-                   Nothing -> print $ "Failed to fetch wikipedia page for '" <> album <> "'"
-                   Just w -> getAndPrintAlbumRatings w albumTitle
+               wikiresults <- requestWikiSearch album
+               case wikiresults of
+                   Nothing -> putStrLn "Search request to wikipedia failed."
+                   Just wr -> do
+                       if length (wr ^. _Array) == 0
+                           then print $ "No results found for search query '" <> album <> "'"
+                           else do
+                               let firstResultTitle = wr ^. nth 0 . key "title" . _String
+                               wikitext <- requestWikiParse "page" $ firstResultTitle  -- Just using the first result
+                               case wikitext of
+                                   Nothing -> print $ "Failed to fetch wikipedia page for '" <> firstResultTitle <> "'"
+                                   Just w -> getAndPrintAlbumRatings w albumTitle
         ("", artist) -> do
                wikiresults <- requestWikiSearch artist
                case wikiresults of
