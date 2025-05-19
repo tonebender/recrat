@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Ratings (
-    getAlbumRatings
+    Album
+    , getAndPrintAlbumRatings
 ) where
 
 import Options.Applicative
@@ -11,6 +12,10 @@ import Data.Text.Internal (Text)
 import Text.Read
 import Data.Maybe
 
+data Album = Album
+    { name :: Text
+    , ratings :: [Rating]
+    } deriving (Show)
 
 -- Type for one review
 data Rating = Rating
@@ -21,27 +26,27 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
-showAlbumRatings :: [Maybe Rating] -> IO ()
-showAlbumRatings [] = return ()
-showAlbumRatings (Nothing:xs) = do
+printRatings :: [Maybe Rating] -> IO ()
+printRatings [] = return ()
+printRatings (Nothing:xs) = do
     putStrLn "-Nothing-"
-    showAlbumRatings xs
-showAlbumRatings (Just x:xs) = do
+    printRatings xs
+printRatings (Just x:xs) = do
     putStrLn $ show (title x) ++ ": " ++ show (ratio x)
-    showAlbumRatings xs
-    
+    printRatings xs
+
 -- TODO: Not finished...
 -- Get the album ratings from a wikipedia page text and display the average score
--- getAlbumRatings :: IO ()
--- getAlbumRatings = do
-getAlbumRatings :: Text -> Text -> IO ()
-getAlbumRatings wikip albumTitle = do
+-- getAndPrintAlbumRatings :: IO ()
+-- getAndPrintAlbumRatings = do
+getAndPrintAlbumRatings :: Text -> Text -> IO ()
+getAndPrintAlbumRatings wikip albumTitle = do
     -- wikip <- readFile "mock_rubber.txt"
     let rev = P.parse musicRatingsParser "(source)" $ wikip
     case rev of
         Right r -> do
-            putStrLn $ show albumTitle
-            showAlbumRatings $ r
+            print albumTitle
+            printRatings $ r
             putStrLn $ (show (length r)) ++ " ratings"
             putStrLn $ "Average score: " ++ (show $ getAverageScore $ catMaybes r)
         Left err -> putStrLn $ "Parse error:" ++ show err
@@ -53,7 +58,7 @@ getAlbumRatings wikip albumTitle = do
 --         Just rats -> do
 --             let rev = P.parse musicRatingsParser "(source)" rats
 --             case rev of
---                 Right r -> showAlbumRatings $ r
+--                 Right r -> printRatings $ r
 --                 Left err -> putStrLn $ "Parse error:" ++ show err
 
 
@@ -69,6 +74,7 @@ musicRatingsParser = do
     _ <- P.manyTill P.anyChar ((P.try (P.string "{{Music ratings\n")) <|> ((P.try (P.string "{{Album ratings\n"))))
     -- TODO: Check that we actually got one of the template strings before getting revs
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}\n")
+    -- TODO: Remove the Maybes with catMaybes before returning
     return revs
 
 -- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",

@@ -73,6 +73,8 @@ requestWikiSearch searchQuery = do
     -- Example of how to get pageid of first search hit:
     -- r ^. responseBody ^.. _Value . key "query" . key "search" . nth 0 . key "pageid"
 
+-- From wikipedia search results, find the first item that has a title that ends with "discography",
+-- and return its wiki page ID number
 findDiscography :: [Value] -> Maybe Integer
 findDiscography [] = Nothing
 findDiscography (x:xs) =
@@ -86,12 +88,12 @@ main = do
     inputargs <- execParser appDescription
     let albumTitle = optAlbum inputargs
     let artistName = optArtist inputargs
-    case (albumTitle, artistName) of  -- TODO: Maybe if-statement is better?
+    case (albumTitle, artistName) of
         (album, "") -> do
                wikitext <- requestWikiParse "page" album  -- TODO: Add searching before parsing
                case wikitext of
                    Nothing -> print $ "Failed to fetch wikipedia page for '" <> album <> "'"
-                   Just w -> getAlbumRatings w albumTitle
+                   Just w -> getAndPrintAlbumRatings w albumTitle
         ("", artist) -> do
                wikiresults <- requestWikiSearch artist
                case wikiresults of
