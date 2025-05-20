@@ -10,7 +10,6 @@ import qualified Data.Text as T
 import Data.Text.Internal (Text)
 import Data.Aeson.Lens -- (_String, key)
 import Data.Aeson
-import Data.Maybe (listToMaybe)
 
 -- This app's modules
 import Ratings
@@ -24,8 +23,8 @@ data Inputargs = Inputargs
     }
 
 -- Parser for command line arguments
-myParser :: Parser Inputargs
-myParser = Inputargs
+commandLineParser :: Parser Inputargs
+commandLineParser = Inputargs
     <$> strOption
         (long "title"
         <> value ""
@@ -39,7 +38,7 @@ myParser = Inputargs
 
 -- Help text and info for command line
 appDescription :: ParserInfo Inputargs
-appDescription = info (myParser <**> helper)
+appDescription = info (commandLineParser <**> helper)
     ( fullDesc
       <> progDesc "Lists music albums by artist and rating"
       <> header "album-ratings - find ratings for music albums" )
@@ -76,15 +75,6 @@ requestWikiSearch searchQuery = do
     -- r ^. responseBody ^.. _Value . key "query" . key "search" . nth 0 . cosmos . _Number & head
     -- Example of how to get pageid of first search hit:
     -- r ^. responseBody ^.. _Value . key "query" . key "search" . nth 0 . key "pageid"
-
--- From wikipedia search results, find the first item that has a title that ends with "discography",
--- and return its wiki page ID number
-findDiscography :: [Value] -> Maybe Integer
-findDiscography [] = Nothing
-findDiscography (x:xs) =
-    if T.isSuffixOf "discography" (x ^. key "title" . _String)
-        then (x ^.. key "pageid" . _Integer & listToMaybe)  -- Don't know why ._Integer needs ^.. instead of ^.
-        else findDiscography xs
 
 
 main :: IO ()
