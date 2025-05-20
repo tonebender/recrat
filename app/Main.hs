@@ -49,6 +49,16 @@ wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
 -- TODO: Handle several results, like different http response codes etc.
 
+-- Make a request to the Wikimedia Action API on Wikipedia, asking it to search for the supplied query
+-- See https://www.mediawiki.org/w/api.php?action=help&modules=query%2Bsearch for parameters documentation
+-- https://haskell-docs.netlify.app/packages/lens/#json
+requestWikiSearch :: Text -> IO (Maybe Value)
+requestWikiSearch searchQuery = do
+    let urlParams = [ ("action", "query"), ("format", "json"), ("list", "search"), ("srprop", "redirecttitle") ]
+    let opts = defaults & params .~ urlParams & param "srsearch" .~ [searchQuery]
+    r <- getWith opts wikipediaApiUrl
+    return $ r ^? responseBody . key "query" . key "search"
+
 -- Make a request to the Wikimedia Action API on Wikipedia, asking it to give us
 -- the contents of the specified wiki page.
 -- pageprop can be "page" for the page name, or "pageid" for the page ID number
@@ -59,23 +69,12 @@ requestWikiParse pageprop val = do
     r <- getWith opts wikipediaApiUrl
     return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
 
--- Make a request to the Wikimedia Action API on Wikipedia, asking it to search for the supplied query
--- See https://www.mediawiki.org/w/api.php?action=help&modules=query%2Bsearch for parameters documentation
-requestWikiSearch :: Text -> IO (Maybe Value)
-requestWikiSearch searchQuery = do
-    let urlParams = [ ("action", "query"), ("format", "json"), ("list", "search"), ("srprop", "redirecttitle") ]
-    let opts = defaults & params .~ urlParams & param "srsearch" .~ [searchQuery]
+requestWikiSections :: Text -> IO (Maybe Value)
+requestWikiSections pageid = do
+    let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "sections"), ("pageid", pageid) ]
+    let opts = defaults & params .~ urlParams
     r <- getWith opts wikipediaApiUrl
-    return $ r ^? responseBody . key "query" . key "search"
-    -- Get the Just from the above returned and then apply ^.. values to get [Value]
-    -- or apply ^. nth 0 . key "pageid" and so on
-    --
-    -- https://haskell-docs.netlify.app/packages/lens/#json
-    -- Example of getting number value:
-    -- r ^. responseBody ^.. _Value . key "query" . key "search" . nth 0 . cosmos . _Number & head
-    -- Example of how to get pageid of first search hit:
-    -- r ^. responseBody ^.. _Value . key "query" . key "search" . nth 0 . key "pageid"
-
+    return $ r ^? responseBody . key "parse"
 
 main :: IO ()
 main = do
@@ -92,21 +91,21 @@ main = do
                            then print $ "No results found for search query '" <> album <> "'"
                            else do
                                let firstResultTitle = wr ^. nth 0 . key "title" . _String
-                               wikitext <- requestWikiParse "page" $ firstResultTitle  -- Just using the first result
+                               wikitext <- requestWikiParse "page" $ firstResultTitle  -- Just taking the first result
                                case wikitext of
-                                   Nothing -> print $ "Failed to fetch wikipedia page for '" <> firstResultTitle <> "'"
-                                   Just w -> getAndPrintAlbumRatings w albumTitle
+                                   Nothing -> print $ "Failed to fetch wikipedia content for '" <> firstResultTitle <> "'"
+                                   Just w -> getAndPrintAlbumRatings w firstResultTitle
         ("", artist) -> do
                wikiresults <- requestWikiSearch artist
                case wikiresults of
                    Nothing -> print $ "Search request to wikipedia failed for '" <> artist <> "'"
                    Just wr -> do
-                       let discoid = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
-                       case discoid of
-                           Nothing -> print $ "Could not find discography related to search query '" <> artist <> "'"
-                           Just did -> do
-                               disco <- requestWikiParse "pageid" $ T.pack $ show did
-                               case disco of
+                       let discopageId = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
+                       case discopageId of
+                           Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
+                           Just dId -> do
+                               discoSections <- requestWikiSections $ T.pack $ show dId
+                               case discoSections of
                                    Nothing -> putStrLn "Failed to fetch discography"
                                    Just d -> print d
         (_, _) -> putStrLn "No album title or artist/band specified."

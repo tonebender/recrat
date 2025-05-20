@@ -3,6 +3,7 @@
 module Artist (
     getArtist
     , findDiscography
+    , findDiscoPart
 ) where
 
 import Control.Lens
@@ -21,6 +22,7 @@ data Artist = Artist
 getArtist :: Text -> IO ()
 getArtist artist = do putStrLn "Placeholder"
 
+-- TODO: Perhaps return title instead to make it more consistent with other calls the wikipedia API
 -- From wikipedia search results, find the first item that has a title that ends with "discography",
 -- and return its wiki page ID number
 findDiscography :: [Value] -> Maybe Integer
@@ -30,7 +32,16 @@ findDiscography (x:xs) =
         then (x ^.. key "pageid" . _Integer & listToMaybe)  -- Don't know why ._Integer needs ^.. instead of ^.
         else findDiscography xs
 
+findDiscoPart :: Text -> [Value] -> Maybe Text
+findDiscoPart _ [] = Nothing
+findDiscoPart partName (x:xs) =
+    if T.isPrefixOf partName (x ^. key "line" . _String)
+        then Just (x ^. key "index" . _String)
+        else findDiscoPart partName xs
+-- Call the above function like this: findDiscoPart "Studio" $ j ^.. key "sections" . values
 
 -- https://en.wikipedia.org/w/api.php?action=parse&format=json&page=Aerosmith_discography&prop=wikitext&section=2&formatversion=2
 --
 -- https://en.wikipedia.org/w/api.php?action=parse&prop=sections&page=Michael_Bisping
+
+
