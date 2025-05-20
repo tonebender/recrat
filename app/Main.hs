@@ -91,7 +91,7 @@ main = do
                            then print $ "No results found for search query '" <> album <> "'"
                            else do
                                let firstResultTitle = wr ^. nth 0 . key "title" . _String
-                               wikitext <- requestWikiParse "page" $ firstResultTitle  -- Just taking the first result
+                               wikitext <- requestWikiParse "page" firstResultTitle  -- Just taking the first result
                                case wikitext of
                                    Nothing -> print $ "Failed to fetch wikipedia content for '" <> firstResultTitle <> "'"
                                    Just w -> getAndPrintAlbumRatings w firstResultTitle
@@ -104,8 +104,8 @@ main = do
                        case discopageId of
                            Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
                            Just dId -> do
-                               discoSections <- requestWikiSections $ T.pack $ show dId
-                               case discoSections of
+                               discography <- requestWikiParse "pageid" $ T.pack $ show dId
+                               case discography of
                                    Nothing -> putStrLn "Failed to fetch discography"
                                    Just d -> print d
         (_, _) -> putStrLn "No album title or artist/band specified."

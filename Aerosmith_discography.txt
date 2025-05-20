@@ -1,0 +1,1632 @@
+
+{{Short description|none}}
+{{Infobox artist discography
+|Artist      = [[Aerosmith]]
+|Logo        = 
+|Image       = Aearosmith Las Vegas 20190413.jpg
+|Caption     = Aerosmith performing in [[Las Vegas, Nevada]] on April 13, 2019.
+|Studio      = 15
+|Live        = 9
+|Compilation = 15
+|EP          = 2
+|Singles     = 72
+}}
+American [[rock music|rock]] band [[Aerosmith]] has released 15 [[studio album]]s, nine [[live album]]s, 15 [[compilation album]]s, two [[extended play]]s, and 72 [[single (music)|singles]]. Aerosmith was formed in [[Boston|Boston, Massachusetts]] in 1970 by vocalist [[Steven Tyler]], guitarists [[Joe Perry (musician)|Joe Perry]] and [[Ray Tabano]], bassist [[Tom Hamilton (musician)|Tom Hamilton]], and drummer [[Joey Kramer]]. Tabano was replaced by [[Brad Whitford]] in 1971. Other than a period from 1979 to 1984, this lineup has remained the same.<ref name="Allmusic bio">{{cite web | url={{Allmusic|class=artist|id=p3508|pure_url=yes}} | title=AllMusic | website=AllMusic | access-date=2008-06-24 }}</ref>
+
+Twenty-one of Aerosmith's songs have reached the top 40 of the [[Billboard Hot 100|''Billboard'' Hot 100]] and the band has long been a stalwart of the [[Mainstream Rock (chart)|Mainstream Rock Tracks]] chart, achieving nine number-one hits on that chart to date. An additional 28 of the band's songs have reached the top 40 on various charts worldwide. The band has achieved four multi-platinum singles ("[[Dream On (Aerosmith song)|Dream On]]", "[[Sweet Emotion]]", "[[Walk This Way]]", and "[[I Don't Want to Miss a Thing]]"), while an additional eight singles have attained silver, gold, or platinum certifications in various territories.
+
+Aerosmith is estimated to have sold well over 150 million albums around the world, making them the biggest-selling hard rock band in United States history.<ref>{{cite news |last=McShane |first=Larry |title=New Aerosmith 'Guitar Hero' game |work=New York Daily News |url=http://www.nydailynews.com/entertainment/music/2008/02/16/2008-02-16_new_aerosmith_guitar_hero_game.html |access-date=March 31, 2008 |date=February 15, 2008 |archive-url=https://web.archive.org/web/20080412025546/http://www.nydailynews.com/entertainment/music/2008/02/16/2008-02-16_new_aerosmith_guitar_hero_game.html |archive-date=12 April 2008  |url-status=live}}</ref> As of November 2021, the band has sold 69.5 million albums in the United States in terms of certification units,<ref name="RIAA&nbsp;— Top Selling Artists">{{cite web| title=Top Selling Artists | publisher=[[Recording Industry Association of America]] (RIAA.com)| url=https://www.riaa.com/goldandplatinum.php?content_selector=top-selling-artists }}</ref> and 31,702,000 albums since 1991 when [[SoundScan]] started tracking actual sales figures.<ref name="US Sales">{{cite web|url=http://music.yahoo.com/blogs/chart-watch/week-ending-july-28-2013-albums-finally-woman-152221250.html |title=Week Ending July 28, 2013. Albums: Selena Bumps Jay Z |work=Chart Watch |publisher=Yahoo|last=Grein |first=Paul|date=July 31, 2013}}</ref>
+
+== Albums ==
+
+=== Studio albums ===
+{| class="wikitable plainrowheaders" style="text-align:center;"
+|+ List of studio albums, with selected chart positions and certifications
+! rowspan="2"| Title
+! scope="col" rowspan="2" style="width:16em;"| Album details
+! scope="col" colspan="10"| Peak chart positions
+! scope="col" rowspan="2"| [[List of music recording certifications|Certifications]]
+|-
+! scope="col" style="width:3em;font-size:90%;"| [[Billboard 200|US]]<br /><ref name="US200">{{cite magazine | url=https://www.billboard.com/artist/aerosmith/chart-history/tlp/ | title=Aerosmith Chart History: Billboard 200 | magazine=[[Billboard (magazine)|Billboard]] | access-date=August 29, 2023}}</ref>
+! scope="col" style="width:3em;font-size:90%;"| [[ARIA Charts|AUS]]<br /><ref name="AUSAl">Peak chart positions for albums in Australia:
+* All except noted: {{cite web | url=http://australian-charts.com/showinterpret.asp?interpret=Aerosmith | title=Discography Aerosmith | publisher=Hung Medien | work=australian-charts.com | access-date=September 30, 2012}}
+* ''Toys in the Attic'' and ''Rocks'': {{cite book | title=[[Kent Music Report|Australian Chart Book 1970-1992]] | last=Kent | first=David | author-link=David Kent (historian) | publisher=Australian Chart Book | location=St Ives, N.S.W. | year=1993 | isbn=0-646-11917-6 }}
+* ''Honkin' on Bobo'' and ''O, Yeah!'': {{cite web | url=http://www.aria.com.au/Issue737.pdf | archive-url=https://webarchive.nla.gov.au/awa/20040406140000/http://pandora.nla.gov.au/pan/23790/20040407-0000/Issue737.pdf | url-status=dead | archive-date=2004-04-06 | title=The ARIA Report: Issue 737 (Week Commencing 12 April 2004) | publisher=[[Australian Recording Industry Association]] | access-date=September 30, 2012 | pages=2 }}{{cbignore|bot=medic}}</ref>
+! scope="col" style="width:3em;font-size:90%;"| [[Ö3 Austria Top 40|AUT]]<br /><ref name="AUT">{{cite web | url=http://austriancharts.at/showinterpret.asp?interpret=Aerosmith | title=Discographie Aerosmith | publisher=Hung Medien | work=austriancharts.at | access-date=September 30, 2012 | language=de}}</ref>
+! scope="col" style="width:3em;font-size:90%;"| [[Canadian Albums Chart|CAN]]<br /><ref name="CANAl">Peak chart positions for albums in Canada:
+* All except noted: {{cite web | url=http://www.collectionscanada.gc.ca/rpm/028020-110.01-e.php?PHPSESSID=v2a76h62to0aart05gg0u3agj2&q1=Aerosmith&q2=Top+Albums%2FCDs&interval=20 | title=Aerosmith – Top Albums/CDs | publisher=[[Walt Grealis]] | work=[[RPM (magazine)|RPM]] | access-date=September 30, 2012 | archive-url=https://web.archive.org/web/20150402113912/http://www.collectionscanada.gc.ca/rpm/028020-110.01-e.php?PHPSESSID=v2a76h62to0aart05gg0u3agj2&q1=Aerosmith&q2=Top+Albums%2FCDs&interval=20 | archive-date=April 2, 2015 | url-status=dead }}</ref><ref name="BillboardCanadaAlbums">Peak positions for ''Nine Lives'', ''Just Push Play'', ''Honkin' on Bobo'' and ''A Little South of Sanity'': {{cite magazine | url={{BillboardURLbyName|artist=aerosmith|chart=Canadian Albums}} | title=Aerosmith Chart History: Canadian Albums | magazine=[[Billboard (magazine)|Billboard]] | access-date=September 30, 2012}}</ref>
+! scope="col" style="width:3em;font-size:90%;"| [[GfK Entertainment|GER]]<br /><ref name="GERAl">{{cite web | url=http://musicline.de/de/chartverfolgung_summary/artist/Aerosmith/485/?type=longplay | title=Chartverfolgung / Aerosmith / Longplay | publisher=[[GfK Entertainment]] | work=musicline.de | access-date=September 30, 2012 | language=de | archive-url=https://web.archive.org/web/20140728221648/http://musicline.de/de/chartverfolgung_summary/artist/Aerosmith/485/?type=longplay | archive-date=July 28, 2014 | url-status=dead | df=mdy-all }}</ref>
+! scope="col" style="width:3em;font-size:90%;"| [[Dutch Album Top 100|NLD]]<br /><ref name="NLD">{{cite web | url=http://dutchcharts.nl/showinterpret.asp?interpret=Aerosmith | title=Discographie Aerosmith | publisher=Hung Medien | work=dutchcharts.nl | access-date=September 30, 2012 | language=nl}}</ref>
+! scope="col" style="width:3em;font-size:90%;"| [[Official New Zealand Music Chart|NZ]]<br /><ref name="NZ">{{cite web | url=https://charts.nz/showinterpret.asp?interpret=Aerosmith | title=Discography Aerosmith | publisher=Hung Medien | work=charts.nz | access-date=September 30, 2012}}</ref>
+! scope="col" style="width:3em;font-size:90%;"| [[Sverigetopplistan|SWE]]<br /><ref name="SWE">{{cite web | url=http://swedishcharts.com/showinterpret.asp?interpret=Aerosmith | title=Discography Aerosmith | website=swedishcharts.com | access-date=September 30, 2012}}</ref>
+! scope="col" style="width:3em;font-size:90%;"| [[Swiss Hitparade|SWI]]<br /><ref name="SWI">{{cite web | url=http://hitparade.ch/artist/Aerosmith | title=Aerosmith (Charts) | website=hitparade.ch | access-date=September 30, 2012 | language=de}}</ref>
+! scope="col" style="width:3em;font-size:90%;"| [[UK Albums Chart|UK]]<br /><ref name="UKAl">Peak chart positions for albums in the United Kingdom:
+* All except ''Gold'': {{cite web | url=https://www.officialcharts.com/artist/24519/aerosmith/ | title=Aerosmith | publisher=[[Official Charts Company]] | access-date=June 15, 2021 | format=select "Albums" tab}}
+* ''Gold'': {{cite web | url=http://zobbel.de/cluk/CLUK_A.HTM | title=Chart Log UK: A – Azzido Da Bass | publisher=Tobias Zywietz | work=Zobbel.de | access-date=September 30, 2012 | author=Zywietz, Tobias}}</ref>
+|-
+! scope="row"| ''[[Aerosmith (album)|Aerosmith]]''
+|
+* Released: January&nbsp;5,&nbsp;1973
+* Label: [[Columbia Records|Columbia]]
+| 21 || — || — || 58 || — || — || — || — || — || —
+|
+* [[Music Canada|CAN]]: Platinum<ref name="MC">{{cite web | url=https://musiccanada.com/GPSearchResult.aspx?sa=Aerosmith | title=Gold and Platinum Search (Aerosmith) | publisher=[[Music Canada]] | access-date=September 30, 2012}}</ref>
+* [[Recording Industry Association of America|US]]: 2× Platinum<ref name="RIAA">{{cite web |title=RIAA |url=https://www.riaa.com/gold-platinum/?tab_active=default-award&se=aerosmith#search_section |publisher=[[Recording Industry Association of America|RIAA]] |access-date=January 12, 2014}}</ref>
+|-
+! scope="row"| ''[[Get Your Wings]]''
+|
+* Released: March&nbsp;15,&nbsp;1974
+* Label: Columbia
+| 74 || — || — || — || — || — || — || — || — || —
+|
+* CAN: Platinum<ref name="MC"/>
+* US: 3× Platinum<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Toys in the Attic (album)|Toys in the Attic]]''
+|
+* Released: April&nbsp;8,&nbsp;1975
+* Label: Columbia
+| 11 || 79 || — || 7 || — || — || — || — || — || —
+|
+* CAN: Platinum<ref name="MC"/>
+* US: 9× Platinum<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Rocks (Aerosmith album)|Rocks]]''
+|
+* Released: May&nbsp;3,&nbsp;1976
+* Label: Columbia
+| 3 || 45 || — || 14 || — || — || — || 46 || — || —
+|
+* CAN: Platinum<ref name="MC"/>
+* US: 4× Platinum<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Draw the Line (Aerosmith album)|Draw the Line]]''
+|
+* Released: December&nbsp;9,&nbsp;1977
+* Label: Columbia
+| 11 || — || — || 10 || — || — || — || — || — || —
+|
+* CAN: Gold<ref name="MC"/>
+* US: 2× Platinum<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Night in the Ruts]]''
+|
+* Released: November&nbsp;16,&nbsp;1979
+* Label: Columbia
+| 14 || — || — || 8 || — || — || — || — || — || —
+|
+* CAN: Gold<ref name="MC"/>
+* US: Platinum<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Rock in a Hard Place]]''
+|
+* Released: August&nbsp;1,&nbsp;1982
+* Label: Columbia
+| 32 || — || — || 24 || — || — || — || — || — || —
+|
+* US: Gold<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Done with Mirrors]]''
+|
+* Released: November&nbsp;4,&nbsp;1985
+* Label: [[Geffen Records|Geffen]]
+| 36 || — || — || 72 || — || — || — || — || — || —
+|
+* US: Gold<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Permanent Vacation (Aerosmith album)|Permanent Vacation]]''
+|
+* Released: August&nbsp;18,&nbsp;1987
+* Label: Geffen
+| 11 || 42 || — || 7 || — || — || — || — || — || 37
+|
+* CAN: 5× Platinum<ref name="MC"/>
+* [[British Phonographic Industry|UK]]: Gold<ref name="BPI">{{cite certification |region=United Kingdom |artist=Aerosmith |access-date=June 18, 2023}}</ref>
+* US: 5× Platinum<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Pump (album)|Pump]]''
+|
+* Released: September&nbsp;12,&nbsp;1989
+* Label: Geffen
+| 5 || 1 || — || 2 || 13 || 33 || 8 || 8 || 9 || 3
+|
+* [[Australian Recording Industry Association|AUS]]: 2× Platinum<ref name="ARIA">{{cite Ryan|page=9}}</ref>
+* CAN: 7× Platinum<ref name="MC"/>
+* [[Bundesverband Musikindustrie|GER]]: Gold<ref name="BVMI">{{cite web | url=http://www.musikindustrie.de/gold_platin_datenbank/?action=suche&strTitel=&strInterpret=Aerosmith | title=Gold-/Platin-Datenback: Aerosmith | publisher=[[Bundesverband Musikindustrie]] | access-date=September 30, 2012 | language=de}}</ref>
+* UK: Gold<ref name="BPI"/>
+* US: 7× Platinum<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Get a Grip]]''
+|
+* Released: April&nbsp;20,&nbsp;1993
+* Label: Geffen
+| 1 || 3 || 3 || 2 || 3 || 2 || 9 || 3 || 1 || 2
+|
+* AUS: Gold<ref name="ARIA"/>
+* [[International Federation of the Phonographic Industry|AUT]]: Platinum<ref name="AUTcert">{{cite certification | region=Austria | artist=Aerosmith | access-date=September 30, 2012}}</ref>
+* CAN: Diamond<ref name="MC"/>
+* GER: Platinum<ref name="BVMI"/>
+* SWE: Platinum<ref name="SWEcert1987-1998">{{cite web|url=http://www.ifpi.se/wp/wp-content/uploads/guld-platina-1987-1998.pdf |title=(Guld & Platina) ÅR 1987-1998 |publisher=[[International Federation of the Phonographic Industry]] |trans-title=(Gold & Platinum) Year 1987-1998 |access-date=September 30, 2012 |language=sv |url-status=dead |archive-url=https://web.archive.org/web/20110616145338/http://www.ifpi.se/wp/wp-content/uploads/guld-platina-1987-1998.pdf |archive-date=June 16, 2011 }}</ref>
+* SWI: Gold<ref name="SWIcert">{{cite web | url=http://swisscharts.com/search_certifications.asp?search=Aerosmith | title=The Official Swiss Charts and Music Community: Awards (Aerosmith) | publisher=Hung Medien | work=swisscharts.com | access-date=September 30, 2012}}</ref>
+* UK: Platinum<ref name="BPI"/>
+* US: 7× Platinum<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Nine Lives (Aerosmith album)|Nine Lives]]''
+|
+* Released: March&nbsp;18,&nbsp;1997
+* Label: Columbia
+| 1 || 13 || 2 || 2 || 3 || 17 || 14 || 3 || 3 || 4
+|
+* AUT: Gold<ref name="AUTcert"/>
+* CAN: 3× Platinum<ref name="MC"/>
+* GER: Gold<ref name="BVMI"/>
+* SWI: Platinum<ref name="SWIcert"/>
+* UK: Gold<ref name="BPI"/>
+* US: 2× Platinum<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Just Push Play]]''
+|
+* Released: March&nbsp;6,&nbsp;2001
+* Label: Columbia
+| 2 || 27 || 7 || 2 || 6 || 32 || — || 19 || 3 || 7
+|
+* SWI: Gold<ref name="SWIcert"/>
+* UK: Silver<ref name="BPI"/>
+* US: Platinum<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Honkin' on Bobo]]''
+|
+* Released: March&nbsp;30,&nbsp;2004
+* Label: Columbia
+| 5 || 59 || 22 || 5 || 32 || 64 || — || 38 || 17 || 28
+|
+* US: Gold<ref name="RIAA"/>
+|-
+! scope="row"| ''[[Music from Another Dimension!]]''
+|
+* Released: November&nbsp;6,&nbsp;2012
+* Label: Columbia
+| 5 || 30 || 12 || 6 || 7 || 33 || — || 11 || 5 || 14
+|
+* CAN: Gold<ref name="MC"/>
+|-
+|align="center" colspan="30" style="font-size: 85%"|"—" denotes a recording that did not chart or was not released in that territory.
+|}
+
+===Live albums===
+{|class="wikitable plainrowheaders"
+!rowspan="2"| Title
+!rowspan="2"| Album details
+!colspan="9"| Peak chart positions
+!rowspan="2" width="150"| Certifications
+<ref name="AerosmithASearch">{{Cite web|url=https://www.riaa.com/goldandplatinumdata.php?table=SEARCH_RESULTS&artist=Aerosmith%20&format=ALBUM&go=Search&perPage=50|title=RIAA Gold and Platinum Search for albums by Aerosmith|website=Riaa.com|access-date=25 April 2022}}</ref>
+<ref name="cria.ca">{{cite web|url=http://www.musiccanada.com/GPSearchResult.aspx?st=&ica=False&sa=Aerosmith&sl=&smt=0&sat=-1&ssb=Cert.%20Date|title=Gold Platinum Database: Aerosmith|publisher=[[Canadian Recording Industry Association]]|access-date=2012-02-27|archive-url=https://web.archive.org/web/20140525195923/http://www.musiccanada.com/GPSearchResult.aspx?st=&ica=False&sa=Aerosmith&sl=&smt=0&sat=-1&ssb=Cert.%20Date|archive-date=2014-05-25|url-status=dead}}</ref>
+<ref name="bpi.co.uk">{{Cite web|url=https://www.bpi.co.uk/|title=Home|website=Bpi.co.uk|access-date=25 April 2022}}</ref>
+|-
+!style="width:3em;font-size:90%"| US<br /><ref name="US">{{cite magazine
+| title=Artist Chart History - Aerosmith
+| magazine=[[Billboard (magazine)|Billboard]]}}</ref>
+
+!style="width:3em;font-size:90%"| AUT<br /><ref name="AUT"/>
+
+!style="width:3em;font-size:90%"| [[Canadian Albums Chart|CAN]]<br /><ref name="BillboardCanadaAlbums"/><ref>Peak position for ''Rockin' the Joint'' on Canadian Albums Chart: {{cite web|url=https://archive.today/20051104025135/http://jam.canoe.ca/Music/Charts/ALBUMS.html|title=ALBUMS : Top 100}}</ref>
+
+!style="width:3em;font-size:90%"| [[France|FRA]]<br /><ref name="FIN">{{cite web
+ |url=http://finnishcharts.com/ 
+ |title=Finnish Chart 
+ |publisher=finnishcharts.com 
+ |access-date=2008-06-24 
+ |url-status=dead 
+ |archive-url=https://web.archive.org/web/20150209134111/http://www.finnishcharts.com/ 
+ |archive-date=2015-02-09}}</ref>
+
+!style="width:3em;font-size:90%"| GER<br /><ref name="GER">{{cite web|url=https://www.offiziellecharts.de/suche?artistId=Aerosmith|title=Discographie von Aerosmith|website=offiziellecharts.de|language=de|access-date=April 26, 2024}}</ref>
+
+!style="width:3em;font-size:90%"| NLD<br /><ref name="NLD"/>
+
+!style="width:3em;font-size:90%"| SWE<br /><ref name="SWE"/>
+
+!style="width:3em;font-size:90%"| SWI<br /><ref name="SWI"/>
+
+!style="width:3em;font-size:90%"| UK<br /><ref name="UKAl"/>
+|-
+! scope="row"| ''[[Live! Bootleg]]''
+|
+* Released: October&nbsp;27,&nbsp;1978
+* Label: Columbia
+|align="center"| 13
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| 
+*CAN: Gold
+*US: Platinum
+|-
+! scope="row"| ''[[Classics Live I and II|Classics Live!]]''
+|
+* Released: April 7, 1986
+* Label: Columbia
+|align="center"| 84
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"|
+*US: Platinum
+|-
+! scope="row"| ''[[Classics Live I and II|Classics Live! II]]''
+|
+* Released: June 29, 1987
+* Label: Columbia
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| 
+*US: Gold
+|-
+! scope="row"| ''[[A Little South of Sanity]]''
+|
+* Released: October 20, 1998
+* Label: Geffen
+|align="center"| 12
+|align="center"| 37
+|align="center"| 6
+|align="center"| 39
+|align="center"| 21
+|align="center"| 34
+|align="center"| 16
+|align="center"| 24
+|align="center"| 36
+|align="center"|
+*CAN: Platinum
+*UK: Gold
+*US: Platinum
+|-
+! scope="row"| ''[[Rockin' the Joint]]''
+|
+* Released: October 25, 2005
+* Label: Columbia
+|align="center"| 24
+|align="center"| —
+|align="center"| 68
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| 97
+|align="center"| —
+|
+|-
+! scope="row"| ''Live in Berlin''
+|
+* Released: 2015
+* Label: Columbia
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|
+|-
+! scope="row"| ''Aerosmith Rocks Donington 2014''
+|
+* Released: 2015
+* Label: [[Universal Music Group]]
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|
+|-
+! scope="row"| ''1971: The Road Starts Hear''
+|
+* Released: November 26, 2021
+* Label: Universal Music Enterprises
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|
+|-
+! scope="row"| ''Japan Calling''
+|
+* Released: 2022
+* Label: Good Ship Funke
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|
+|-
+|align="center" colspan="30" style="font-size: 85%"| "—" denotes albums that did not chart.
+|}
+
+===Compilation albums===
+{|class="wikitable plainrowheaders"
+!rowspan="2"| Title
+!rowspan="2"| Album details
+!colspan="6"| Peak chart positions
+!rowspan="2"| Certifications
+<ref name="AerosmithASearch"/><ref name="cria.ca"/><ref name="bpi.co.uk"/>
+|-
+!style="width:3em;font-size:90%"| US<br /><ref name="US"/>
+
+!style="width:3em;font-size:90%"| AUS<br /><ref name="AUSAl"/>
+
+!style="width:3em;font-size:90%"| GER<br /><ref name="GER"/>
+
+!style="width:3em;font-size:90%"| NZ<br /><ref name="NZ"/>
+
+!style="width:3em;font-size:90%"| SWI<br /><ref name="SWI"/>
+
+!style="width:3em;font-size:90%"| UK<br /><ref name="UKAl"/>
+|-
+! scope="row"| ''[[Greatest Hits (Aerosmith album)|Aerosmith's Greatest Hits]]''
+| align="left"|
+*Released: November 11, 1980
+*Label: Columbia
+|align="center"| 43
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| 
+*CAN: Platinum
+*UK: Silver<ref name=BPI/>
+*US: Diamond (12× Platinum)
+|-
+! scope="row"| ''Anthology''
+|
+*Released: June 1988 (UK only)
+*Label: Raw Power
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"|
+|-
+! scope="row"| ''[[Gems (Aerosmith album)|Gems]]''
+| align="left"|
+*Released: November 15, 1988
+*Label: Columbia
+|align="center"| 133
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"|
+*US: Gold
+|-
+! scope="row"| ''[[Pandora's Box (album)|Pandora's Box]]''
+| align="left"|
+*Released: November 19, 1991
+*Label: Columbia
+|align="center"| 45
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| 
+*US: Platinum
+|-
+! scope="row"| ''[[Pandora's Toys]]''
+| align="left" |
+*Released: June 8, 1994
+*Label: Columbia
+| align="center" | —
+| align="center" | —
+| align="center" | 52
+| align="center" | —
+| align="center" | 21
+| align="center" | —
+|
+|-
+! scope="row"| ''[[Big Ones]]''
+| align="left"|
+*Released: November 1, 1994
+*Label: Geffen
+|align="center"| 6
+|align="center"| 12
+|align="center"| 5
+|align="center"| 4
+|align="center"| 6
+|align="center"| 7
+|align="center"|
+*AUS: Gold<ref name="ARIA"/>
+*AUT: Gold
+*CAN: 8× Platinum
+*GER: Gold<ref name="BVMI"/>
+*UK: Platinum<ref name="BPI"/>
+*US: 4× Platinum
+|-
+! scope="row"| ''[[Box of Fire]]''
+| align="left"|
+*Released: November 22, 1994
+*Label: Columbia
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| 
+*US: Gold
+|-
+! scope="row"| ''[[Classic Aerosmith: The Universal Masters Collection]]''
+| align="left" |
+*Released: November 2, 2000
+*Label: Geffen
+| align="center" | —
+| align="center" | —
+| align="center" | —
+| align="center" | —
+| align="center" | —
+| align="center" | —
+|
+|-
+! scope="row"| ''[[Young Lust: The Aerosmith Anthology]]''
+| align="left"|
+*Released: November 20, 2001
+*Label: Geffen
+|align="center"| 191
+|align="center"| 48
+|align="center"| 78
+|align="center"| 15
+|align="center"| —
+|align="center"| 32
+|align="center"|
+*UK: Platinum<ref name="BPI"/>
+*US: Gold
+|-
+! scope="row"| ''[[O, Yeah! Ultimate Aerosmith Hits]]''
+| align="left"|
+*Released: July 2, 2002
+*Label: Columbia/Geffen
+|align="center"| 4
+|align="center"| 82
+|align="center"| —
+|align="center"| —
+|align="center"| 90
+|align="center"| 6
+|align="center"|
+*UK: Silver<ref name="BPI"/>
+*US: 3× Platinum
+|-
+! scope="row"| ''20th Century Masters: The Millennium Collection – The Best of Aerosmith''
+| align="left" |
+*Released: October 7, 2003
+*Label: Geffen
+| align="center" | 67
+| align="center" | —
+| align="center" | —
+| align="center" | —
+| align="center" | —
+| align="center" | —
+| align="center" |
+|-
+! scope="row"| ''[[Devil's Got a New Disguise: The Very Best of Aerosmith]]''
+| align="left"|
+*Released: October 17, 2006
+*Label: Columbia/Geffen
+|align="center"| 33
+|align="center"| 31
+|align="center"| 80
+|align="center"| 2
+|align="center"| 30
+|align="center"| 19
+|align="center"|
+*UK: Platinum<ref name="BPI"/>
+|-
+! scope="row"| ''[[Tough Love: Best of the Ballads]]''
+| align="left"|
+*Released: May 10, 2011
+*Label: Geffen
+|align="center"| 109
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| 87
+|align="center"| 42
+|align="center"|
+|-
+! scope="row"| ''The Essential Aerosmith''
+| align="left" |
+*Released: September 13, 2011
+*Label: Columbia
+|align="center"| 104
+|align="center"| 44
+|align="center"| —
+|align="center"| —
+|align="center"| 86
+|align="center"| —
+|align="center"|
+*UK: Gold<ref name="BPI"/>
+|-
+! scope="row"| ''[[Greatest Hits (2023 Aerosmith album)|Greatest Hits]]''
+| align="left" |
+*Released: August 18, 2023
+*Label: Capitol
+|align="center"| 36
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|align="center"| —
+|
+|-
+|align="center" colspan="30" style="font-size: 85%"| "—" denotes albums that did not chart.
+|}
+
+==Extended plays==
+* ''[[Vacation Club]]'' (December 10, 1988)
+* ''[[Made in America (EP)|Made in America]]'' (March 18, 1997)
+
+==Singles==<!-- This section is linked from [[Aerosmith]] -->
+
+===1970s===
+{| class="wikitable plainrowheaders"
+! rowspan="2"|Title
+! rowspan="2"|Year
+! colspan="3"|Peak chart positions
+! rowspan="2"|[[List of music recording certifications|Certifications]]
+! rowspan="2"|Album
+|-
+!style="width:3em;font-size:85%"|[[Billboard Hot 100|US]]<br/><ref name="Hot 100">{{cite web| url = https://www.billboard.com/music/aerosmith| title = Aerosmith: Chart History{{snd}}Hot 100| website = [[billboard.com]]| access-date = January 18, 2020}}</ref>
+!style="width:3em;font-size:85%"|[[Kent Music Report|AUS]]<br/><ref name="AUS">Australian chart peaks:
+*Top 100 ([[Kent Music Report]]) peaks to June 19, 1988: {{cite book|first=David|last=Kent|author-link=David Kent (historian)|title=Australian Chart Book 1970–1992|publisher=Australian Chart Book|location=St Ives|year=1993|page=12|isbn=0-646-11917-6}} N.B. The Kent Report chart was licensed by [[Australian Recording Industry Association|ARIA]] between mid 1983 and June 19, 1988.
+*Top 50 ([[ARIA Charts|ARIA Chart]]) peaks from June 26, 1988: {{cite web|url=http://australian-charts.com/showinterpret.asp?interpret=Aerosmith|title=australian-charts.com > Aerosmith in Australian Charts|publisher=Hung Medien|access-date=September 1, 2016}}
+*Top 100 (ARIA Chart) peaks from January 1990 to December 2010: {{cite book|last=Ryan|first=Gavin|title=Australia's Music Charts 1988-2010|year=2011|publisher=Moonlight Publishing|location=Mt. Martha, VIC, Australia}}
+*"Blind Man": {{cite web|url=http://i.imgur.com/FF9dQgi.jpg|title=The ARIA Australian Top 100 Singles Chart – Week Ending 27 Nov 1994|publisher=Imgur.com (original document published by [[Australian Recording Industry Association|ARIA]])|access-date=September 1, 2016}}</ref>
+!style="width:3em;font-size:85%"|[[Canadian Singles Chart|CAN]]<br/><ref name="rpm">{{Cite web |url=http://www.collectionscanada.gc.ca/rpm/028020-110.01-e.php?PHPSESSID=4b4hk696a43h743affk2vjggm1&q1=Aerosmith&q2=Top+Singles&interval=20 |title=Canadian peaks |access-date=February 8, 2013 |archive-url=https://web.archive.org/web/20160107084007/http://www.collectionscanada.gc.ca/rpm/028020-110.01-e.php?PHPSESSID=4b4hk696a43h743affk2vjggm1&q1=Aerosmith&q2=Top+Singles&interval=20 |archive-date=January 7, 2016 |url-status=dead }}</ref>
+|-
+!scope="row"|"[[Dream On (Aerosmith song)|Dream On]]"
+| align="center" |1973
+| align="center" |59
+| align="center" |—
+| align="center" |87
+|
+* [[Recording Industry Association of America|RIAA]]: 4× Platinum<ref name="RIAA"/>
+* [[British Phonographic Industry|BPI]]: Platinum<ref name="UK">{{cite certification | region=United Kingdom|artist=Aerosmith|access-date=May 14, 2023|type=single}}</ref>
+|''[[Aerosmith (album)|Aerosmith]]''
+|-
+!scope="row"|"[[Same Old Song and Dance]]"
+|align="center" rowspan="2"|1974
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|rowspan="3"|''[[Get Your Wings]]''
+|-
+!scope="row"|"[[Train Kept A-Rollin'|Train Kept A Rollin']]"
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[S.O.S. (Too Bad)]]"
+|align="center" rowspan="5"|1975
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Sweet Emotion]]"
+|align="center"|36
+|align="center"|—
+|align="center"|56
+|
+* RIAA: 3× Platinum<ref name="RIAA"/>
+* BPI: Silver<ref name="UK"/>
+| rowspan="3" |''[[Toys in the Attic (album)|Toys in the Attic]]''
+|-
+!scope="row"|"[[Walk This Way]]"
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+* RIAA: 2× Platinum<ref name="RIAA"/>
+* BPI: Silver<ref name="UK"/>
+|-
+!scope="row"|"[[You See Me Crying]]"
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"Dream On" (re-issue)
+|align="center"|6
+|align="center"|72
+|align="center"|10
+|
+|''Aerosmith''
+|-
+!scope="row"|"[[Last Child]]"
+|align="center" rowspan="4"|1976
+|align="center"|21
+|align="center"|—
+|align="center"|26
+|
+| rowspan="2" |''[[Rocks (Aerosmith album)|Rocks]]''
+|-
+!scope="row"|"[[Home Tonight]]"
+|align="center"|71
+|align="center"|—
+|align="center"|82
+|-
+!scope="row"|"[[Walk This Way]]" (re-issue)
+|align="center"|10
+|align="center"|85
+|align="center"|7
+|
+|''Toys in the Attic''
+|-
+!scope="row"|"[[Back in the Saddle]]"
+|align="center"|38
+|align="center"|—
+|align="center"|68
+|
+|''Rocks''
+|-
+!scope="row"|"[[Draw the Line (song)|Draw the Line]]"
+|align="center" |1977
+|align="center"|42
+|align="center"|—
+|align="center"|38
+|
+|rowspan="3"|''[[Draw the Line (Aerosmith album)|Draw the Line]]''
+|-
+!scope="row"|"[[Kings and Queens (Aerosmith song)|Kings and Queens]]"
+|align="center" rowspan="4"|1978
+|align="center"|70
+|align="center"|—
+|align="center"|77
+|
+|-
+!scope="row"|"[[Get It Up (Aerosmith song)|Get It Up]]"
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Come Together]]"
+|align="center"|23
+|align="center"|—
+|align="center"|24
+|
+|[[Sgt. Pepper's Lonely Hearts Club Band (soundtrack)|''Sgt. Pepper's Lonely Hearts<br>Club Band: The Original Motion Picture Soundtrack'']]
+|-
+!scope="row"|"[[Chip Away the Stone]]"
+|align="center"|77
+|align="center"|—
+|align="center"|—
+|
+|''[[Live! Bootleg (Aerosmith album)|Live! Bootleg]]''
+|-
+!scope="row"|"[[Remember (Walking in the Sand)]]"
+|align="center" |1979
+|align="center"|67
+|align="center"|—
+|align="center"|29
+|
+|''[[Night in the Ruts]]''
+|-
+|align="center" colspan="13" style="font-size: 85%"|"—" denotes releases that did not chart
+|}
+
+===1980s===
+{| class="wikitable plainrowheaders"
+! rowspan="2"|Title
+! rowspan="2"|Year
+! colspan="9"|Peak chart positions
+! rowspan="2"|Certifications
+! rowspan="2"|Album
+|-
+!style="width:3em;font-size:85%"|US<br/><ref name="Hot 100"/>
+!style="width:3em;font-size:85%"|[[Mainstream Rock Tracks|US Rock]]<br/><ref name="Mainstream Rock">{{cite web| url = https://www.billboard.com/artist/aerosmith/chart-history/rtt/| title = Aerosmith: Chart History{{snd}}Mainstream Rock Songs| website = [[billboard.com]]| access-date = January 18, 2020}}</ref>
+!style="width:3em;font-size:85%"|[[ARIA Charts|AUS]]<br/><ref name="AUS"/>
+!style="width:3em;font-size:85%"|CAN<br/><ref name="rpm"/>
+!style="width:3em;font-size:85%"|[[Irish Singles Chart|IRE]]<br/><ref>{{cite web|url=http://www.irishcharts.ie/search/placement|title=Irish Singles Chart – Search for song|access-date=July 6, 2011|publisher=[[Irish Recorded Music Association]]}}</ref>
+!style="width:3em;font-size:85%"|[[Dutch Single Top 100|NLD]]<br/><ref name="NLD"/>
+!style="width:3em;font-size:85%"|[[Official New Zealand Music Chart|NZ]]<br/><ref name="NZ"/>
+!style="width:3em;font-size:85%"|[[Sverigetopplistan|SWE]]<br/><ref name="SWE"/>
+!style="width:3em;font-size:85%"|UK<br/><ref name="British Hit Singles & Albums">{{cite book| first= David| last=Roberts| year= 2006| title= British Hit Singles & Albums| edition= 19th| publisher= Guinness World Records Limited | location= London| isbn= 1-904994-10-5| page= 157}}</ref>
+|-
+!scope="row"|"[[Lightning Strikes (Aerosmith song)|Lightning Strikes]]" (album track only)
+|align="center" rowspan="2"|1982
+|align="center"|—
+|align="center"|21
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|rowspan="2"|''[[Rock in a Hard Place]]''
+|-
+!scope="row"|"[[Bitch's Brew (song)|Bitch's Brew]]" (promo only)
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Let the Music Do the Talking (song)|Let the Music Do the Talking]]"
+|align="center" rowspan="2"|1985
+|align="center"|—
+|align="center"|18
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|rowspan="4"|''[[Done with Mirrors]]''
+|-
+!scope="row"|"[[Shela (song)|Shela]]"
+| align="center" |—
+| align="center" |20
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+|
+|-
+!scope="row"|"[[Darkness (Aerosmith song)|Darkness]]"
+|align="center" rowspan="2"|1986
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+|
+|-
+!scope="row"|"[[My Fist Your Face]]"
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+|
+|-
+!scope="row"|"[[Dude (Looks Like a Lady)]]"
+|align="center" rowspan="2"|1987
+|align="center"|14
+|align="center"|4
+|align="center"|95
+|align="center"|22
+|align="center"|10
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|45
+|
+* BPI: Gold<ref name="UK"/>
+|rowspan="5"|''[[Permanent Vacation (Aerosmith album)|Permanent Vacation]]''
+|-
+!scope="row"|"[[Hangman Jury]]"
+|align="center"|—
+|align="center"|14
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Angel (Aerosmith song)|Angel]]"
+|align="center" rowspan="4"|1988
+|align="center"|3
+|align="center"|2
+|align="center"|—
+|align="center"|14
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|69
+|
+|-
+!scope="row"|"[[Rag Doll (Aerosmith song)|Rag Doll]]"
+|align="center"|17
+|align="center"|12
+|align="center"|—
+|align="center"|23
+|align="center"|29
+|align="center"|16
+|align="center"|—
+|align="center"|—
+|align="center"|42
+|
+|-
+!scope="row"|"Magic Touch"
+|align="center"|—
+|align="center"|42
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Rockin' Pneumonia and the Boogie Woogie Flu]]"
+|align="center"|—
+|align="center"|44
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|[[Less than Zero (soundtrack)|''Less than Zero: Original Motion Picture Soundtrack'']]
+|-
+!scope="row"|"Chip Away the Stone" (re-issue)
+|align="center" rowspan="4"|1989
+|align="center"|—
+|align="center"|13
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|''[[Gems (Aerosmith album)|Gems]]''
+|-
+!scope="row"|"[[Love in an Elevator]]"
+|align="center"|5
+|align="center"|1
+|align="center"|33
+|align="center"|13
+|align="center"|18
+|align="center"|14
+|align="center"|15
+|align="center"|—
+|align="center"|13
+|
+* RIAA: Gold<ref name="RIAA"/>
+|rowspan="3"|''[[Pump (album)|Pump]]''
+|-
+!scope="row"|"[[F.I.N.E.*]]"
+|align="center"|—
+|align="center"|14
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Janie's Got a Gun]]"
+|align="center"|4
+|align="center"|2
+|align="center"|1
+|align="center"|2
+|align="center"|—
+|align="center"|—
+|align="center"|13
+|align="center"|12
+|align="center"|76
+|
+* [[Australian Recording Industry Association|ARIA]]: Platinum<ref>{{cite Ryan|page=8}}</ref>
+|-
+|align="center" colspan="15" style="font-size: 85%"|"—" denotes releases that did not chart
+|}
+
+===1990s===
+{| class="wikitable plainrowheaders"
+! rowspan="2"|Title
+! rowspan="2"|Year
+! colspan="10"|Peak chart positions
+! rowspan="2"|Certifications
+! rowspan="2"|Album
+|-
+!style="width:3em;font-size:85%"|US<br /><ref name="Hot 100"/>
+!style="width:3em;font-size:85%"|US Rock<br /><ref name="Mainstream Rock"/>
+!style="width:3em;font-size:85%"|[[Mainstream Top 40|US Main]]<br /><ref name="Top 40">{{cite web| url = https://www.billboard.com/artist/aerosmith/chart-history/tfm/| title = Aerosmith: Chart History{{snd}}Mainstream Top 40| website = [[billboard.com]]| access-date = January 18, 2020}}</ref>
+!style="width:3em;font-size:85%"|AUS<br /><ref name="AUS"/>
+!style="width:3em;font-size:85%"|CAN<br /><ref name="rpm"/>
+!style="width:3em;font-size:85%"|[[GfK Entertainment charts|GER]]<br /><ref name="GER"/>
+!style="width:3em;font-size:85%"|NLD<br /><ref name="NLD2">[http://dutchcharts.nl/search.asp?search=Aerosmith&cat=s Dutch peaks]</ref>
+!style="width:3em;font-size:85%"|SWE<br /><ref name="SWE2">[http://swedishcharts.com/search.asp?search=Aerosmith&cat=s Swedish peaks]</ref>
+!style="width:3em;font-size:85%"|[[Swiss Hitparade|SWI]]<br /><ref name="SUI">[http://hitparade.ch/search.asp?search=Aerosmith&cat=s Swiss peaks]</ref>
+!style="width:3em;font-size:85%"|UK<br /><ref name="British Hit Singles & Albums"/>
+|-
+!scope="row"|"[[What It Takes (Aerosmith song)|What It Takes]]"
+|align="center" rowspan="5"|1990
+|align="center"|9
+|align="center"|1
+|align="center"|—
+|align="center"|46
+|align="center"|15
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|rowspan="3"|''Pump''
+|-
+!scope="row"|"[[The Other Side (Aerosmith song)|The Other Side]]"
+|align="center"|22
+|align="center"|1
+|align="center"|—
+|align="center"|73
+|align="center"|22
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|46
+|
+|-
+!scope="row"|"[[Monkey on My Back]]"
+|align="center"|—
+|align="center"|17
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"Dude (Looks Like a Lady)" (re-issue)
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|20
+|
+|''[[Permanent Vacation (Aerosmith album)|Permanent Vacation]]''
+|-
+!scope="row"|"[[Love Me Two Times]]"
+|align="center"|—
+|align="center"|27
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|[[Air America (film)|''Air America: Original Soundtrack Album'']]
+|-
+!scope="row"|"Sweet Emotion" (re-issue)
+|align="center" rowspan="2" |1991
+|align="center"|—
+|align="center"|36
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|rowspan="2"|''[[Pandora's Box (album)|Pandora's Box]]''
+|-
+!scope="row"|"[[Helter Skelter (song)|Helter Skelter]]"
+|align="center"|—
+|align="center"|21
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Livin' on the Edge]]"
+|align="center" rowspan="5"|1993
+|align="center"|18
+|align="center"|1
+|align="center"|19
+|align="center"|21
+|align="center"|10
+|align="center"|—
+|align="center"|42
+|align="center"|29
+|align="center"|21
+|align="center"|19
+|
+|rowspan="6"|''[[Get a Grip]]''
+|-
+!scope="row"|"[[Eat the Rich (Aerosmith song)|Eat the Rich]]"
+|align="center"|—
+|align="center"|5
+|align="center"|—
+|align="center"|63
+|align="center"|45
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|34
+|
+|-
+!scope="row"|"[[Fever (Aerosmith song)|Fever]]"
+|align="center"|—
+|align="center"|5
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Cryin']]"
+|align="center"|12
+|align="center"|1
+|align="center"|11
+|align="center"|80
+|align="center"|8
+|align="center"|7
+|align="center"|5
+|align="center"|3
+|align="center"|4
+|align="center"|17
+|
+* RIAA: Gold<ref name="RIAA"/>
+* BPI: Silver<ref name="UK"/>
+|-
+!scope="row"|"[[Amazing (Aerosmith song)|Amazing]]"
+|align="center"|24
+|align="center"|3
+|align="center"|9
+|align="center"|—
+|align="center"|4
+|align="center"|28
+|align="center"|12
+|align="center"|24
+|align="center"|16
+|align="center"|57
+|
+|-
+!scope="row"|"[[Shut Up and Dance (Aerosmith song)|Shut Up and Dance]]"
+|align="center" rowspan="4"|1994
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|24
+|
+|-
+!scope="row"|"[[Deuces Are Wild]]"
+|align="center"|—
+|align="center"|1
+|align="center"|—
+|align="center"|—
+|align="center"|25
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|''[[The Beavis and Butt-Head Experience]]''
+|-
+!scope="row"|"[[Crazy (Aerosmith song)|Crazy]]"
+|align="center"|17
+|align="center"|7
+|align="center"|7
+|align="center"|—
+|align="center"|3
+|align="center"|43
+|align="center"|28
+|align="center"|—
+|align="center"|28
+|align="center" rowspan="2"|23
+|
+*BPI: Silver<ref name="UK"/>
+|''Get a Grip''
+|-
+!scope="row"|"[[Blind Man (Aerosmith song)|Blind Man]]"
+|align="center"|48
+|align="center"|3
+|align="center"|23
+|align="center"|76
+|align="center"|5
+|align="center"|89
+|align="center"|37
+|align="center"|—
+|align="center"|—
+|
+|rowspan="2"|''[[Big Ones]]''
+|-
+!scope="row"|"[[Walk on Water (Aerosmith song)|Walk on Water]]"
+|align="center"|1995
+|align="center"|—
+|align="center"|16
+|align="center"|—
+|align="center"|—
+|align="center"|62
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Nine Lives (Aerosmith song)|Nine Lives]]"
+| rowspan="5" align="center" |1997
+|align="center"|—
+|align="center"|37
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|rowspan="6"|''[[Nine Lives (Aerosmith album)|Nine Lives]]''
+|-
+!scope="row"|"[[Falling in Love (Is Hard on the Knees)]]"
+|align="center"|35
+|align="center"|1
+|align="center"|29
+|align="center"|46
+|align="center"|2
+|align="center"|40
+|align="center"|76
+|align="center"|23
+|align="center"|22
+|align="center"|22
+|
+* RIAA: Gold<ref name="RIAA"/>
+|-
+!scope="row"|"[[Hole in My Soul]]"
+|align="center"|51
+|align="center"|4
+|align="center"|—
+|align="center"|—
+|align="center"|10
+|align="center"|75
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|29
+|
+|-
+!scope="row"|"[[Pink (Aerosmith song)|Pink]]"
+|align="center"|27
+|align="center"|1
+|align="center"|23
+|align="center"|86
+|align="center"|42
+|align="center"|81
+|align="center"|58
+|align="center"|—
+|align="center"|—
+|align="center"|38
+|
+*RIAA: Gold<ref name="RIAA"/>
+|-
+!scope="row"|"Full Circle"
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+|
+|-
+!scope="row"|"[[Taste of India]]"
+| rowspan="3" |1998
+| align="center" |—
+| align="center" |3
+| align="center" |—
+| align="center" |—
+| align="center" |40
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+| align="center" |—
+|
+|-
+!scope="row"|"[[I Don't Want to Miss a Thing]]"
+|align="center"|1
+|align="center"|4
+|align="center"|1
+|align="center"|1
+|align="center"|2
+|align="center"|1
+|align="center"|3
+|align="center"|2
+|align="center"|1
+|align="center"|4
+|
+* RIAA: 5× Platinum<ref name="RIAA"/>
+* ARIA: 2× Platinum<ref>{{cite Ryan|page=9}}</ref>
+* BPI: 3× Platinum<ref name="UK"/>
+* BVMI: Platinum<ref name="BVMI2">{{cite certification|region=Germany|artist=Aerosmith|access-date=3 August 2023}}</ref>
+|rowspan="2"|[[Armageddon: The Album|''Armageddon: The Album'']]
+|-
+!scope="row"|"[[What Kind of Love Are You On]]"
+|align="center"|—
+|align="center"|4
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"Pink" (re-issue)
+|align="center"|1999
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|13
+|
+|''Nine Lives''
+|-
+|align="center" colspan="15" style="font-size: 85%"|"—" denotes releases that did not chart
+|}
+
+===2000s===
+{| class="wikitable plainrowheaders"
+! rowspan="2" width="200"| Title
+! rowspan="2" width="33"| Year
+! colspan="10"| Peak chart positions
+! rowspan="2"| Certifications
+! rowspan="2" width="175"| Album
+|-
+!style="width:3em;font-size:85%"|US<br/><ref name="Hot 100"/>
+!style="width:3em;font-size:85%"|US Rock<br/><ref name="Mainstream Rock"/>
+!style="width:3em;font-size:85%"|US Main.<br/><ref name="Top 40"/>
+!style="width:3em;font-size:85%"|AUS<br/><ref name="AUS"/>
+!style="width:3em;font-size:85%"|[[Ö3 Austria Top 40|AUT]]<br/><ref name="AUT2">[http://austriancharts.at/search.asp?search=Aerosmith&cat=s Austrian peaks]</ref>
+!style="width:3em;font-size:85%"|CAN<br/><ref name="rpm"/>
+!style="width:3em;font-size:85%"|GER<br/><ref name="GER"/>
+!style="width:3em;font-size:85%"|NLD<br/><ref name="NLD"/>
+!style="width:3em;font-size:85%"|SWI<br/><ref name="SUI"/>
+!style="width:3em;font-size:85%"|UK<br/><ref name="British Hit Singles & Albums"/>
+|-
+!scope="row"|"[[Angel's Eye]]"
+|align="center"|2000
+|align="center"|—
+|align="center"|4 
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|[[Charlie's Angels (2000 film)|''Charlie's Angels: Music from the Motion Picture'']]
+|-
+!scope="row"|"[[Jaded (Aerosmith song)|Jaded]]"
+|align="center" rowspan="4"|2001
+|align="center"|7
+|align="center"|1
+|align="center"|6
+|align="center"|51
+|align="center"|47
+|align="center"|6
+|align="center"|48
+|align="center"|54
+|align="center"|30
+|align="center"|13
+|
+*RIAA: Gold<ref name="RIAA"/>
+|rowspan="4"|''[[Just Push Play]]''
+|-
+!scope="row"|"[[Fly Away from Here]]"
+|align="center"|103
+|align="center"|—
+|align="center"|24
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|99
+|align="center"|94
+|align="center"|—
+|
+|-
+!scope="row"|"[[Sunshine (Aerosmith song)|Sunshine]]"
+|align="center"|—
+|align="center"|23
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Just Push Play (song)|Just Push Play]]"
+|align="center"|—
+|align="center"|10
+|align="center"|38
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|-
+!scope="row"|"[[Girls of Summer]]"
+|align="center"|2002
+|align="center"|—
+|align="center"|25
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|199
+|
+|''[[O, Yeah! Ultimate Aerosmith Hits]]''
+|-
+!scope="row"|"[[Baby, Please Don't Go]]"
+|align="center"|2004
+|align="center"|—
+|align="center"|7
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|''[[Honkin' on Bobo]]''
+|-
+!scope="row"|"[[Devil's Got a New Disguise (song)|Devil's Got a New Disguise]]"
+|align="center"|2006
+|align="center"|—
+|align="center"|15
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|align="center"|—
+|
+|''[[Devil's Got a New Disguise: The Very Best of Aerosmith|Devil's Got a New Disguise]]''
+|-
+|align="center" colspan="16" style="font-size: 85%"|"—" denotes releases that did not chart
+|}
+
+===2010s===
+{| class="wikitable plainrowheaders"
+! rowspan="2" width="200"| Title
+! rowspan="2" width="33"|Year
+! colspan="2"| Peak chart positions
+! rowspan="2" width="175"| Album
+|-
+!style="width:3em;font-size:85%"|US Rock<br/><ref name="Mainstream Rock"/>
+!style="width:3em;font-size:85%"|[[Adult Top 40|US Adult]]<br/><ref>{{cite web| url = https://www.billboard.com/artist/aerosmith/chart-history/atf/| title = Aerosmith: Chart History{{snd}}Adult Top 40| website = [[billboard.com]]| access-date = January 18, 2020}}</ref>
+|-
+!scope="row"|"[[Legendary Child]]"
+|align="center" rowspan="3" |2012
+|align="center"|17
+|align="center"|—
+| rowspan="4" | ''[[Music from Another Dimension!]]''
+|-
+!scope="row"|"[[Lover Alot]]"
+|align="center"|31
+|align="center"|—
+|-
+!scope="row"|"[[What Could Have Been Love]]"
+|align="center"|—
+|align="center"|22
+|-
+!scope="row"|"[[Can't Stop Lovin' You (Aerosmith song)|Can't Stop Lovin' You]]" <br /><small>(featuring [[Carrie Underwood]])</small>
+|align="center" rowspan="1" |2013
+|align="center"|—
+|align="center"|—
+|-
+|align="center" colspan="15" style="font-size: 85%"|"—" denotes releases that did not chart
+|}
+
+===Notes===
+*The Mainstream Rock Tracks chart was not created until 1981 and the Top 40 Mainstream chart was not created until the 1990s. Thus, both charts only include material after their creation. 
+*"Crazy" was released as a double A-side with "Blind Man" in the United Kingdom, so the chart position of #23 is given for both.
+
+==Peak positions on other charts==
+Additionally, the band charted these on other charts:
+*"[[Dude (Looks Like a Lady)]]" (1988) – #41 [[Hot Dance Club Songs|Dance Music/Club Play]]
+*"[[I Don't Want to Miss a Thing]]" (1998) – #13 [[Adult Contemporary (chart)|Adult Contemporary]], #14 [[Hot Latin Songs|Hot Latin Tracks]]
+*"[[Jaded (Aerosmith song)|Jaded]]" (2001) – #8 [[Top 40 Tracks]], #21 [[Tropical Songs|Latin Tropical/Salsa Airplay]], #30 [[Latin Pop Airplay]]
+*"[[Fly Away from Here]]" (2001) – #34 Top 40 Tracks
+*"[[Legendary Child]]" (2012) – #19 [[Active rock|Active Rock]], #3 [[Heritage rock|Heritage Rock]], #27 [[List of number-one Billboard Rock Songs|Hot Rock Songs]], #69 [[Canadian Hot 100]] Airplay
+*"[[Lover Alot]]" (2012) – #19 Heritage Rock, #47 Hot Rock Songs
+*"[[What Could Have Been Love]]" (2012) – #28 Adult Contemporary, #48 Hot Rock Songs
+
+== Other appearances ==
+{| class="wikitable"
+|+
+!Year
+!Song(s)
+!Album
+!Notes
+|-
+|1978
+|"[[Come Together#Aerosmith version|Come Together]]"
+|''[[Sgt. Pepper's Lonely Hearts Club Band (soundtrack)|Sgt. Pepper's Lonely Hearts Club Band]]''
+|[[The Beatles]] cover
+|-
+|1987
+|"[[Rockin' Pneumonia and the Boogie Woogie Flu]]
+|''[[Less than Zero (soundtrack)|Less than Zero]]''
+|[[Huey "Piano" Smith]] cover
+|-
+|1990
+|"[[Love Me Two Times#Aerosmith version|Love Me Two Times]]"
+|''[[Air America (film)#Soundtrack|Air America]]''
+|[[The Doors]] cover
+|-
+|1993
+|"[[Deuces Are Wild]]"
+|''[[The Beavis and Butt-Head Experience]]''
+|originally recorded for ''[[Pump (album)|Pump]]''
+|-
+|1998
+|"[[I Don't Want to Miss a Thing]]" and "[[What Kind of Love Are You On]]"
+|''[[Armageddon: The Album|Armageddon]]''
+|"I Don't Want to Miss a Thing" written by [[Diane Warren]]
+|-
+|2000
+|"[[Angel's Eye]]"
+|''[[Charlie's Angels (2000 film)#Soundtrack|Charlie's Angels]]''
+|written with Marti Frederiksen and Taylor Rhodes
+|-
+|2002
+|"Theme from Spider-Man"
+|''[[Music from and Inspired by Spider-Man|Spider-Man]]''
+|[[Paul Francis Webster]] and [[J. Robert Harris|Robert Harris]] cover
+|-
+|2003
+|"Lizard Love"
+|''[[Rugrats Go Wild#Soundtrack|Rugrats Go Wild]]''
+|written with Jeff Lynne
+|-
+|2007
+|"[[Give Peace a Chance]]"
+|''[[Instant Karma: The Amnesty International Campaign to Save Darfur|Instant Karma]]''
+|[[John Lennon]] cover; featuring Sierra Leone's Refugee All Stars
+|}
+
+==See also==
+*[[Aerosmith singles discography]]
+*[[Aerosmith videography]]
+*[[List of songs recorded by Aerosmith]]
+*[[List of awards and nominations received by Aerosmith]]
+*[[List of best-selling albums in the United States]]
+*[[List of best-selling music artists]]
+*[[List of best-selling music artists in the United States]]
+*[[List of artists who reached number one on the Australian singles chart]]
+*[[List of artists who reached number one on the Hot 100 (United States)]]
+*[[List of artists who reached number one on the U.S. Mainstream Rock chart]]
+*[[Joe Perry (musician)#Discography|Joe Perry discography]]
+*[[Steven Tyler#Discography|Steven Tyler discography]]
+*[[Whitford/St. Holmes]]
+
+==References==
+{{reflist|2}}
+
+==External links==
+*{{Discogs artist|Aerosmith|Aerosmith}}
+
+{{Aerosmith}}
+
+[[Category:Rock music group discographies]]
+[[Category:Discographies of American artists]]
+[[Category:Aerosmith|Discography]]
