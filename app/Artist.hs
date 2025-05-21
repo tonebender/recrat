@@ -3,7 +3,7 @@
 module Artist (
     getArtist
     , findDiscography
-    , findDiscoPart
+    , testing
 ) where
 
 import Control.Lens
@@ -34,6 +34,11 @@ findDiscography (x:xs) =
         then (x ^.. key "pageid" . _Integer & listToMaybe)  -- Don't know why ._Integer needs ^.. instead of ^.
         else findDiscography xs
 
+testing :: IO ()
+testing = do
+    aerodisco <- readFile "Aerosmith_discography.txt"
+    print $ P.parse discoParser "(xxx)" $ T.pack aerodisco
+
 -- TODO: Ditch this function
 findDiscoPart :: Text -> [Value] -> Maybe Text
 findDiscoPart _ [] = Nothing
@@ -46,24 +51,32 @@ findDiscoPart partName (x:xs) =
 -- https://en.wikipedia.org/w/api.php?action=parse&format=json&page=Aerosmith_discography&prop=wikitext&section=2&formatversion=2
 -- https://en.wikipedia.org/w/api.php?action=parse&prop=sections&page=Michael_Bisping
 
-discoParser :: P.Parsec Text () [Maybe Album]
+discoParser :: P.Parsec Text () [(Text, Text)]
 discoParser = do
-    _ <- P.manyTill P.anyChar (P.try (P.string "{{Infobox"))
     artistName <- infoboxParser
-    _ <- P.manyTill P.anyChar (P.string "=== Studio albums ===")
-    _ <- P.manyTill P.anyChar (P.try albumParser)
-    records <- P.manyTill (P.try albumParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}\n")
-    return [Nothing]
+    _ <- P.manyTill P.anyChar (P.try (P.string "=== Studio albums ==="))
+    records <- P.manyTill (P.try albumParser <|> (P.manyTill P.anyChar P.endOfLine >> return ("", ""))) (P.try (P.string "|}\n"))
+    return records
 
-albumParser :: P.Parsec Text () (Maybe Text)
+albumParser :: P.Parsec Text () (Text, Text)
 albumParser = do
-    recordPage <- P.string "!" >> P.spaces >> P.string "scope=\"row\"|" >> P.spaces >> P.string "''[[" >> P.manyTill P.anyChar (P.char '|')
-    recordName <- P.manyTill P.anyChar (P.string "]]''")
-    return Nothing
+    record <- P.string "!" >> P.spaces >> P.string "scope=\"row\"|" >> P.spaces >> ((P.try album1) <|> album2)
+    return record
 -- ! scope="row"| ''[[Aerosmith (album)|Aerosmith]]''
+
+album1 :: P.Parsec Text () (Text, Text)
+album1 = do
+    pageName <- P.string "''[[" >> P.manyTill (P.noneOf "|") (P.string "]]''")
+    return (T.pack pageName, T.pack pageName)
+
+album2 :: P.Parsec Text () (Text, Text)
+album2 = do
+    pageName <- P.string "''[[" >> P.manyTill (P.anyChar) (P.try (P.string "|"))
+    recordName <- P.manyTill P.anyChar (P.string "]]''")
+    return (T.pack pageName, T.pack recordName)
 
 infoboxParser :: P.Parsec Text () Text
 infoboxParser = do
-    _ <- P.string "{{Infobox artist discography" >> P.endOfLine
+    _ <- P.manyTill P.anyChar (P.try (P.string "{{Infobox artist discography" >> P.endOfLine))
     artistName <- P.string "|Artist" >> P.spaces >> P.string "=" >> P.spaces >> P.string "[[" >> P.manyTill P.anyChar (P.string "]]")
     return $ T.pack artistName

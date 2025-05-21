@@ -96,16 +96,19 @@ main = do
                                 Nothing -> print $ "Failed to fetch wikipedia content for '" <> firstResultTitle <> "'"
                                 Just w -> getAndPrintAlbumRatings w firstResultTitle
         ("", artist) -> do
-            wikiresults <- requestWikiSearch artist
-            case wikiresults of
-                Nothing -> print $ "Search request to wikipedia failed for '" <> artist <> "'"
-                Just wr -> do
-                    let discopageId = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
-                    case discopageId of
-                        Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
-                        Just dId -> do
-                            discography <- requestWikiParse "pageid" $ T.pack $ show dId
-                            case discography of
-                                Nothing -> putStrLn "Failed to fetch discography"
-                                Just d -> print d
+            testing
+            putStrLn "Done"
+
+--             wikiresults <- requestWikiSearch artist
+--             case wikiresults of
+--                 Nothing -> print $ "Search request to wikipedia failed for '" <> artist <> "'"
+--                 Just wr -> do
+--                     let discopageId = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
+--                     case discopageId of
+--                         Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
+--                         Just dId -> do
+--                             discography <- requestWikiParse "pageid" $ T.pack $ show dId
+--                             case discography of
+--                                 Nothing -> putStrLn "Failed to fetch discography"
+--                                 Just d -> print d
         (_, _) -> putStrLn "No album title or artist/band specified."
