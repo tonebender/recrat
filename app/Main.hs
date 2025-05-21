@@ -83,29 +83,29 @@ main = do
     let artistName = optArtist inputargs
     case (albumTitle, artistName) of
         (album, "") -> do
-               wikiresults <- requestWikiSearch album
-               case wikiresults of
-                   Nothing -> putStrLn "Search request to wikipedia failed."
-                   Just wr -> do
-                       if length (wr ^. _Array) == 0
-                           then print $ "No results found for search query '" <> album <> "'"
-                           else do
-                               let firstResultTitle = wr ^. nth 0 . key "title" . _String
-                               wikitext <- requestWikiParse "page" firstResultTitle  -- Just taking the first result
-                               case wikitext of
-                                   Nothing -> print $ "Failed to fetch wikipedia content for '" <> firstResultTitle <> "'"
-                                   Just w -> getAndPrintAlbumRatings w firstResultTitle
+            wikiresults <- requestWikiSearch album
+            case wikiresults of
+                Nothing -> putStrLn "Search request to wikipedia failed."
+                Just wr -> do
+                    if length (wr ^. _Array) == 0
+                        then print $ "No results found for search query '" <> album <> "'"
+                        else do
+                            let firstResultTitle = wr ^. nth 0 . key "title" . _String
+                            wikitext <- requestWikiParse "page" firstResultTitle  -- Just taking the first result
+                            case wikitext of
+                                Nothing -> print $ "Failed to fetch wikipedia content for '" <> firstResultTitle <> "'"
+                                Just w -> getAndPrintAlbumRatings w firstResultTitle
         ("", artist) -> do
-               wikiresults <- requestWikiSearch artist
-               case wikiresults of
-                   Nothing -> print $ "Search request to wikipedia failed for '" <> artist <> "'"
-                   Just wr -> do
-                       let discopageId = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
-                       case discopageId of
-                           Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
-                           Just dId -> do
-                               discography <- requestWikiParse "pageid" $ T.pack $ show dId
-                               case discography of
-                                   Nothing -> putStrLn "Failed to fetch discography"
-                                   Just d -> print d
+            wikiresults <- requestWikiSearch artist
+            case wikiresults of
+                Nothing -> print $ "Search request to wikipedia failed for '" <> artist <> "'"
+                Just wr -> do
+                    let discopageId = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
+                    case discopageId of
+                        Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
+                        Just dId -> do
+                            discography <- requestWikiParse "pageid" $ T.pack $ show dId
+                            case discography of
+                                Nothing -> putStrLn "Failed to fetch discography"
+                                Just d -> print d
         (_, _) -> putStrLn "No album title or artist/band specified."
