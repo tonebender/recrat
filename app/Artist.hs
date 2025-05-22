@@ -11,7 +11,7 @@ import qualified Data.Text as T
 import Data.Text.Internal (Text)
 import Data.Aeson.Lens -- (_String, key)
 import Data.Aeson
-import Data.Maybe (listToMaybe)
+import Data.Maybe (listToMaybe, catMaybes)
 import Ratings (Album)
 import qualified Text.Parsec as P
 import Options.Applicative
@@ -20,6 +20,12 @@ data Artist = Artist
     { name :: Text
     , albums :: [Album]
     }
+
+-- TODO:
+-- Ditch the parser and use Data.Text and list operations, like these:
+--
+-- map (T.splitOn "|" . fromJust . T.stripPrefix "''[[" . fromJust . T.stripSuffix "]]''" . fromJust . T.stripPrefix "! scope=\"row\"| ") $ filter (\x -> "! scope=\"row\"" `T.isPrefixOf` x && "[[" `T.isInfixOf` x) $ T.lines $ head $ T.splitOn "|}" $ head $ drop 1 $ T.splitOn "=== Studio albums ===" dist
+
 
 getArtist :: Text -> IO ()
 getArtist artist = do putStrLn "Placeholder"
@@ -37,7 +43,10 @@ findDiscography (x:xs) =
 testing :: IO ()
 testing = do
     aerodisco <- readFile "Aerosmith_discography.txt"
-    print $ P.parse discoParser "(xxx)" $ T.pack aerodisco
+    let disco = P.parse discoParser "(xxx)" $ T.pack aerodisco
+    case disco of
+        Left err -> putStrLn $ "Error parsing discography: " ++ show err
+        Right d -> print $ catMaybes d
 
 -- TODO: Ditch this function
 findDiscoPart :: Text -> [Value] -> Maybe Text
@@ -51,29 +60,27 @@ findDiscoPart partName (x:xs) =
 -- https://en.wikipedia.org/w/api.php?action=parse&format=json&page=Aerosmith_discography&prop=wikitext&section=2&formatversion=2
 -- https://en.wikipedia.org/w/api.php?action=parse&prop=sections&page=Michael_Bisping
 
-discoParser :: P.Parsec Text () [(Text, Text)]
+discoParser :: P.Parsec Text () [Maybe (Text, Text)]
 discoParser = do
     artistName <- infoboxParser
     _ <- P.manyTill P.anyChar (P.try (P.string "=== Studio albums ==="))
-    records <- P.manyTill (P.try albumParser <|> (P.manyTill P.anyChar P.endOfLine >> return ("", ""))) (P.try (P.string "|}\n"))
+    records <- P.manyTill (P.try albumParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.try (P.string "|}\n"))
     return records
 
-albumParser :: P.Parsec Text () (Text, Text)
-albumParser = do
-    record <- P.string "!" >> P.spaces >> P.string "scope=\"row\"|" >> P.spaces >> ((P.try album1) <|> album2)
-    return record
+albumParser :: P.Parsec Text () (Maybe (Text, Text))
+albumParser = P.string "!" >> P.spaces >> P.string "scope=\"row\"|" >> P.spaces >> ((P.try album1) <|> album2)
 -- ! scope="row"| ''[[Aerosmith (album)|Aerosmith]]''
 
-album1 :: P.Parsec Text () (Text, Text)
+album1 :: P.Parsec Text () (Maybe (Text, Text))
 album1 = do
     pageName <- P.string "''[[" >> P.manyTill (P.noneOf "|") (P.string "]]''")
-    return (T.pack pageName, T.pack pageName)
+    return $ Just (T.pack pageName, T.pack pageName)
 
-album2 :: P.Parsec Text () (Text, Text)
+album2 :: P.Parsec Text () (Maybe (Text, Text))
 album2 = do
     pageName <- P.string "''[[" >> P.manyTill (P.anyChar) (P.try (P.string "|"))
     recordName <- P.manyTill P.anyChar (P.string "]]''")
-    return (T.pack pageName, T.pack recordName)
+    return $ Just (T.pack pageName, T.pack recordName)
 
 infoboxParser :: P.Parsec Text () Text
 infoboxParser = do
