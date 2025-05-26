@@ -103,11 +103,11 @@ main = do
 --             case wikiresults of
 --                 Nothing -> print $ "Search request to wikipedia failed for '" <> artist <> "'"
 --                 Just wr -> do
---                     let discopageId = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
---                     case discopageId of
+--                     let discopageTitle = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
+--                     case discopageTitle of
 --                         Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
---                         Just dId -> do
---                             discography <- requestWikiParse "pageid" $ T.pack $ show dId
+--                         Just dT -> do
+--                             discography <- requestWikiParse "page" $ dT
 --                             case discography of
 --                                 Nothing -> putStrLn "Failed to fetch discography"
 --                                 Just d -> print d

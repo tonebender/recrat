@@ -20,14 +20,13 @@ data Artist = Artist
     }
 
 
--- TODO: Perhaps return title instead to make it more consistent with other calls the wikipedia API.
 -- From wikipedia search results, find the first item that has a title that ends with "discography",
--- and return its wiki page ID number
-findDiscography :: [Value] -> Maybe Integer
+-- and return its wiki page title
+findDiscography :: [Value] -> Maybe Text
 findDiscography [] = Nothing
 findDiscography (x:xs) =
     if T.isSuffixOf "discography" (x ^. key "title" . _String)
-        then (x ^.. key "pageid" . _Integer & listToMaybe)  -- Don't know why ._Integer needs ^.. instead of ^.
+        then Just (x ^. key "title" . _String)
         else findDiscography xs
 
 type WikiURI = Text
