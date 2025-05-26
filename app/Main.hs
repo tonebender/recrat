@@ -96,8 +96,9 @@ main = do
                                 Nothing -> print $ "Failed to fetch wikipedia content for '" <> firstResultTitle <> "'"
                                 Just w -> getAndPrintAlbumRatings w firstResultTitle
         ("", artist) -> do
-            testing
-            putStrLn "Done"
+            aerodisco <- readFile "Aerosmith_discography.txt"
+            let a = testing (T.pack aerodisco) "Live"
+            print a
 
 --             wikiresults <- requestWikiSearch artist
 --             case wikiresults of
