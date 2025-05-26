@@ -2,7 +2,7 @@
 
 module Artist (
     findDiscography
-    , testing
+    , parseDiscography
 ) where
 
 import Control.Lens
@@ -13,17 +13,11 @@ import Data.Aeson
 import Data.Maybe (listToMaybe, catMaybes, fromJust)
 import Ratings (Album)
 import qualified Text.Parsec as P
-import Options.Applicative
 
 data Artist = Artist
     { name :: Text
     , albums :: [Album]
     }
-
--- TODO:
--- Ditch the parser and use Data.Text and list operations, like these:
---
--- map (T.splitOn "|" . fromJust . T.stripPrefix "''[[" . fromJust . T.stripSuffix "]]''" . fromJust . T.stripPrefix "! scope=\"row\"| ") $ filter (\x -> "! scope=\"row\"" `T.isPrefixOf` x && "[[" `T.isInfixOf` x) $ T.lines $ head $ T.splitOn "|}" $ head $ drop 1 $ T.splitOn "=== Studio albums ===" dist
 
 
 -- TODO: Perhaps return title instead to make it more consistent with other calls the wikipedia API.
@@ -56,8 +50,8 @@ parseWikiAnchor markup =
                 (x:[]) -> WikiAnchor x x
                 (uri:label:_) -> WikiAnchor uri label
 
-testing :: Text -> Text -> [WikiAnchor]
-testing disco albumType =
+parseDiscography :: Text -> Text -> [WikiAnchor]
+parseDiscography disco albumType =
     let discoz = T.replace "=== " "===" $ T.replace " ===" "===" disco in
     case drop 1 $ T.splitOn ("===" <> albumType <> " albums===") $ discoz of
         [] -> []
@@ -76,28 +70,6 @@ findDiscoPart partName (x:xs) =
 
 -- https://en.wikipedia.org/w/api.php?action=parse&format=json&page=Aerosmith_discography&prop=wikitext&section=2&formatversion=2
 -- https://en.wikipedia.org/w/api.php?action=parse&prop=sections&page=Michael_Bisping
-
-discoParser :: P.Parsec Text () [Maybe (Text, Text)]
-discoParser = do
-    artistName <- infoboxParser
-    _ <- P.manyTill P.anyChar (P.try (P.string "=== Studio albums ==="))
-    records <- P.manyTill (P.try albumParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.try (P.string "|}\n"))
-    return records
-
-albumParser :: P.Parsec Text () (Maybe (Text, Text))
-albumParser = P.string "!" >> P.spaces >> P.string "scope=\"row\"|" >> P.spaces >> ((P.try album1) <|> album2)
--- ! scope="row"| ''[[Aerosmith (album)|Aerosmith]]''
-
-album1 :: P.Parsec Text () (Maybe (Text, Text))
-album1 = do
-    pageName <- P.string "''[[" >> P.manyTill (P.noneOf "|") (P.string "]]''")
-    return $ Just (T.pack pageName, T.pack pageName)
-
-album2 :: P.Parsec Text () (Maybe (Text, Text))
-album2 = do
-    pageName <- P.string "''[[" >> P.manyTill (P.anyChar) (P.try (P.string "|"))
-    recordName <- P.manyTill P.anyChar (P.string "]]''")
-    return $ Just (T.pack pageName, T.pack recordName)
 
 infoboxParser :: P.Parsec Text () Text
 infoboxParser = do
