@@ -51,7 +51,7 @@ wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
 -- Make a request to the Wikimedia Action API on Wikipedia, asking it to search for the supplied query
 -- See https://www.mediawiki.org/w/api.php?action=help&modules=query%2Bsearch for parameters documentation
--- https://haskell-docs.netlify.app/packages/lens/#json
+-- See https://haskell-docs.netlify.app/packages/lens/#json for all the ^. stuff
 requestWikiSearch :: Text -> IO (Maybe Value)
 requestWikiSearch searchQuery = do
     let urlParams = [ ("action", "query"), ("format", "json"), ("list", "search"), ("srprop", "redirecttitle") ]
@@ -61,20 +61,12 @@ requestWikiSearch searchQuery = do
 
 -- Make a request to the Wikimedia Action API on Wikipedia, asking it to give us
 -- the contents of the specified wiki page.
--- pageprop can be "page" for the page name, or "pageid" for the page ID number
-requestWikiParse :: Text -> Text -> IO (Maybe Text)
-requestWikiParse pageprop val = do
-    let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "wikitext"), ("redirects", "1"), (pageprop, val) ]
+requestWikiParse :: Text -> IO (Maybe Text)
+requestWikiParse title = do
+    let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "wikitext"), ("redirects", "1"), ("page", title) ]
     let opts = defaults & params .~ urlParams
     r <- getWith opts wikipediaApiUrl
     return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
-
-requestWikiSections :: Text -> IO (Maybe Value)
-requestWikiSections pageid = do
-    let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "sections"), ("pageid", pageid) ]
-    let opts = defaults & params .~ urlParams
-    r <- getWith opts wikipediaApiUrl
-    return $ r ^? responseBody . key "parse"
 
 main :: IO ()
 main = do
@@ -91,24 +83,24 @@ main = do
                         then print $ "No results found for search query '" <> album <> "'"
                         else do
                             let firstResultTitle = wr ^. nth 0 . key "title" . _String
-                            wikitext <- requestWikiParse "page" firstResultTitle  -- Just taking the first result
+                            wikitext <- requestWikiParse firstResultTitle  -- Just taking the first result
                             case wikitext of
                                 Nothing -> print $ "Failed to fetch wikipedia content for '" <> firstResultTitle <> "'"
                                 Just w -> getAndPrintAlbumRatings w firstResultTitle
         ("", artist) -> do
-            aerodisco <- readFile "Aerosmith_discography.txt"
-            let a = parseDiscography (T.pack aerodisco) "Studio"
-            print a
---             wikiresults <- requestWikiSearch artist
---             case wikiresults of
---                 Nothing -> print $ "Search request to wikipedia failed for '" <> artist <> "'"
---                 Just wr -> do
---                     let discopageTitle = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
---                     case discopageTitle of
---                         Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
---                         Just dT -> do
---                             discography <- requestWikiParse "page" $ dT
---                             case discography of
---                                 Nothing -> putStrLn "Failed to fetch discography"
---                                 Just d -> print d
+--             aerodisco <- readFile "Aerosmith_discography.txt"
+--             let a = parseDiscography (T.pack aerodisco) "Studio"
+--             print a
+            wikiresults <- requestWikiSearch artist
+            case wikiresults of
+                Nothing -> print $ "Search request to wikipedia failed for '" <> artist <> "'"
+                Just wr -> do
+                    let discopageTitle = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
+                    case discopageTitle of
+                        Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
+                        Just dT -> do
+                            discography <- requestWikiParse dT
+                            case discography of
+                                Nothing -> putStrLn "Failed to fetch discography"
+                                Just d -> putStrLn $ show $ parseDiscography d "Studio"
         (_, _) -> putStrLn "No album title or artist/band specified."

@@ -13,6 +13,7 @@ import Data.Aeson
 import Data.Maybe (listToMaybe, catMaybes, fromJust)
 import Ratings (Album)
 import qualified Text.Parsec as P
+import Options.Applicative
 
 data Artist = Artist
     { name :: Text
@@ -20,12 +21,12 @@ data Artist = Artist
     }
 
 
--- From wikipedia search results, find the first item that has a title that ends with "discography",
+-- From wikipedia search results, find the first item that has a title that contains "discography",
 -- and return its wiki page title
 findDiscography :: [Value] -> Maybe Text
 findDiscography [] = Nothing
 findDiscography (x:xs) =
-    if T.isSuffixOf "discography" (x ^. key "title" . _String)
+    if T.isInfixOf "discography" (x ^. key "title" . _String)  -- TODO: Convert to lowercase
         then Just (x ^. key "title" . _String)
         else findDiscography xs
 
@@ -36,8 +37,8 @@ data WikiAnchor = WikiAnchor WikiURI WikiLabel
 
 -- Take a Wikipedia link/label string such as "''[[No Quarter (song)|No Quarter]]''"
 -- and parse it into a WikiAnchor with the URI and label separate.
--- If ''[[URI and label are the same]]'' use it for both URI and label.
--- If only ''text'' and no [[link]], leave the URI part empty.
+-- If [[URI and label are the same]] use it for both URI and label.
+-- If only ''text'' and no [[link]], make the URI part an empty text.
 parseWikiAnchor :: Text -> WikiAnchor
 parseWikiAnchor markup =
     let anchor = (T.replace "''" "" markup) in
@@ -46,29 +47,38 @@ parseWikiAnchor markup =
         True -> let stripped = T.replace "[[" "" $ T.replace "]]" "" anchor in
             case T.splitOn "|" stripped of
                 [] -> WikiAnchor "" ""
-                (x:[]) -> WikiAnchor x x
+                (urilabel:[]) -> WikiAnchor urilabel urilabel
                 (uri:label:_) -> WikiAnchor uri label
 
+-- Take a discography Wikipedia page and get a list of albums
+-- (each a WikiAnchor) from the table under the albumType subtitle
+-- (such as "=== Studio albums ===")
 parseDiscography :: Text -> Text -> [WikiAnchor]
 parseDiscography disco albumType =
-    let discoz = T.replace "=== " "===" $ T.replace " ===" "===" disco in
-    case drop 1 $ T.splitOn ("===" <> albumType <> " albums===") $ discoz of
+    let discoz = T.replace "== " "==" disco
+        subtitle = findDiscoSubtitle (T.lines disco) albumType in
+    case drop 1 $ T.splitOn subtitle $ discoz of
         [] -> []
-        (a:_) -> case T.splitOn "|}" a of
+        (a:_) -> case T.splitOn "|}" a of  -- End of table
             [] -> []
-            (b:_) -> parseWikiAnchor <$> (T.replace "! scope=\"row\"| " "") <$> (filter (T.isPrefixOf "! scope=\"row\"|") $ T.lines b)
+            (b:_) -> parseWikiAnchor <$> getWikiAnchor <$> (filter (T.isInfixOf "scope=\"row\"") $ T.lines b)
 
--- TODO: Ditch this function
-findDiscoPart :: Text -> [Value] -> Maybe Text
-findDiscoPart _ [] = Nothing
-findDiscoPart partName (x:xs) =
-    if T.isPrefixOf partName (x ^. key "line" . _String)
-        then Just (x ^. key "index" . _String)
-        else findDiscoPart partName xs
--- Call the above function like this: findDiscoPart "Studio" $ j ^.. key "sections" . values
+-- Take one line of text and attempt to get a wiki link from it
+-- by getting what's inside of '' ''
+getWikiAnchor :: Text -> Text
+getWikiAnchor anchor =
+    case T.splitOn "''" anchor of
+        [] -> anchor
+        (a:[]) -> a
+        (_:b:_) -> b
 
--- https://en.wikipedia.org/w/api.php?action=parse&format=json&page=Aerosmith_discography&prop=wikitext&section=2&formatversion=2
--- https://en.wikipedia.org/w/api.php?action=parse&prop=sections&page=Michael_Bisping
+-- Take a discography wiki page as a list of text lines and return
+-- the one that contains query (if not found, just return query itself
+-- surrounded by "==")
+findDiscoSubtitle :: [Text] -> Text -> Text
+findDiscoSubtitle [] query = "==" <> query <> "=="
+findDiscoSubtitle (x:xs) query = if T.isInfixOf query x then x else findDiscoSubtitle xs query
+
 
 infoboxParser :: P.Parsec Text () Text
 infoboxParser = do
