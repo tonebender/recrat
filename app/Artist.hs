@@ -3,6 +3,7 @@
 module Artist (
     findDiscography
     , parseDiscography
+    , findDiscoSubtitle 
 ) where
 
 import Control.Lens
@@ -41,14 +42,14 @@ data WikiAnchor = WikiAnchor WikiURI WikiLabel
 -- If only ''text'' and no [[link]], make the URI part an empty text.
 parseWikiAnchor :: Text -> WikiAnchor
 parseWikiAnchor markup =
-    let anchor = (T.replace "''" "" markup) in
+    let anchor = T.replace "''" "" markup in
     case T.isInfixOf "[[" anchor of
         False -> WikiAnchor "" anchor
         True -> let stripped = T.replace "[[" "" $ T.replace "]]" "" anchor in
             case T.splitOn "|" stripped of
                 [] -> WikiAnchor "" ""
-                (urilabel:[]) -> WikiAnchor urilabel urilabel
-                (uri:label:_) -> WikiAnchor uri label
+                urilabel:[] -> WikiAnchor urilabel urilabel
+                uri:label:_ -> WikiAnchor uri label
 
 -- Take a discography Wikipedia page and get a list of albums
 -- (each a WikiAnchor) from the table under the albumType subtitle
@@ -59,9 +60,9 @@ parseDiscography disco albumType =
         subtitle = findDiscoSubtitle (T.lines disco) albumType in
     case drop 1 $ T.splitOn subtitle $ discoz of
         [] -> []
-        (a:_) -> case T.splitOn "|}" a of  -- End of table
+        a:_ -> case T.splitOn "|}" a of  -- End of table
             [] -> []
-            (b:_) -> parseWikiAnchor <$> getWikiAnchor <$> (filter (T.isInfixOf "scope=\"row\"") $ T.lines b)
+            b:_ -> parseWikiAnchor <$> getWikiAnchor <$> (filter (T.isInfixOf "scope=\"row\"") $ T.lines b)
 
 -- Take one line of text and attempt to get a wiki link from it
 -- by getting what's inside of '' ''
@@ -69,15 +70,15 @@ getWikiAnchor :: Text -> Text
 getWikiAnchor anchor =
     case T.splitOn "''" anchor of
         [] -> anchor
-        (a:[]) -> a
-        (_:b:_) -> b
+        a:[] -> a
+        _:b:_ -> b
 
 -- Take a discography wiki page as a list of text lines and return
 -- the one that contains query (if not found, just return query itself
 -- surrounded by "==")
 findDiscoSubtitle :: [Text] -> Text -> Text
 findDiscoSubtitle [] query = "==" <> query <> "=="
-findDiscoSubtitle (x:xs) query = if T.isInfixOf query x then x else findDiscoSubtitle xs query
+findDiscoSubtitle (x:xs) query = if T.isInfixOf query x && T.isInfixOf "==" x then x else findDiscoSubtitle xs query
 
 
 infoboxParser :: P.Parsec Text () Text

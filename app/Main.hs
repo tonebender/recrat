@@ -20,6 +20,7 @@ import Artist
 data Inputargs = Inputargs
     { optAlbum :: Text
     , optArtist :: Text
+    , optCategory :: Text
     }
 
 -- Parser for command line arguments
@@ -35,6 +36,11 @@ commandLineParser = Inputargs
         <> value ""
         <> metavar "ARTIST"
         <> help "A music artist (or group) whose discography to list")
+    <*> strOption
+        (long "category"
+        <> value "Studio"
+        <> metavar "CATEGORY"
+        <> help "A subsection of the artist discography, such as \"studio\" or \"live\"")
 
 -- Help text and info for command line
 appDescription :: ParserInfo Inputargs
@@ -73,6 +79,7 @@ main = do
     inputargs <- execParser appDescription
     let albumTitle = optAlbum inputargs
     let artistName = optArtist inputargs
+    let category = optCategory inputargs
     case (albumTitle, artistName) of
         (album, "") -> do
             wikiresults <- requestWikiSearch album
@@ -102,5 +109,5 @@ main = do
                             discography <- requestWikiParse dT
                             case discography of
                                 Nothing -> putStrLn "Failed to fetch discography"
-                                Just d -> putStrLn $ show $ parseDiscography d "Studio"
+                                Just d -> putStrLn $ show $ parseDiscography d category
         (_, _) -> putStrLn "No album title or artist/band specified."
