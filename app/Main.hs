@@ -6,7 +6,6 @@ module Main where
 import Options.Applicative
 import qualified Network.Wreq as W (getWith, defaults, params, param, header, responseBody)
 import Control.Lens
-import qualified Data.Text as T
 import Data.Text.Internal (Text)
 import Data.Aeson.Lens -- (_String, key)
 import Data.Aeson
@@ -57,7 +56,7 @@ userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
 
 -- TODO: Handle several results, like different http response codes etc.
 
--- Make a request to the Wikimedia Action API on Wikipedia, asking it to search for the supplied query
+-- Make a request to the MediaWiki Action API on Wikipedia, asking it to search for the supplied query
 -- See https://www.mediawiki.org/w/api.php?action=help&modules=query%2Bsearch for parameters documentation
 -- See https://haskell-docs.netlify.app/packages/lens/#json for all the ^. stuff
 requestWikiSearch :: Text -> IO (Maybe Value)
@@ -67,7 +66,7 @@ requestWikiSearch searchQuery = do
     r <- W.getWith opts wikipediaApiUrl
     return $ r ^? W.responseBody . key "query" . key "search"
 
--- Make a request to the Wikimedia Action API on Wikipedia, asking it to give us
+-- Make a request to the MediaWiki Action API on Wikipedia, asking it to give us
 -- the contents of the specified wiki page.
 requestWikiParse :: Text -> IO (Maybe Text)
 requestWikiParse title = do
@@ -75,6 +74,18 @@ requestWikiParse title = do
     let opts = W.defaults & W.params .~ urlParams & W.header "User-Agent" .~ [userAgent]
     r <- W.getWith opts wikipediaApiUrl
     return $ r ^? W.responseBody . key "parse" . key "wikitext" . key "*" . _String
+
+-- Make a request to the MediaWiki Action API on Wikipedia, using the Revisions API,
+-- asking it to give us all pages specified in titles, e.g. "Bongo_Fury|Zoot_Allures"
+requestWikiPages :: Text -> IO (Maybe Value)
+requestWikiPages titles = do
+    let urlParams = [ ("action", "query"), ("format", "json"), ("prop", "revisions"), ("rvslots", "*"), ("rvprop", "content"), ("formatversion", "2"), ("titles", titles) ]
+    let opts = W.defaults & W.params .~ urlParams & W.header "User-Agent" .~ [userAgent]
+    r <- W.getWith opts wikipediaApiUrl
+    return $ r ^? W.responseBody . key "query" . key "pages"
+
+-- (fromJust r) ^.. nth 0 . key "revisions" . nth 0 . key "slots" . key "main" . key "content"
+-- Use T.intercalate to create the "text|with|albums"
 
 main :: IO ()
 main = do
@@ -86,7 +97,7 @@ main = do
         (album, "") -> do
             wikiresults <- requestWikiSearch album
             case wikiresults of
-                Nothing -> putStrLn "Search request to wikipedia failed."
+                Nothing -> putStrLn "Search request to Wikipedia failed."
                 Just wr -> do
                     if length (wr ^. _Array) == 0
                         then print $ "No results found for search query '" <> album <> "'"
@@ -102,7 +113,7 @@ main = do
 --             print a
             wikiresults <- requestWikiSearch artist
             case wikiresults of
-                Nothing -> print $ "Search request to wikipedia failed for '" <> artist <> "'"
+                Nothing -> print $ "Search request to Wikipedia failed for '" <> artist <> "'"
                 Just wr -> do
                     let discopageTitle = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
                     case discopageTitle of

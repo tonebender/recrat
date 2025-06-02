@@ -11,15 +11,13 @@ import qualified Data.Text as T
 import Data.Text.Internal (Text)
 import Data.Aeson.Lens -- (_String, key)
 import Data.Aeson
-import Data.Maybe (listToMaybe, catMaybes, fromJust)
-import Ratings (Album)
+-- import Ratings (Album)
 import qualified Text.Parsec as P
-import Options.Applicative
 
-data Artist = Artist
-    { name :: Text
-    , albums :: [Album]
-    }
+-- data Artist = Artist
+--     { name :: Text
+--     , albums :: [Album]
+--     }
 
 
 -- From wikipedia search results, find the first item that has a title that contains "discography",
@@ -80,7 +78,8 @@ findDiscoSubtitle [] query = query
 findDiscoSubtitle (x:xs) query = if T.isInfixOf query x && T.isInfixOf "==" x then x else findDiscoSubtitle xs query
 
 
--- Get the rows that fit the rather loose criteria for containing an album inside the discography table
+-- Get the rows that fit the rather loose criteria for containing an album inside the discography table,
+-- i.e. contains '' and starts with either | or !
 -- (Better keep this fairly tolerant; wrong entries will eventually be discarded later)
 filterAlbums :: [Text] -> [Text]
 filterAlbums = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isPrefixOf "!" r))

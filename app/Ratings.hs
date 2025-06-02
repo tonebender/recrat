@@ -141,5 +141,5 @@ noteParser :: P.Parsec Text () String
 noteParser = P.string "{{" *> P.manyTill P.anyChar (P.string "}}") 
 
 getAverageScore :: [Rating] -> Double
-getAverageScore ratings = (sum [ratio s | s <- ratings]) / (fromIntegral (length ratings))
+getAverageScore scores = (sum [ratio s | s <- scores]) / (fromIntegral (length scores))
 
