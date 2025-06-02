@@ -55,14 +55,14 @@ parseWikiAnchor markup =
 -- (each a WikiAnchor) from the table under the albumType subtitle
 -- (such as "=== Studio albums ===")
 parseDiscography :: Text -> Text -> [WikiAnchor]
-parseDiscography disco albumType =
-    let discoz = T.replace "== " "==" disco
-        subtitle = findDiscoSubtitle (T.lines disco) albumType in
-    case drop 1 $ T.splitOn subtitle $ discoz of
+parseDiscography disco category =
+    let subtitle = findDiscoSubtitle (T.lines disco) category in
+    case drop 1 $ T.splitOn subtitle disco of
         [] -> []
         a:_ -> case T.splitOn "|}" a of  -- End of table
             [] -> []
-            b:_ -> parseWikiAnchor <$> getWikiAnchor <$> (filter (T.isInfixOf "scope=\"row\"") $ T.lines b)
+            b:_ -> parseWikiAnchor <$> getWikiAnchor <$> (filterAlbums $ T.lines b)
+
 
 -- Take one line of text and attempt to get a wiki link from it
 -- by getting what's inside of '' ''
@@ -74,11 +74,16 @@ getWikiAnchor anchor =
         _:b:_ -> b
 
 -- Take a discography wiki page as a list of text lines and return
--- the one that contains query (if not found, just return query itself
--- surrounded by "==")
+-- the one that contains the header query (if not found, just return query itself)
 findDiscoSubtitle :: [Text] -> Text -> Text
-findDiscoSubtitle [] query = "==" <> query <> "=="
+findDiscoSubtitle [] query = query
 findDiscoSubtitle (x:xs) query = if T.isInfixOf query x && T.isInfixOf "==" x then x else findDiscoSubtitle xs query
+
+
+-- Get the rows that fit the rather loose criteria for containing an album inside the discography table
+-- (Better keep this fairly tolerant; wrong entries will eventually be discarded later)
+filterAlbums :: [Text] -> [Text]
+filterAlbums = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isPrefixOf "!" r))
 
 
 infoboxParser :: P.Parsec Text () Text
