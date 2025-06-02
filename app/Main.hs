@@ -4,7 +4,7 @@ module Main where
 
 -- External modules
 import Options.Applicative
-import Network.Wreq (getWith, defaults, params, param, responseBody)
+import qualified Network.Wreq as W (getWith, defaults, params, param, header, responseBody)
 import Control.Lens
 import qualified Data.Text as T
 import Data.Text.Internal (Text)
@@ -53,6 +53,8 @@ appDescription = info (commandLineParser <**> helper)
 wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
+userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
+
 -- TODO: Handle several results, like different http response codes etc.
 
 -- Make a request to the Wikimedia Action API on Wikipedia, asking it to search for the supplied query
@@ -61,18 +63,18 @@ wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 requestWikiSearch :: Text -> IO (Maybe Value)
 requestWikiSearch searchQuery = do
     let urlParams = [ ("action", "query"), ("format", "json"), ("list", "search"), ("srprop", "redirecttitle") ]
-    let opts = defaults & params .~ urlParams & param "srsearch" .~ [searchQuery]
-    r <- getWith opts wikipediaApiUrl
-    return $ r ^? responseBody . key "query" . key "search"
+    let opts = W.defaults & W.params .~ urlParams & W.param "srsearch" .~ [searchQuery] & W.header "User-Agent" .~ [userAgent]
+    r <- W.getWith opts wikipediaApiUrl
+    return $ r ^? W.responseBody . key "query" . key "search"
 
 -- Make a request to the Wikimedia Action API on Wikipedia, asking it to give us
 -- the contents of the specified wiki page.
 requestWikiParse :: Text -> IO (Maybe Text)
 requestWikiParse title = do
     let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "wikitext"), ("redirects", "1"), ("page", title) ]
-    let opts = defaults & params .~ urlParams
-    r <- getWith opts wikipediaApiUrl
-    return $ r ^? responseBody . key "parse" . key "wikitext" . key "*" . _String
+    let opts = W.defaults & W.params .~ urlParams & W.header "User-Agent" .~ [userAgent]
+    r <- W.getWith opts wikipediaApiUrl
+    return $ r ^? W.responseBody . key "parse" . key "wikitext" . key "*" . _String
 
 main :: IO ()
 main = do
