@@ -9,6 +9,7 @@ import Control.Lens
 import Data.Text.Internal (Text)
 import Data.Aeson.Lens -- (_String, key)
 import Data.Aeson
+import qualified Data.Text as T
 
 -- This app's modules
 import Ratings
@@ -93,29 +94,23 @@ main = do
     let albumTitle = optAlbum inputargs
     let artistName = optArtist inputargs
     let category = optCategory inputargs
-    case (albumTitle, artistName) of
-        (album, "") -> do
-            wikiresults <- requestWikiSearch album
-            case wikiresults of
-                Nothing -> putStrLn "Search request to Wikipedia failed."
-                Just wr -> do
-                    if length (wr ^. _Array) == 0
+    let query = if (albumTitle /= T.empty) then albumTitle else artistName
+    wikiresults <- requestWikiSearch query
+    case wikiresults of
+        Nothing -> print $ "Search request to Wikipedia failed for '" <> query <> "'"
+        Just wikidata -> do
+            case (albumTitle, artistName) of
+                (album, "") -> do
+                    if length (wikidata ^. _Array) == 0
                         then print $ "No results found for search query '" <> album <> "'"
                         else do
-                            let firstResultTitle = wr ^. nth 0 . key "title" . _String
+                            let firstResultTitle = wikidata ^. nth 0 . key "title" . _String
                             wikitext <- requestWikiParse firstResultTitle  -- Just taking the first result
                             case wikitext of
                                 Nothing -> print $ "Failed to fetch wikipedia content for '" <> firstResultTitle <> "'"
                                 Just w -> getAndPrintAlbumRatings w firstResultTitle
-        ("", artist) -> do
---             aerodisco <- readFile "Aerosmith_discography.txt"
---             let a = parseDiscography (T.pack aerodisco) "Studio"
---             print a
-            wikiresults <- requestWikiSearch artist
-            case wikiresults of
-                Nothing -> print $ "Search request to Wikipedia failed for '" <> artist <> "'"
-                Just wr -> do
-                    let discopageTitle = findDiscography $ wr ^.. values  -- Maybe move ^..values to requestWikiSearch?
+                ("", artist) -> do
+                    let discopageTitle = findDiscography $ wikidata ^.. values  -- Maybe move ^..values to requestWikiSearch?
                     case discopageTitle of
                         Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
                         Just dT -> do
@@ -123,4 +118,4 @@ main = do
                             case discography of
                                 Nothing -> putStrLn "Failed to fetch discography"
                                 Just d -> putStrLn $ show $ parseDiscography d category
-        (_, _) -> putStrLn "No album title or artist/band specified."
+                (_, _) -> putStrLn "No album title or artist/band specified."
