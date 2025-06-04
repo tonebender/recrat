@@ -3,6 +3,7 @@
 module Artist (
     parseDiscography
     , infoboxArtistParser
+    , parseInfobox
 ) where
 
 import qualified Data.Text as T
@@ -85,3 +86,17 @@ infoboxArtistParser = do
     _ <- P.manyTill P.anyChar (P.try (P.string "{{Infobox")) >> P.manyTill P.anyChar P.endOfLine
     artistName <- P.spaces >> P.string "|" >> P.spaces >> (P.string "Artist" <|> P.string "artist") >> P.spaces >> P.string "=" >> P.spaces >> P.manyTill P.anyChar P.endOfLine
     return $ T.pack artistName
+
+parseInfobox :: Text -> [Maybe (Text, Text)]
+parseInfobox text =
+    case drop 1 $ T.splitOn "{{Infobox" text of
+        [] -> []
+        a:_ -> case T.splitOn "}}" a of  -- End of infobox
+            [] -> []
+            b:_ -> map parseInfoboxLine $ filter (T.isInfixOf "=") $ T.lines b
+
+parseInfoboxLine :: Text -> Maybe (Text, Text)
+parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`elem` ("| " :: String)) line of
+    a:b:[] -> Just (a, b)
+    _:_ -> Nothing
+    [] -> Nothing
