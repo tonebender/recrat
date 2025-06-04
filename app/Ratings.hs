@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- TODO: Maybe rename this module to Albums or so
+
 module Ratings (
     Album
     , getAndPrintAlbumRatings
@@ -37,11 +39,12 @@ printRatings (Just x:xs) = do
 
 -- TODO: Not finished...
 -- TODO: Get title from actual page (use parser for this?)
+
 -- Get the album ratings from a wikipedia page text and display the average score
 getAndPrintAlbumRatings :: Text -> Text -> IO ()
 getAndPrintAlbumRatings wikip albumTitle = do
     -- wikip <- readFile "mock_rubber.txt"
-    let rev = P.parse musicRatingsParser "(source)" $ wikip
+    let rev = P.parse musicRatingsParser "(source)" wikip
     case rev of
         Right r -> do
             print albumTitle
@@ -142,4 +145,3 @@ noteParser = P.string "{{" *> P.manyTill P.anyChar (P.string "}}")
 
 getAverageScore :: [Rating] -> Double
 getAverageScore scores = (sum [ratio s | s <- scores]) / (fromIntegral (length scores))
-

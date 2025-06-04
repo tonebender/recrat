@@ -27,7 +27,7 @@ data Inputargs = Inputargs
 commandLineParser :: Parser Inputargs
 commandLineParser = Inputargs
     <$> strOption
-        (long "title"
+        (long "album"
         <> value ""
         <> metavar "ALBUMTITLE"
         <> help "An album title to get ratings for")
@@ -94,28 +94,22 @@ main = do
     let albumTitle = optAlbum inputargs
     let artistName = optArtist inputargs
     let category = optCategory inputargs
-    let query = if (albumTitle /= T.empty) then albumTitle else artistName
+    let query = if (albumTitle /= T.empty) then albumTitle else artistName <> " discography"
     wikiresults <- requestWikiSearch query
     case wikiresults of
         Nothing -> print $ "Search request to Wikipedia failed for '" <> query <> "'"
         Just wikidata -> do
-            case (albumTitle, artistName) of
-                (album, "") -> do
-                    if length (wikidata ^. _Array) == 0
-                        then print $ "No results found for search query '" <> album <> "'"
-                        else do
-                            let firstResultTitle = wikidata ^. nth 0 . key "title" . _String
-                            wikitext <- requestWikiParse firstResultTitle  -- Just taking the first result
-                            case wikitext of
-                                Nothing -> print $ "Failed to fetch wikipedia content for '" <> firstResultTitle <> "'"
-                                Just w -> getAndPrintAlbumRatings w firstResultTitle
-                ("", artist) -> do
-                    let discopageTitle = findDiscography $ wikidata ^.. values  -- Maybe move ^..values to requestWikiSearch?
-                    case discopageTitle of
-                        Nothing -> print $ "Could not find discography wiki page related to search query '" <> artist <> "'"
-                        Just dT -> do
-                            discography <- requestWikiParse dT
-                            case discography of
-                                Nothing -> putStrLn "Failed to fetch discography"
-                                Just d -> putStrLn $ show $ parseDiscography d category
-                (_, _) -> putStrLn "No album title or artist/band specified."
+            if length (wikidata ^. _Array) == 0
+                then print $ "No results found for search query '" <> query <> "'"
+                else do
+                    let firstResultTitle = wikidata ^. nth 0 . key "title" . _String
+                    wikitext <- requestWikiParse firstResultTitle
+                    case wikitext of
+                        Nothing -> print $ "Failed to fetch wikipedia page content for '" <> firstResultTitle <> "'"
+                        Just wtext -> do
+                            case (albumTitle, artistName) of
+                                (_, "") -> getAndPrintAlbumRatings wtext firstResultTitle
+                                ("", _) -> do
+                                    artistData <- parseDiscography wtext category
+                                    print artistData
+                                (_, _) -> putStrLn "No album title or artist/band specified."
