@@ -57,8 +57,8 @@ parseWikiAnchor markup =
                 urilabel:[] -> WikiAnchor urilabel urilabel
                 uri:label:_ -> WikiAnchor uri label
 
--- Take one line of text and attempt to get a wiki link from it
--- by getting what's inside of '' ''
+-- Take one line of text and attempt to get whatever is inside its
+-- first '' ''
 getWikiAnchor :: Text -> Text
 getWikiAnchor text =
     case T.splitOn "''" text of
