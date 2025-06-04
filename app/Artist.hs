@@ -2,15 +2,14 @@
 
 module Artist (
     parseDiscography
-    , infoboxArtistParser
     , parseInfobox
+    , findInfoboxLine
 ) where
 
 import qualified Data.Text as T
 import Data.Text.Internal (Text)
 -- import Ratings (Album)
-import qualified Text.Parsec as P
-import Options.Applicative ((<|>))
+import Data.Maybe (catMaybes, listToMaybe)
 
 data Artist = Artist
     { name :: WikiAnchor
@@ -25,9 +24,9 @@ data WikiAnchor = WikiAnchor WikiURI WikiLabel
 -- TODO: Use Maybe as return type to handle nonexistent artists
 parseDiscography :: Text -> Text -> IO Artist
 parseDiscography disco category = do
-    let artistName = case (P.parse infoboxArtistParser "(source)" disco) of
-         Left _ -> WikiAnchor "" "Unknown artist"
-         Right artist -> parseWikiAnchor artist
+    let artistName = case findInfoboxLine "artist" (parseInfobox disco) of
+         Nothing -> WikiAnchor "" "Unknown artist"
+         Just artist -> parseWikiAnchor $ snd artist
     let albumList = parseDiscographyAlbums disco category
     return $ Artist artistName albumList
 
@@ -79,24 +78,25 @@ findDiscoSubtitle (x:xs) query = if T.isInfixOf query x && T.isInfixOf "==" x th
 filterAlbums :: [Text] -> [Text]
 filterAlbums = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isPrefixOf "!" r))
 
--- TODO: Mabye ditch Parsec and make this a pure function almost identical to parseDiscographyAlbums
--- Parsec parser that gets the artist name (a wiki anchor) outta the infobox in a wiki page
-infoboxArtistParser :: P.Parsec Text () Text
-infoboxArtistParser = do
-    _ <- P.manyTill P.anyChar (P.try (P.string "{{Infobox")) >> P.manyTill P.anyChar P.endOfLine
-    artistName <- P.spaces >> P.string "|" >> P.spaces >> (P.string "Artist" <|> P.string "artist") >> P.spaces >> P.string "=" >> P.spaces >> P.manyTill P.anyChar P.endOfLine
-    return $ T.pack artistName
-
-parseInfobox :: Text -> [Maybe (Text, Text)]
+-- Get the first {{Infobox ...}} in the specified wiki page text and return all its
+-- "|Key = Value" lines as a list of (Text, Text) tuples
+parseInfobox :: Text -> [(Text, Text)]
 parseInfobox text =
     case drop 1 $ T.splitOn "{{Infobox" text of
         [] -> []
         a:_ -> case T.splitOn "}}" a of  -- End of infobox
             [] -> []
-            b:_ -> map parseInfoboxLine $ filter (T.isInfixOf "=") $ T.lines b
+            b:_ -> catMaybes $ map parseInfoboxLine $ filter (T.isInfixOf "=") $ T.lines b
 
+-- Take a text line and return Just (Text, Text) if it matched the syntax "|Key = Value"
+-- and Nothing if not
 parseInfoboxLine :: Text -> Maybe (Text, Text)
 parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`elem` ("| " :: String)) line of
     a:b:[] -> Just (a, b)
     _:_ -> Nothing
     [] -> Nothing
+
+-- Take a list of (Text, Text) and find the tuple whose first variable
+-- equals query (caseless); return Nothing if not found
+findInfoboxLine :: Text -> [(Text, Text)] -> Maybe (Text, Text)
+findInfoboxLine query = listToMaybe . dropWhile (\e -> T.toCaseFold (fst e) /= T.toCaseFold query)
