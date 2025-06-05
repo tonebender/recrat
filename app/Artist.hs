@@ -6,6 +6,7 @@ module Artist (
     , findInfoboxLine
     , findDiscoSubtitle
     , getWikiAnchor
+    , createMultipageQuery 
 ) where
 
 import qualified Data.Text as T
@@ -18,10 +19,12 @@ data Artist = Artist
     , albums :: [WikiAnchor]
     } deriving (Show)
 
-type WikiURI = Text
-type WikiLabel = Text
+-- TODO: Change WikiAnchor to a simple type synonym: type WikiAnchor = (Text, Text)
+-- or give it named properties like Artist above
 data WikiAnchor = WikiAnchor WikiURI WikiLabel
     deriving (Show)
+type WikiURI = Text
+type WikiLabel = Text
 
 -- TODO: Use Maybe as return type to handle nonexistent artists
 parseDiscography :: Text -> Text -> IO Artist
@@ -100,3 +103,9 @@ parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`elem` (
 -- equals query (caseless); return Nothing if not found
 findInfoboxLine :: Text -> [(Text, Text)] -> Maybe (Text, Text)
 findInfoboxLine query = listToMaybe . dropWhile (\e -> T.toCaseFold (fst e) /= T.toCaseFold query)
+
+getWikiAnchorURI :: WikiAnchor -> Text
+getWikiAnchorURI (WikiAnchor uri _) = uri
+
+createMultipageQuery :: [WikiAnchor] -> Text
+createMultipageQuery anchors = T.intercalate "|" $ map getWikiAnchorURI anchors
