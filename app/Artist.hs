@@ -6,7 +6,7 @@ module Artist (
     , findInfoboxLine
     , findDiscoSubtitle
     , getWikiAnchor
-    , createMultipageQuery 
+    , artistToAlbumsQuery 
 ) where
 
 import qualified Data.Text as T
@@ -19,12 +19,10 @@ data Artist = Artist
     , albums :: [WikiAnchor]
     } deriving (Show)
 
--- TODO: Change WikiAnchor to a simple type synonym: type WikiAnchor = (Text, Text)
--- or give it named properties like Artist above
-data WikiAnchor = WikiAnchor WikiURI WikiLabel
-    deriving (Show)
-type WikiURI = Text
-type WikiLabel = Text
+data WikiAnchor = WikiAnchor
+    { wikiURI :: Text
+    , wikiLabel :: Text
+    } deriving (Show)
 
 -- TODO: Use Maybe as return type to handle nonexistent artists
 parseDiscography :: Text -> Text -> IO Artist
@@ -104,8 +102,7 @@ parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`elem` (
 findInfoboxLine :: Text -> [(Text, Text)] -> Maybe (Text, Text)
 findInfoboxLine query = listToMaybe . dropWhile (\e -> T.toCaseFold (fst e) /= T.toCaseFold query)
 
-getWikiAnchorURI :: WikiAnchor -> Text
-getWikiAnchorURI (WikiAnchor uri _) = uri
-
-createMultipageQuery :: [WikiAnchor] -> Text
-createMultipageQuery anchors = T.intercalate "|" $ map getWikiAnchorURI anchors
+-- Create a string such as "Bleach (Nirvana album)|Nevermind|In Utero" from an Artist's
+-- albums list, for use in a multi-page wiki request
+artistToAlbumsQuery :: Artist -> Text
+artistToAlbumsQuery artist = T.intercalate "|" $ map wikiURI $ albums artist
