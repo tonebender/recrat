@@ -4,6 +4,8 @@ module Artist (
     parseDiscography
     , parseInfobox
     , findInfoboxLine
+    , findDiscoSubtitle
+    , getWikiAnchor
 ) where
 
 import qualified Data.Text as T
@@ -42,41 +44,39 @@ parseDiscographyAlbums disco category =
             [] -> []
             b:_ -> parseWikiAnchor <$> getWikiAnchor <$> (filterAlbums $ T.lines b)
 
--- Take a Wikipedia link/label string such as "''[[No Quarter (song)|No Quarter]]''"
+-- Take a Wikipedia link/label string such as "[[No Quarter (song)|No Quarter]]"
 -- and parse it into a WikiAnchor with the URI and label separate.
 -- If [[URI and label are the same]] use it for both URI and label.
--- If only ''text'' and no [[link]], make the URI part an empty text.
+-- If no [[ ]] found, return WikiAnchor with only the label part set.
 parseWikiAnchor :: Text -> WikiAnchor
 parseWikiAnchor markup =
     let anchor = T.replace "''" "" markup in
-    case T.isInfixOf "[[" anchor of
+    case T.isPrefixOf "[[" anchor of
         False -> WikiAnchor "" anchor
-        True -> let stripped = T.replace "[[" "" $ T.replace "]]" "" anchor in
-            case T.splitOn "|" stripped of
+        True -> case T.splitOn "|" $ T.replace "[[" "" $ T.replace "]]" "" anchor of
                 [] -> WikiAnchor "" ""
                 urilabel:[] -> WikiAnchor urilabel urilabel
                 uri:label:_ -> WikiAnchor uri label
 
--- Take one line of text and attempt to get whatever is inside its
--- first '' ''
+-- Take a line of text and get the first [[x]] found, otherwise return empty text
 getWikiAnchor :: Text -> Text
-getWikiAnchor text =
-    case T.splitOn "''" text of
-        [] -> text
-        a:[] -> a
-        _:b:_ -> b
+getWikiAnchor text = let stripped = T.dropWhile (/= '[') text in
+    if T.isPrefixOf "[" stripped
+        then T.takeWhile (/= ']') stripped <> "]]"
+        else ""
 
 -- Take a discography wiki page as a list of text lines and return
 -- the one that contains the header query (if not found, just return query itself)
 findDiscoSubtitle :: [Text] -> Text -> Text
 findDiscoSubtitle [] query = query
-findDiscoSubtitle (x:xs) query = if T.isInfixOf query x && T.isInfixOf "==" x then x else findDiscoSubtitle xs query
+findDiscoSubtitle (x:xs) query =
+    if T.isInfixOf (T.toCaseFold query) (T.toCaseFold x) && T.isInfixOf "==" x then x else findDiscoSubtitle xs query
 
 -- Get the rows that fit the (loose) criteria for containing an album inside the discography table,
 -- i.e. contains '' and starts with either | or !
 -- (This can be fairly tolerant; wrong entries will eventually be discarded later)
 filterAlbums :: [Text] -> [Text]
-filterAlbums = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isPrefixOf "!" r))
+filterAlbums = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isInfixOf "scope=\"row\"" r))
 
 -- Get the first {{Infobox ...}} in the specified wiki page text and return all its
 -- "|Key = Value" lines as a list of (Text, Text) tuples
