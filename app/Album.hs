@@ -2,7 +2,7 @@
 
 -- TODO: Maybe rename this module to Albums or so
 
-module Ratings (
+module Album (
     Album
     , getAndPrintAlbumRatings
 ) where
@@ -15,7 +15,7 @@ import Text.Read
 import Data.Maybe
 
 data Album = Album
-    { name :: Text
+    { albumName :: Text
     , ratings :: [Rating]
     } deriving (Show)
 
