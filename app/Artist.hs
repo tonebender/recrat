@@ -1,22 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Artist (
-    parseDiscography
-    , parseInfobox
-    , findInfoboxLine
-    , findDiscoSubtitle
-    , getWikiAnchor
-    , artistToAlbumsQuery 
+    getAlbums
 ) where
 
 import qualified Data.Text as T
 import Data.Text.Internal (Text)
--- import Ratings (Album)
 import Data.Maybe (catMaybes, listToMaybe)
+import Data.Aeson (Value)
+import Data.Aeson.Lens (_String, key, nth, values)
+import Control.Lens ((^.), (^..))
+
+import WikiRequests (requestWikiPages)
+import Album (Album, getAlbumRatings)
+
 
 data Artist = Artist
     { name :: WikiAnchor
-    , albums :: [WikiAnchor]
+    , albums :: [Album]
     } deriving (Show)
 
 data WikiAnchor = WikiAnchor
@@ -24,14 +25,36 @@ data WikiAnchor = WikiAnchor
     , wikiLabel :: Text
     } deriving (Show)
 
--- TODO: Use Maybe as return type to handle nonexistent artists
-parseDiscography :: Text -> Text -> IO Artist
-parseDiscography disco category = do
-    let artistName = case findInfoboxLine "artist" (parseInfobox disco) of
-         Nothing -> WikiAnchor "" "Unknown artist"
-         Just artist -> parseWikiAnchor $ snd artist
-    let albumList = parseDiscographyAlbums disco category
-    return $ Artist artistName albumList
+-- TODO: Try Either instead of Maybe to get better error messages?
+-- Take a discography wiki page text and a category (such as "studio") and
+-- request all of the Wikipedia pages for the albums found under that category
+-- in the discography. Find the artist name and then get the album ratings
+-- for every requested album.
+getAlbums :: Text -> Text -> IO (Maybe Artist)
+getAlbums discography category = do
+    case getArtistName discography of
+        Nothing -> return Nothing
+        Just artistName -> do
+            r <- requestWikiPages $ artistToAlbumsQuery $ parseDiscographyAlbums discography category
+            case r of
+                Nothing -> return Nothing
+                Just wikiJson -> do
+                    rats <- applyGetAlbumRatings (wikiJson ^.. values)
+                    return $ Just $ Artist artistName rats
+
+-- Take a list of Value (from a wiki json result) and feed each of
+-- its elements to getAlbumRatings to get a list of album ratings
+applyGetAlbumRatings :: [Value] -> IO [Album]
+applyGetAlbumRatings [] = return []
+applyGetAlbumRatings (x:xs) = do
+    parsedRatings <- getAlbumRatings $ getPageFromWikiRevJson x
+    nextIteration <- applyGetAlbumRatings xs
+    return $ parsedRatings : nextIteration
+
+-- Lens stuff to get the page contents of the first revision
+-- listed in a json object from a request to the MediaWiki Revisions API
+getPageFromWikiRevJson :: Value -> Text
+getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
 
 -- Take a discography Wikipedia page and get a list of albums
 -- (each a WikiAnchor) from the table under the subtitle specified by category
@@ -102,7 +125,14 @@ parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`elem` (
 findInfoboxLine :: Text -> [(Text, Text)] -> Maybe (Text, Text)
 findInfoboxLine query = listToMaybe . dropWhile (\e -> T.toCaseFold (fst e) /= T.toCaseFold query)
 
+-- Get the "artist" value out of an infobox line in the discographyText
+getArtistName :: Text -> Maybe WikiAnchor
+getArtistName discographyText =
+    case findInfoboxLine "artist" (parseInfobox discographyText) of
+        Nothing -> Nothing
+        Just aName -> Just $ parseWikiAnchor $ snd aName
+
 -- Create a string such as "Bleach (Nirvana album)|Nevermind|In Utero" from an Artist's
 -- albums list, for use in a multi-page wiki request
-artistToAlbumsQuery :: Artist -> Text
-artistToAlbumsQuery artist = T.intercalate "|" $ map wikiURI $ albums artist
+artistToAlbumsQuery :: [WikiAnchor] -> Text
+artistToAlbumsQuery albumAnchors = T.intercalate "|" $ map wikiURI albumAnchors

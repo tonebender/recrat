@@ -1,10 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- TODO: Maybe rename this module to Albums or so
-
 module Album (
     Album
     , getAndPrintAlbumRatings
+    , getAlbumRatings
 ) where
 
 import Options.Applicative
@@ -28,14 +27,21 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
-printRatings :: [Maybe Rating] -> IO ()
-printRatings [] = return ()
-printRatings (Nothing:xs) = do
+getAlbumRatings :: Text -> IO (Album) -- TODO: Get album name from infobox!
+getAlbumRatings wikip = do
+    let rev = P.parse musicRatingsParser "(source)" wikip
+    case rev of
+        Right r -> return $ Album "Noname" (catMaybes r)
+        Left err -> return $ Album (T.pack (show err)) []  -- Not ideal
+
+printRatingsMaybe :: [Maybe Rating] -> IO ()
+printRatingsMaybe [] = return ()
+printRatingsMaybe (Nothing:xs) = do
     putStrLn "-Nothing-"
-    printRatings xs
-printRatings (Just x:xs) = do
+    printRatingsMaybe xs
+printRatingsMaybe (Just x:xs) = do
     putStrLn $ show (title x) ++ ": " ++ show (ratio x)
-    printRatings xs
+    printRatingsMaybe xs
 
 -- TODO: Not finished...
 -- TODO: Get title from actual page (use parser for this?)
@@ -48,7 +54,7 @@ getAndPrintAlbumRatings wikip albumTitle = do
     case rev of
         Right r -> do
             print albumTitle
-            printRatings $ r
+            printRatingsMaybe $ r
             putStrLn $ show (length (catMaybes r)) ++ " ratings"
             putStrLn $ "Average score: " ++ (show $ getAverageScore $ catMaybes r)
         Left err -> putStrLn $ "Parse error:" ++ show err
@@ -60,7 +66,7 @@ getAndPrintAlbumRatings wikip albumTitle = do
 --         Just rats -> do
 --             let rev = P.parse musicRatingsParser "(source)" rats
 --             case rev of
---                 Right r -> printRatings $ r
+--                 Right r -> printRatingsMaybe $ r
 --                 Left err -> putStrLn $ "Parse error:" ++ show err
 
 

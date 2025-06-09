@@ -10,7 +10,7 @@ import Options.Applicative
 import qualified Data.Text as T
 
 -- This app's modules
-import Ratings
+import Album
 import Artist
 import WikiRequests
 
@@ -67,9 +67,7 @@ main = do
                     case wikitext of
                         Nothing -> print $ "Failed to fetch wikipedia page content for '" <> firstResultTitle <> "'"
                         Just wtext -> do
-                            case (albumTitle, artistName) of
-                                (_, "") -> getAndPrintAlbumRatings wtext firstResultTitle
-                                ("", _) -> do
-                                    artistData <- parseDiscography wtext category
-                                    print artistData
+                            case (albumTitle, artistName) of  -- TODO: Change the case block to something better (if?)
+                                (_, "") -> getAndPrintAlbumRatings wtext firstResultTitle  -- One album
+                                ("", _) -> print =<< getAlbums wtext category              -- Artist/discography
                                 (_, _) -> putStrLn "No album title or artist/band specified."
