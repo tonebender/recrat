@@ -6,12 +6,14 @@ module Album (
     , getAlbumRatings
 ) where
 
-import Options.Applicative
+import Options.Applicative ((<|>))
 import qualified Text.Parsec as P
 import qualified Data.Text as T
 import Data.Text.Internal (Text)
-import Text.Read
-import Data.Maybe
+import Text.Read (readMaybe)
+import Data.Maybe (catMaybes)
+
+import Wiki (parseInfobox, findInfoboxProperty, wikiLabel)
 
 data Album = Album
     { albumName :: Text
@@ -27,12 +29,15 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
-getAlbumRatings :: Text -> IO (Album) -- TODO: Get album name from infobox!
+-- TODO: Handle errors better!
+getAlbumRatings :: Text -> IO (Album)
 getAlbumRatings wikip = do
-    let rev = P.parse musicRatingsParser "(source)" wikip
-    case rev of
-        Right r -> return $ Album "Noname" (catMaybes r)
-        Left err -> return $ Album (T.pack (show err)) []  -- Not ideal
+    case findInfoboxProperty "name" (parseInfobox wikip) of
+        Nothing -> return $ Album "No album name found" []  -- Not ideal
+        Just artistName -> do
+            case P.parse musicRatingsParser "(music ratings parser)" wikip of
+                Right reviews -> return $ Album (wikiLabel artistName) $ catMaybes reviews
+                Left err -> return $ Album (T.pack (show err)) []  -- Not ideal
 
 printRatingsMaybe :: [Maybe Rating] -> IO ()
 printRatingsMaybe [] = return ()

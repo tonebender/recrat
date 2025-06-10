@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module WikiRequests (
+module Wiki (
     requestWikiSearch
     , requestWikiParse
     , requestWikiPages
@@ -8,6 +8,7 @@ module WikiRequests (
     , findInfoboxProperty
     , WikiAnchor
     , wikiURI
+    , wikiLabel
     , getWikiAnchor
     , parseWikiAnchor
 ) where

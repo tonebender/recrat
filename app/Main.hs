@@ -12,7 +12,7 @@ import qualified Data.Text as T
 -- This app's modules
 import Album
 import Artist
-import WikiRequests
+import Wiki
 
 -- Type for command line args
 data Inputargs = Inputargs

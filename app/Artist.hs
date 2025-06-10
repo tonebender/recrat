@@ -10,7 +10,7 @@ import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key, nth, values)
 import Control.Lens ((^.), (^..))
 
-import WikiRequests (requestWikiPages
+import Wiki (requestWikiPages
     , parseInfobox
     , findInfoboxProperty
     , WikiAnchor
