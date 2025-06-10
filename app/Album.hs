@@ -2,8 +2,11 @@
 
 module Album (
     Album
-    , getAndPrintAlbumRatings
+    , albumName
+    , albumRatings
     , getAlbumRatings
+    , getAverageScore
+    , showRatings
 ) where
 
 import Options.Applicative ((<|>))
@@ -17,7 +20,7 @@ import Wiki (parseInfobox, findInfoboxProperty, wikiLabel)
 
 data Album = Album
     { albumName :: Text
-    , ratings :: [Rating]
+    , albumRatings :: [Rating]
     } deriving (Show)
 
 -- Type for one review
@@ -30,53 +33,47 @@ data Rating = Rating
     } deriving (Show)
 
 -- TODO: Handle errors better!
+-- TODO: This doesn't have to be a monad?
+-- TODO: Check if ratings block exist; if not, add the album with an empty ratings list?
 getAlbumRatings :: Text -> IO (Album)
 getAlbumRatings wikip = do
     case findInfoboxProperty "name" (parseInfobox wikip) of
         Nothing -> return $ Album "No album name found" []  -- Not ideal
-        Just artistName -> do
-            case P.parse musicRatingsParser "(music ratings parser)" wikip of
-                Right reviews -> return $ Album (wikiLabel artistName) $ catMaybes reviews
-                Left err -> return $ Album (T.pack (show err)) []  -- Not ideal
+        Just albName -> do
+            case P.parse musicRatingsParser (show $ wikiLabel albName) wikip of
+                Right reviews -> return $ Album (wikiLabel albName) (catMaybes reviews)
+                Left err -> return $ Album (T.pack $ show err) []  -- Not ideal
 
-printRatingsMaybe :: [Maybe Rating] -> IO ()
-printRatingsMaybe [] = return ()
-printRatingsMaybe (Nothing:xs) = do
-    putStrLn "-Nothing-"
-    printRatingsMaybe xs
-printRatingsMaybe (Just x:xs) = do
-    putStrLn $ show (title x) ++ ": " ++ show (ratio x)
-    printRatingsMaybe xs
+-- Take an Album and create a Text with one line its title
+-- and subsequent lines its ratings, e.g. "Allmusic: 0.8"
+showRatings :: Album -> Text
+showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
+    where showRatings' [] = ""
+          showRatings' (x:xs) = T.pack (show (title x) ++ ": " ++ show (ratio x) ++ "\n") <> showRatings' xs
 
--- TODO: Not finished...
--- TODO: Get title from actual page (use parser for this?)
+-- The below should be deleted but is kept if needed for testing
+-- printRatingsMaybe :: [Maybe Rating] -> IO ()
+-- printRatingsMaybe [] = return ()
+-- printRatingsMaybe (Nothing:xs) = do
+--     putStrLn "-Nothing-"
+--     printRatingsMaybe xs
+-- printRatingsMaybe (Just x:xs) = do
+--     putStrLn $ show (title x) ++ ": " ++ show (ratio x)
+--     printRatingsMaybe xs
+-- 
+-- -- Get the album ratings from a wikipedia page text and display the average score
+-- getAndPrintAlbumRatings :: Text -> Text -> IO ()
+-- getAndPrintAlbumRatings wikip albumTitle = do
+--     -- wikip <- readFile "mock_rubber.txt"
+--     let rev = P.parse musicRatingsParser "(source)" wikip
+--     case rev of
+--         Right r -> do
+--             print albumTitle
+--             printRatingsMaybe $ r
+--             putStrLn $ show (length (catMaybes r)) ++ " ratings"
+--             putStrLn $ "Average score: " ++ (show $ getAverageScore $ catMaybes r)
+--         Left err -> putStrLn $ "Parse error:" ++ show err
 
--- Get the album ratings from a wikipedia page text and display the average score
-getAndPrintAlbumRatings :: Text -> Text -> IO ()
-getAndPrintAlbumRatings wikip albumTitle = do
-    -- wikip <- readFile "mock_rubber.txt"
-    let rev = P.parse musicRatingsParser "(source)" wikip
-    case rev of
-        Right r -> do
-            print albumTitle
-            printRatingsMaybe $ r
-            putStrLn $ show (length (catMaybes r)) ++ " ratings"
-            putStrLn $ "Average score: " ++ (show $ getAverageScore $ catMaybes r)
-        Left err -> putStrLn $ "Parse error:" ++ show err
-
---    wikip <- readFile "mock_rubber.txt"
---    let ratingsBlock = getRatingsBlockInAlbumPage $ T.pack wikip
---    case ratingsBlock of
---         Nothing -> do putStrLn "Could not extract Music/Album ratings from wiki page. Perhaps there are none?"
---         Just rats -> do
---             let rev = P.parse musicRatingsParser "(source)" rats
---             case rev of
---                 Right r -> printRatingsMaybe $ r
---                 Left err -> putStrLn $ "Parse error:" ++ show err
-
-
--- TODO: Check presence of ratings block?
---    if T.isInfixOf music wikiText then
 
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
@@ -84,9 +81,9 @@ getAndPrintAlbumRatings wikip albumTitle = do
 -- aggregate reviews are skipped.
 musicRatingsParser :: P.Parsec Text () [Maybe Rating]
 musicRatingsParser = do
-    _ <- P.manyTill P.anyChar ((P.try (P.string "{{Music ratings\n")) <|> (P.try (P.string "{{Album ratings\n")))
+    _ <- P.manyTill P.anyChar ((P.try (P.string "{{Music ratings\n")) <|> (P.try (P.string "{{Album ratings\n")) <|> (P.try (P.string "{{Album reviews\n")))
     -- TODO: Check that we actually got one of the template strings before getting revs
-    revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}\n")
+    revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
     -- TODO: Remove the Maybes with catMaybes before returning
     return revs
 
@@ -154,5 +151,6 @@ refSingle = (P.string "<ref") *> P.manyTill P.anyChar (P.try (P.string "/>")) <*
 noteParser :: P.Parsec Text () String
 noteParser = P.string "{{" *> P.manyTill P.anyChar (P.string "}}") 
 
+-- Take a list of ratings and return the average score (ratio) of all of them
 getAverageScore :: [Rating] -> Double
 getAverageScore scores = (sum [ratio s | s <- scores]) / (fromIntegral (length scores))

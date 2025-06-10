@@ -79,9 +79,7 @@ executable album-ratings
                       text >= 2.1.1,
                       parsec >= 3.1.17.0,
                       mtl >= 2.3.1,
-                      -- bytestring >= 0.12.2.0,
                       aeson >= 2.2.3.0
-                      -- vector >= 0.13.2.0
 
     -- Directories containing source files.
     hs-source-dirs:   app

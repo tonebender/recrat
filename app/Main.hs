@@ -8,6 +8,7 @@ import Data.Aeson.Lens (_String, _Array, key, nth)
 import Data.Text.Internal (Text)
 import Options.Applicative
 import qualified Data.Text as T
+import qualified Data.Text.IO as Tio
 
 -- This app's modules
 import Album
@@ -55,19 +56,27 @@ main = do
     let artistName = optArtist inputargs
     let category = optCategory inputargs
     let query = if (albumTitle /= T.empty) then albumTitle else artistName <> " discography"
-    wikiresults <- requestWikiSearch query
-    case wikiresults of
+    maybeWikiresults <- requestWikiSearch query
+    case maybeWikiresults of
         Nothing -> print $ "Search request to Wikipedia failed for '" <> query <> "'"
         Just wikidata -> do
             if length (wikidata ^. _Array) == 0
                 then print $ "No results found for search query '" <> query <> "'"
                 else do
                     let firstResultTitle = wikidata ^. nth 0 . key "title" . _String
-                    wikitext <- requestWikiParse firstResultTitle
-                    case wikitext of
+                    maybeWikitext <- requestWikiParse firstResultTitle
+                    case maybeWikitext of
                         Nothing -> print $ "Failed to fetch wikipedia page content for '" <> firstResultTitle <> "'"
                         Just wtext -> do
                             case (albumTitle, artistName) of  -- TODO: Change the case block to something better (if?)
-                                (_, "") -> getAndPrintAlbumRatings wtext firstResultTitle  -- One album
-                                ("", _) -> print =<< getAlbums wtext category              -- Artist/discography
+                                (_, "") -> do
+                                    ratings <- getAlbumRatings wtext -- One album
+                                    Tio.putStrLn $ showRatings ratings
+                                ("", _) -> do
+                                    maybeArtist <- getAlbums wtext category              -- Artist/discography
+                                    case maybeArtist of
+                                        Nothing -> print $ "Failed to fetch albums for '" <> firstResultTitle <> "'"
+                                        Just artist -> do
+                                            Tio.putStrLn $ showArtistName artist
+                                            Tio.putStr $ showAlbums artist
                                 (_, _) -> putStrLn "No album title or artist/band specified."

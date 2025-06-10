@@ -2,6 +2,8 @@
 
 module Artist (
     getAlbums
+    , showArtistName
+    , showAlbums
 ) where
 
 import qualified Data.Text as T
@@ -16,14 +18,28 @@ import Wiki (requestWikiPages
     , WikiAnchor
     , getWikiAnchor
     , parseWikiAnchor
-    , wikiURI)
-import Album (Album, getAlbumRatings)
+    , wikiURI
+    , wikiLabel)
+
+import Album (Album
+    , getAlbumRatings
+    , getAverageScore
+    , albumName
+    , albumRatings)
 
 
 data Artist = Artist
     { name :: WikiAnchor
     , albums :: [Album]
     } deriving (Show)
+
+showArtistName :: Artist -> Text
+showArtistName artist = wikiLabel $ name artist
+
+showAlbums :: Artist -> Text
+showAlbums artist = showAlbums' $ albums artist
+    where showAlbums' [] = T.empty
+          showAlbums' (x:xs) = albumName x <> ": " <> (T.pack $ show $ getAverageScore $ albumRatings x) <> "\n" <> showAlbums' xs
 
 -- TODO: Try Either instead of Maybe to get better error messages?
 -- Take a discography wiki page text and a category (such as "studio") and
