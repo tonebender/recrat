@@ -6,12 +6,11 @@ module Artist (
 
 import qualified Data.Text as T
 import Data.Text.Internal (Text)
-import Data.Maybe (catMaybes, listToMaybe)
 import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key, nth, values)
 import Control.Lens ((^.), (^..))
 
-import WikiRequests (requestWikiPages)
+import WikiRequests (requestWikiPages, parseInfobox, findInfoboxProperty)
 import Album (Album, getAlbumRatings)
 
 
@@ -28,7 +27,7 @@ data WikiAnchor = WikiAnchor
 -- TODO: Try Either instead of Maybe to get better error messages?
 -- Take a discography wiki page text and a category (such as "studio") and
 -- request all of the Wikipedia pages for the albums found under that category
--- in the discography. Find the artist name and then get the album ratings
+-- in the discography. Also find the artist name and finally get the album ratings
 -- for every requested album.
 getAlbums :: Text -> Text -> IO (Maybe Artist)
 getAlbums discography category = do
@@ -102,33 +101,10 @@ findDiscoSubtitle (x:xs) query =
 filterAlbums :: [Text] -> [Text]
 filterAlbums = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isInfixOf "scope=\"row\"" r))
 
--- Get the first {{Infobox ...}} in the specified wiki page text and return all its
--- "|Key = Value" lines as a list of (Text, Text) tuples
-parseInfobox :: Text -> [(Text, Text)]
-parseInfobox text =
-    case drop 1 $ T.splitOn "{{Infobox" text of
-        [] -> []
-        a:_ -> case T.splitOn "}}" a of  -- End of infobox
-            [] -> []
-            b:_ -> catMaybes $ map parseInfoboxLine $ filter (T.isInfixOf "=") $ T.lines b
-
--- Take a text line and return Just (Text, Text) if it matched the syntax "|Key = Value"
--- and Nothing if not
-parseInfoboxLine :: Text -> Maybe (Text, Text)
-parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`elem` ("| " :: String)) line of
-    a:b:[] -> Just (a, b)
-    _:_ -> Nothing
-    [] -> Nothing
-
--- Take a list of (Text, Text) and find the tuple whose first variable
--- equals query (caseless); return Nothing if not found
-findInfoboxLine :: Text -> [(Text, Text)] -> Maybe (Text, Text)
-findInfoboxLine query = listToMaybe . dropWhile (\e -> T.toCaseFold (fst e) /= T.toCaseFold query)
-
 -- Get the "artist" value out of an infobox line in the discographyText
 getArtistName :: Text -> Maybe WikiAnchor
 getArtistName discographyText =
-    case findInfoboxLine "artist" (parseInfobox discographyText) of
+    case findInfoboxProperty "artist" (parseInfobox discographyText) of
         Nothing -> Nothing
         Just aName -> Just $ parseWikiAnchor $ snd aName
 

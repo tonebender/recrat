@@ -4,6 +4,8 @@ module WikiRequests (
     requestWikiSearch
     , requestWikiParse
     , requestWikiPages
+    , parseInfobox
+    , findInfoboxProperty
 ) where
 
 import Control.Lens
@@ -11,6 +13,8 @@ import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key)
 import Data.Text.Internal (Text)
 import qualified Network.Wreq as W (getWith, defaults, params, param, header, responseBody)
+import qualified Data.Text as T
+import Data.Maybe (catMaybes, listToMaybe)
 
 wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
@@ -47,6 +51,26 @@ requestWikiPages titles = do
     r <- W.getWith opts wikipediaApiUrl
     return $ r ^? W.responseBody . key "query" . key "pages"
 
--- (fromJust r) ^.. nth 0 . key "revisions" . nth 0 . key "slots" . key "main" . key "content"
--- Use T.intercalate to create the "text|with|albums"
+-- Take a list of (Text, Text) and find the tuple whose first variable
+-- equals query (caseless); return Nothing if not found
+findInfoboxProperty :: Text -> [(Text, Text)] -> Maybe (Text, Text)
+findInfoboxProperty query = listToMaybe . dropWhile (\e -> T.toCaseFold (fst e) /= T.toCaseFold query)
 
+-- Get the first {{Infobox ...}} in the specified wiki page text and return all its
+-- "|Key = Value" lines as a list of (Text, Text) tuples
+parseInfobox :: Text -> [(Text, Text)]
+parseInfobox text =
+    case drop 1 $ T.splitOn "{{Infobox" text of
+        [] -> []
+        a:_ -> case T.splitOn "}}" a of  -- End of infobox
+            [] -> []
+            b:_ -> catMaybes $ map parseInfoboxLine $ filter (T.isInfixOf "=") $ T.lines b
+
+-- Helper function for parseInfobox.
+-- Take a text line and return Just (Text, Text) if it matched the syntax "|Key = Value"
+-- and Nothing if it didn't.
+parseInfoboxLine :: Text -> Maybe (Text, Text)
+parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`elem` ("| " :: String)) line of
+    a:b:[] -> Just (a, b)
+    _:_ -> Nothing
+    [] -> Nothing
