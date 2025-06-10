@@ -10,18 +10,19 @@ import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key, nth, values)
 import Control.Lens ((^.), (^..))
 
-import WikiRequests (requestWikiPages, parseInfobox, findInfoboxProperty)
+import WikiRequests (requestWikiPages
+    , parseInfobox
+    , findInfoboxProperty
+    , WikiAnchor
+    , getWikiAnchor
+    , parseWikiAnchor
+    , wikiURI)
 import Album (Album, getAlbumRatings)
 
 
 data Artist = Artist
     { name :: WikiAnchor
     , albums :: [Album]
-    } deriving (Show)
-
-data WikiAnchor = WikiAnchor
-    { wikiURI :: Text
-    , wikiLabel :: Text
     } deriving (Show)
 
 -- TODO: Try Either instead of Maybe to get better error messages?
@@ -31,7 +32,7 @@ data WikiAnchor = WikiAnchor
 -- for every requested album.
 getAlbums :: Text -> Text -> IO (Maybe Artist)
 getAlbums discography category = do
-    case getArtistName discography of
+    case findInfoboxProperty "artist" (parseInfobox discography) of
         Nothing -> return Nothing
         Just artistName -> do
             r <- requestWikiPages $ artistToAlbumsQuery $ parseDiscographyAlbums discography category
@@ -67,27 +68,6 @@ parseDiscographyAlbums disco category =
             [] -> []
             b:_ -> parseWikiAnchor <$> getWikiAnchor <$> (filterAlbums $ T.lines b)
 
--- Take a Wikipedia link/label string such as "[[No Quarter (song)|No Quarter]]"
--- and parse it into a WikiAnchor with the URI and label separate.
--- If [[URI and label are the same]] use it for both URI and label.
--- If no [[ ]] found, return WikiAnchor with only the label part set.
-parseWikiAnchor :: Text -> WikiAnchor
-parseWikiAnchor markup =
-    let anchor = T.replace "''" "" markup in
-    case T.isPrefixOf "[[" anchor of
-        False -> WikiAnchor "" anchor
-        True -> case T.splitOn "|" $ T.replace "[[" "" $ T.replace "]]" "" anchor of
-                [] -> WikiAnchor "" ""
-                urilabel:[] -> WikiAnchor urilabel urilabel
-                uri:label:_ -> WikiAnchor uri label
-
--- Take a line of text and get the first [[x]] found, otherwise return empty text
-getWikiAnchor :: Text -> Text
-getWikiAnchor text = let stripped = T.dropWhile (/= '[') text in
-    if T.isPrefixOf "[" stripped
-        then T.takeWhile (/= ']') stripped <> "]]"
-        else ""
-
 -- Take a discography wiki page as a list of text lines and return
 -- the one that contains the header query (if not found, just return query itself)
 findDiscoSubtitle :: [Text] -> Text -> Text
@@ -100,13 +80,6 @@ findDiscoSubtitle (x:xs) query =
 -- (This can be fairly tolerant; wrong entries will eventually be discarded later)
 filterAlbums :: [Text] -> [Text]
 filterAlbums = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isInfixOf "scope=\"row\"" r))
-
--- Get the "artist" value out of an infobox line in the discographyText
-getArtistName :: Text -> Maybe WikiAnchor
-getArtistName discographyText =
-    case findInfoboxProperty "artist" (parseInfobox discographyText) of
-        Nothing -> Nothing
-        Just aName -> Just $ parseWikiAnchor $ snd aName
 
 -- Create a string such as "Bleach (Nirvana album)|Nevermind|In Utero" from an Artist's
 -- albums list, for use in a multi-page wiki request

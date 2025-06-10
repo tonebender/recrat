@@ -6,6 +6,10 @@ module WikiRequests (
     , requestWikiPages
     , parseInfobox
     , findInfoboxProperty
+    , WikiAnchor
+    , wikiURI
+    , getWikiAnchor
+    , parseWikiAnchor
 ) where
 
 import Control.Lens
@@ -20,6 +24,12 @@ wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
 userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
+
+data WikiAnchor = WikiAnchor
+    { wikiURI :: Text
+    , wikiLabel :: Text
+    } deriving (Show)
+
 
 -- TODO: Handle several results, like different http response codes etc.
 
@@ -52,9 +62,12 @@ requestWikiPages titles = do
     return $ r ^? W.responseBody . key "query" . key "pages"
 
 -- Take a list of (Text, Text) and find the tuple whose first variable
--- equals query (caseless); return Nothing if not found
-findInfoboxProperty :: Text -> [(Text, Text)] -> Maybe (Text, Text)
-findInfoboxProperty query = listToMaybe . dropWhile (\e -> T.toCaseFold (fst e) /= T.toCaseFold query)
+-- equals query (caseless), then return its second variable (the value)
+-- as a WikiAnchor; return Nothing if not found
+findInfoboxProperty :: Text -> [(Text, Text)] -> Maybe WikiAnchor
+findInfoboxProperty query props = case (listToMaybe $ dropWhile (\e -> T.toCaseFold (fst e) /= T.toCaseFold query) props) of
+    Nothing -> Nothing
+    Just (_, val) -> Just $ parseWikiAnchor val
 
 -- Get the first {{Infobox ...}} in the specified wiki page text and return all its
 -- "|Key = Value" lines as a list of (Text, Text) tuples
@@ -65,12 +78,29 @@ parseInfobox text =
         a:_ -> case T.splitOn "}}" a of  -- End of infobox
             [] -> []
             b:_ -> catMaybes $ map parseInfoboxLine $ filter (T.isInfixOf "=") $ T.lines b
+                where parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`elem` ("| " :: String)) line of
+                        ky:vl:[] -> Just (ky, vl)
+                        _:_ -> Nothing
+                        [] -> Nothing
 
--- Helper function for parseInfobox.
--- Take a text line and return Just (Text, Text) if it matched the syntax "|Key = Value"
--- and Nothing if it didn't.
-parseInfoboxLine :: Text -> Maybe (Text, Text)
-parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`elem` ("| " :: String)) line of
-    a:b:[] -> Just (a, b)
-    _:_ -> Nothing
-    [] -> Nothing
+-- Take a Wikipedia link/label string such as "[[No Quarter (song)|No Quarter]]"
+-- and parse it into a WikiAnchor with the URI and label separate.
+-- If [[URI and label are the same]] use it for both URI and label.
+-- If no [[ ]] found, return WikiAnchor with only the label part set.
+parseWikiAnchor :: Text -> WikiAnchor
+parseWikiAnchor markup =
+    let anchor = T.replace "''" "" markup in
+    case T.isPrefixOf "[[" anchor of
+        False -> WikiAnchor "" anchor
+        True -> case T.splitOn "|" $ T.replace "[[" "" $ T.replace "]]" "" anchor of
+                [] -> WikiAnchor "" ""
+                urilabel:[] -> WikiAnchor urilabel urilabel
+                uri:label:_ -> WikiAnchor uri label
+
+-- Take a line of text and get the first [[x]] found, otherwise return empty text
+getWikiAnchor :: Text -> Text
+getWikiAnchor text = let stripped = T.dropWhile (/= '[') text in
+    if T.isPrefixOf "[" stripped
+        then T.takeWhile (/= ']') stripped <> "]]"
+        else ""
+
