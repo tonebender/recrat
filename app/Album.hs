@@ -9,12 +9,13 @@ module Album (
     , showRatings
 ) where
 
-import Options.Applicative ((<|>))
-import qualified Text.Parsec as P
-import qualified Data.Text as T
-import Data.Text.Internal (Text)
-import Text.Read (readMaybe)
 import Data.Maybe (catMaybes)
+import Data.Text.Internal (Text)
+import Options.Applicative ((<|>))
+import Text.Printf (printf)
+import Text.Read (readMaybe)
+import qualified Data.Text as T
+import qualified Text.Parsec as P
 
 import Wiki (parseInfobox, findInfoboxProperty, wikiLabel)
 
@@ -51,7 +52,7 @@ getAlbumRatings wikip = do
 showRatings :: Album -> Text
 showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
     where showRatings' [] = ""
-          showRatings' (x:xs) = T.pack (show (title x) ++ ": " ++ show (ratio x) ++ "\n") <> showRatings' xs
+          showRatings' (x:xs) = T.pack (printf "%s: %.2f\n" (title x) (ratio x)) <> showRatings' xs
 
 findRatingsBlock :: Text -> Bool
 findRatingsBlock w = "{{Music ratings" `T.isInfixOf` w || "{{Album ratings" `T.isInfixOf` w || "{{Album reviews" `T.isInfixOf` w

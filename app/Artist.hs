@@ -11,6 +11,7 @@ import Data.Text.Internal (Text)
 import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key, nth, values)
 import Control.Lens ((^.), (^..))
+import Text.Printf (printf)
 
 import Wiki (requestWikiPages
     , parseInfobox
@@ -39,7 +40,7 @@ showArtistName artist = wikiLabel $ name artist
 showAlbums :: Artist -> Text
 showAlbums artist = showAlbums' $ albums artist
     where showAlbums' [] = T.empty
-          showAlbums' (x:xs) = albumName x <> ": " <> (T.pack $ show $ getAverageScore $ albumRatings x) <> "\n" <> showAlbums' xs
+          showAlbums' (x:xs) = albumName x <> ": " <> (T.pack $ printf "%.2f\n" (getAverageScore $ albumRatings x)) <> showAlbums' xs
 
 -- TODO: Try Either instead of Maybe to get better error messages?
 -- Take a discography wiki page text and a category (such as "studio") and
