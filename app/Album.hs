@@ -38,11 +38,14 @@ data Rating = Rating
 getAlbumRatings :: Text -> IO (Album)
 getAlbumRatings wikip = do
     case findInfoboxProperty "name" (parseInfobox wikip) of
-        Nothing -> return $ Album "No album name found" []  -- Not ideal
+        Nothing -> return $ Album "Album name not found" []  -- Not ideal
         Just albName -> do
-            case P.parse musicRatingsParser (show $ wikiLabel albName) wikip of
-                Right reviews -> return $ Album (wikiLabel albName) (catMaybes reviews)
-                Left err -> return $ Album (T.pack $ show err) []  -- Not ideal
+            case findRatingsBlock wikip of
+                False -> return $ Album "No ratings found for album" [] -- Not ideal
+                True -> do
+                    case P.parse musicRatingsParser (show $ wikiLabel albName) wikip of
+                        Right reviews -> return $ Album (wikiLabel albName) (catMaybes reviews)
+                        Left err -> return $ Album (T.pack $ show err) []  -- Not ideal
 
 -- Take an Album and create a Text with one line its title
 -- and subsequent lines its ratings, e.g. "Allmusic: 0.8"
@@ -50,6 +53,9 @@ showRatings :: Album -> Text
 showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
     where showRatings' [] = ""
           showRatings' (x:xs) = T.pack (show (title x) ++ ": " ++ show (ratio x) ++ "\n") <> showRatings' xs
+
+findRatingsBlock :: Text -> Bool
+findRatingsBlock w = "{{Music ratings" `T.isInfixOf` w || "{{Album ratings" `T.isInfixOf` w || "{{Album reviews" `T.isInfixOf` w
 
 -- The below should be deleted but is kept if needed for testing
 -- printRatingsMaybe :: [Maybe Rating] -> IO ()
