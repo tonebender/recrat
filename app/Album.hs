@@ -34,14 +34,13 @@ data Rating = Rating
 
 -- TODO: Handle errors better!
 -- TODO: This doesn't have to be a monad?
--- TODO: Check if ratings block exist; if not, add the album with an empty ratings list?
 getAlbumRatings :: Text -> IO (Album)
 getAlbumRatings wikip = do
     case findInfoboxProperty "name" (parseInfobox wikip) of
         Nothing -> return $ Album "Album name not found" []  -- Not ideal
         Just albName -> do
             case findRatingsBlock wikip of
-                False -> return $ Album "No ratings found for album" [] -- Not ideal
+                False -> return $ Album (wikiLabel albName <> " (no ratings)") [] -- Not ideal
                 True -> do
                     case P.parse musicRatingsParser (show $ wikiLabel albName) wikip of
                         Right reviews -> return $ Album (wikiLabel albName) (catMaybes reviews)
