@@ -42,16 +42,20 @@ getAlbumRatings wikip =
                 True -> case P.parse musicRatingsParser (show $ wikiLabel albName) wikip of
                     Right ratings -> Just $ Album (wikiLabel albName) ratings
                     Left _ -> Just $ Album (wikiLabel albName <> " (no ratings)") []  -- We keep named albums with failed ratings
+            where findRatingsBlock w = T.isInfixOf "{{Music ratings" w || T.isInfixOf "{{Album ratings" w || T.isInfixOf "{{Album reviews" w
 
-findRatingsBlock :: Text -> Bool
-findRatingsBlock w = T.isInfixOf "{{Music ratings" w || T.isInfixOf "{{Album ratings" w || T.isInfixOf "{{Album reviews" w
-
--- Take an Album and create a Text with one line its title
--- and subsequent lines its ratings, e.g. "Allmusic: 0.8"
+-- Take an Album and create a Text where the first line is its title
+-- and subsequent lines contain its ratings, e.g. "Allmusic: 0.8"
 showRatings :: Album -> Text
 showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
     where showRatings' [] = ""
           showRatings' (x:xs) = T.pack (printf "%s: %.2f\n" (title x) (ratio x)) <> showRatings' xs
+
+-- Take a list of ratings and return the average score (ratio) of all of them
+-- (return 0 if list is empty)
+getAverageScore :: [Rating] -> Double
+getAverageScore [] = 0
+getAverageScore scores = (sum [ratio s | s <- scores]) / (fromIntegral (length scores))
 
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
@@ -126,7 +130,3 @@ refSingle = (P.string "<ref") *> P.manyTill P.anyChar (P.try (P.string "/>")) <*
 -- Parser for note such as {{sfn|Graff|Durchholz|1999|p=88}}
 noteParser :: P.Parsec Text () String
 noteParser = P.string "{{" *> P.manyTill P.anyChar (P.string "}}") 
-
--- Take a list of ratings and return the average score (ratio) of all of them
-getAverageScore :: [Rating] -> Double
-getAverageScore scores = (sum [ratio s | s <- scores]) / (fromIntegral (length scores))
