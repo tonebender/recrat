@@ -6,12 +6,13 @@ module Artist (
     , showAlbums
 ) where
 
-import qualified Data.Text as T
-import Data.Text.Internal (Text)
+import Control.Lens ((^.), (^..))
 import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key, nth, values)
-import Control.Lens ((^.), (^..))
+import Data.Maybe (catMaybes)
 import Text.Printf (printf)
+import qualified Data.Text as T
+import Data.Text.Internal (Text)
 
 import Wiki (requestWikiPages
     , parseInfobox
@@ -58,7 +59,7 @@ getAlbums discography category = do
             case r of
                 Nothing -> return Nothing
                 Just wikiJson ->
-                    return $ Just $ Artist artistName $ map (getAlbumRatings . getPageFromWikiRevJson) (wikiJson ^.. values)
+                    return $ Just $ Artist artistName $ catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (wikiJson ^.. values)
 
 -- Lens stuff to get the page contents of the first revision
 -- listed in a json object from a request to the MediaWiki Revisions API
