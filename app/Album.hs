@@ -33,8 +33,9 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
+-- data AlbumError = NoAlbumName | NoRatings
+
 -- TODO: Handle errors better!
--- TODO: This doesn't have to be a monad?
 getAlbumRatings :: Text -> Album
 getAlbumRatings wikip =
     case findInfoboxProperty "name" (parseInfobox wikip) of

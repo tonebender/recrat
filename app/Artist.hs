@@ -42,6 +42,8 @@ showAlbums artist = showAlbums' $ albums artist
     where showAlbums' [] = T.empty
           showAlbums' (x:xs) = albumName x <> ": " <> (T.pack $ printf "%.2f\n" (getAverageScore $ albumRatings x)) <> showAlbums' xs
 
+data ArtistError = NoArtistFound
+
 -- TODO: Try Either instead of Maybe to get better error messages?
 -- Take a discography wiki page text and a category (such as "studio") and
 -- request all of the Wikipedia pages for the albums found under that category
@@ -55,18 +57,8 @@ getAlbums discography category = do
             r <- requestWikiPages $ artistToAlbumsQuery $ parseDiscographyAlbums discography category
             case r of
                 Nothing -> return Nothing
-                Just wikiJson -> do
-                    rats <- applyGetAlbumRatings (wikiJson ^.. values)
-                    return $ Just $ Artist artistName rats
-
--- Take a list of Value (from a wiki json result) and feed each of
--- its elements to getAlbumRatings to get a list of album ratings
-applyGetAlbumRatings :: [Value] -> IO [Album]
-applyGetAlbumRatings [] = return []
-applyGetAlbumRatings (x:xs) = do
-    parsedRatings <- getAlbumRatings $ getPageFromWikiRevJson x
-    nextIteration <- applyGetAlbumRatings xs
-    return $ parsedRatings : nextIteration
+                Just wikiJson ->
+                    return $ Just $ Artist artistName $ map (getAlbumRatings . getPageFromWikiRevJson) (wikiJson ^.. values)
 
 -- Lens stuff to get the page contents of the first revision
 -- listed in a json object from a request to the MediaWiki Revisions API

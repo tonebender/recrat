@@ -69,9 +69,7 @@ main = do
                         Nothing -> print $ "Failed to fetch wikipedia page content for '" <> firstResultTitle <> "'"
                         Just wtext -> do
                             case (albumTitle, artistName) of  -- TODO: Change the case block to something better (if?)
-                                (_, "") -> do
-                                    ratings <- getAlbumRatings wtext -- One album
-                                    Tio.putStrLn $ showRatings ratings
+                                (_, "") -> Tio.putStrLn $ showRatings $ getAlbumRatings wtext  -- One album
                                 ("", _) -> do
                                     maybeArtist <- getAlbums wtext category              -- Artist/discography
                                     case maybeArtist of
