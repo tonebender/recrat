@@ -35,17 +35,15 @@ data Rating = Rating
 
 -- TODO: Handle errors better!
 -- TODO: This doesn't have to be a monad?
-getAlbumRatings :: Text -> IO (Album)
-getAlbumRatings wikip = do
+getAlbumRatings :: Text -> Album
+getAlbumRatings wikip =
     case findInfoboxProperty "name" (parseInfobox wikip) of
-        Nothing -> return $ Album "Album name not found" []  -- Not ideal
-        Just albName -> do
-            case findRatingsBlock wikip of
-                False -> return $ Album (wikiLabel albName <> " (no ratings)") [] -- Not ideal
-                True -> do
-                    case P.parse musicRatingsParser (show $ wikiLabel albName) wikip of
-                        Right reviews -> return $ Album (wikiLabel albName) (catMaybes reviews)
-                        Left err -> return $ Album (T.pack $ show err) []  -- Not ideal
+        Nothing -> Album "Album name not found" []  -- Not ideal
+        Just albName -> case findRatingsBlock wikip of
+                False -> Album (wikiLabel albName <> " (no ratings)") [] -- Not ideal
+                True -> case P.parse musicRatingsParser (show $ wikiLabel albName) wikip of
+                        Right reviews -> Album (wikiLabel albName) (catMaybes reviews)
+                        Left err -> Album (T.pack $ show err) []  -- Not ideal
 
 -- Take an Album and create a Text with one line its title
 -- and subsequent lines its ratings, e.g. "Allmusic: 0.8"
