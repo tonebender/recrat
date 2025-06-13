@@ -49,7 +49,8 @@ appDescription = info (commandLineParser <**> helper)
       <> progDesc "Lists music albums by artist and rating"
       <> header "album-ratings - find ratings for music albums" )
 
-
+-- TODO: Instead of the staircase, divide this into a couple of separate functions
+-- that can be called by both (and other) cases
 main :: IO ()
 main = do
     inputargs <- execParser appDescription
@@ -59,24 +60,24 @@ main = do
     let query = if (albumTitle /= T.empty) then albumTitle else artistName <> " discography"
     maybeWikiresults <- requestWikiSearch query
     case maybeWikiresults of
-        Nothing -> print $ "Search request to Wikipedia failed for '" <> query <> "'"
+        Nothing -> Tio.putStrLn $ "Search request to Wikipedia failed for '" <> query <> "'"
         Just wikidata -> do
             if length (wikidata ^. _Array) == 0
-                then print $ "No results found for search query '" <> query <> "'"
+                then Tio.putStrLn $ "No results found for search query '" <> query <> "'"
                 else do
                     let firstResultTitle = wikidata ^. nth 0 . key "title" . _String
                     maybeWikitext <- requestWikiParse firstResultTitle
                     case maybeWikitext of
-                        Nothing -> print $ "Failed to fetch wikipedia page content for '" <> firstResultTitle <> "'"
+                        Nothing -> Tio.putStrLn $ "Failed to fetch wikipedia page content for '" <> firstResultTitle <> "'"
                         Just wtext -> do
                             case (albumTitle, artistName) of  -- TODO: Change the case block to something better (if?)
                                 (_, "") -> case getAlbumRatings wtext of  -- One album
-                                    Nothing -> print $ "This doesn't appear to be a music album: '" <> firstResultTitle <> "'"
+                                    Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> firstResultTitle <> "'"
                                     Just alb -> Tio.putStrLn $ showRatings alb
                                 ("", _) -> do
                                     maybeArtist <- getAlbums wtext category              -- Artist/discography
                                     case maybeArtist of
-                                        Nothing -> print $ "Failed to fetch albums for '" <> firstResultTitle <> "'"
+                                        Nothing -> Tio.putStrLn $ "Failed to fetch albums for '" <> firstResultTitle <> "'"
                                         Just artist -> do
                                             Tio.putStrLn $ showArtistName artist
                                             Tio.putStr $ showAlbums artist
