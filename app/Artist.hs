@@ -4,6 +4,7 @@ module Artist (
     getAlbums
     , showArtistName
     , showAlbums
+    , ArtistError (NoArtistFound, AlbumsRequestFailed)
 ) where
 
 import Control.Lens ((^.), (^..))
@@ -35,6 +36,8 @@ data Artist = Artist
     , albums :: [Album]
     } deriving (Show)
 
+data ArtistError = NoArtistFound | AlbumsRequestFailed
+
 showArtistName :: Artist -> Text
 showArtistName artist = wikiLabel $ name artist
 
@@ -43,23 +46,20 @@ showAlbums artist = showAlbums' $ albums artist
     where showAlbums' [] = T.empty
           showAlbums' (x:xs) = albumName x <> ": " <> (T.pack $ printf "%.2f\n" (getAverageScore $ albumRatings x)) <> showAlbums' xs
 
-data ArtistError = NoArtistFound
-
--- TODO: Try Either instead of Maybe to get better error messages?
 -- Take a discography wiki page text and a category (such as "studio") and
 -- request all of the Wikipedia pages for the albums found under that category
--- in the discography. Also find the artist name and finally get the album ratings
--- for every requested album.
-getAlbums :: Text -> Text -> IO (Maybe Artist)
+-- in the discography (with a single request). Also find the artist name
+-- and finally parse the album ratings for every requested album.
+getAlbums :: Text -> Text -> IO (Either ArtistError Artist)
 getAlbums discography category = do
     case findInfoboxProperty "artist" (parseInfobox discography) of
-        Nothing -> return Nothing
+        Nothing -> return $ Left NoArtistFound
         Just artistName -> do
             r <- requestWikiPages $ artistToAlbumsQuery $ parseDiscographyAlbums discography category
             case r of
-                Nothing -> return Nothing
+                Nothing -> return $ Left AlbumsRequestFailed
                 Just wikiJson ->
-                    return $ Just $ Artist artistName $ catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (wikiJson ^.. values)
+                    return $ Right $ Artist artistName (catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (wikiJson ^.. values))
 
 -- Lens stuff to get the page contents of the first revision
 -- listed in a json object from a request to the MediaWiki Revisions API

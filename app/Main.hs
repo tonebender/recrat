@@ -75,10 +75,11 @@ main = do
                                     Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> firstResultTitle <> "'"
                                     Just alb -> Tio.putStrLn $ showRatings alb
                                 ("", _) -> do
-                                    maybeArtist <- getAlbums wtext category              -- Artist/discography
-                                    case maybeArtist of
-                                        Nothing -> Tio.putStrLn $ "Failed to fetch albums for '" <> firstResultTitle <> "'"
-                                        Just artist -> do
+                                    eitherArtist <- getAlbums wtext category              -- Artist/discography
+                                    case eitherArtist of
+                                        Left AlbumsRequestFailed -> Tio.putStrLn $ "Failed to fetch albums for '" <> firstResultTitle <> "'"
+                                        Left NoArtistFound -> Tio.putStrLn $ firstResultTitle <> " does not appear to be an artist"
+                                        Right artist -> do
                                             Tio.putStrLn $ showArtistName artist
                                             Tio.putStr $ showAlbums artist
                                 (_, _) -> putStrLn "No album title or artist/band specified."
