@@ -49,7 +49,7 @@ getAlbumRatings wikip =
 showRatings :: Album -> Text
 showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
     where showRatings' [] = ""
-          showRatings' (x:xs) = T.pack (printf "%s: %.2f\n" (title x) (ratio x)) <> showRatings' xs
+          showRatings' (x:xs) = T.pack (printf "%s: %d\n" (title x) (ratioToPercent $ ratio x)) <> showRatings' xs
 
 -- Take a list of ratings and return the average score (ratio) of all of them, converted to percentage
 -- (return 0 if list is empty)

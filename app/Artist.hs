@@ -10,8 +10,8 @@ module Artist (
 import Control.Lens ((^.), (^..))
 import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key, nth, values)
-import Data.List (sortBy, sortOn)
-import Data.Maybe (catMaybes)
+import Data.List (sort, sortOn)
+import Data.Maybe (catMaybes, listToMaybe)
 import Text.Printf (printf)
 import qualified Data.Text as T
 import Data.Text.Internal (Text)
@@ -43,12 +43,17 @@ showArtistName :: Artist -> Text
 showArtistName artist = wikiLabel $ name artist
 
 showAlbums :: Artist -> Text
-showAlbums artist = showAlbums' $ sortAlbums $ albums artist
-    where showAlbums' [] = T.empty
-          showAlbums' (x:xs) = albumName x <> ": " <> (T.pack $ printf "%d\n" (getAverageScore $ albumRatings x)) <> showAlbums' xs
+showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $ albums artist
+    where showAlbums' _ [] = T.empty
+          showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x) <> (T.pack $ printf "%d\n" (getAverageScore $ albumRatings x)) <> showAlbums' padding xs
 
 sortAlbums :: [Album] -> [Album]
 sortAlbums albumList = reverse $ sortOn (getAverageScore . albumRatings) albumList
+
+longestName :: [Album] -> Int
+longestName albums' = case listToMaybe $ reverse $ sort $ map (T.length . albumName) albums' of
+    Nothing -> 0
+    Just x -> x
 
 -- Take a discography wiki page text and a category (such as "studio") and
 -- request all of the Wikipedia pages for the albums found under that category
