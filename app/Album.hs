@@ -51,11 +51,15 @@ showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
     where showRatings' [] = ""
           showRatings' (x:xs) = T.pack (printf "%s: %.2f\n" (title x) (ratio x)) <> showRatings' xs
 
--- Take a list of ratings and return the average score (ratio) of all of them
+-- Take a list of ratings and return the average score (ratio) of all of them, converted to percentage
 -- (return 0 if list is empty)
-getAverageScore :: [Rating] -> Double
+getAverageScore :: [Rating] -> Int
 getAverageScore [] = 0
-getAverageScore scores = (sum [ratio s | s <- scores]) / (fromIntegral (length scores))
+getAverageScore scores = ratioToPercent $ (sum [ratio s | s <- scores]) / (fromIntegral (length scores))
+
+-- Convert value from Double with decimals to 100 times that, without decimals
+ratioToPercent :: Double -> Int
+ratioToPercent r = fromInteger $ round $ r * (10^(2::Int))
 
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a

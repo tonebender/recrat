@@ -45,7 +45,7 @@ showArtistName artist = wikiLabel $ name artist
 showAlbums :: Artist -> Text
 showAlbums artist = showAlbums' $ sortAlbums $ albums artist
     where showAlbums' [] = T.empty
-          showAlbums' (x:xs) = albumName x <> ": " <> (T.pack $ printf "%.2f\n" (getAverageScore $ albumRatings x)) <> showAlbums' xs
+          showAlbums' (x:xs) = albumName x <> ": " <> (T.pack $ printf "%d\n" (getAverageScore $ albumRatings x)) <> showAlbums' xs
 
 sortAlbums :: [Album] -> [Album]
 sortAlbums albumList = reverse $ sortOn (getAverageScore . albumRatings) albumList
