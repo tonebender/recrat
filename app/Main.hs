@@ -80,7 +80,7 @@ main = do
                             case (albumTitle, artistName) of  -- TODO: Change the case block to something better (if?)
                                 (_, "") -> case getAlbumRatings wtext of  -- One album
                                     Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> firstResultTitle <> "'"
-                                    Just alb -> Tio.putStrLn $ showRatings $ filterRatings critic alb
+                                    Just alb -> Tio.putStr $ showRatings $ filterRatings critic alb
                                 ("", _) -> do
                                     eitherArtist <- getAlbums wtext category              -- Artist/discography
                                     case eitherArtist of
