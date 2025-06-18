@@ -39,17 +39,22 @@ data Artist = Artist
 
 data ArtistError = NoArtistFound | AlbumsRequestFailed
 
+-- Get the artist name as Text
 showArtistName :: Artist -> Text
 showArtistName artist = wikiLabel $ name artist
 
+-- Return a Text with artist's album titles and their ratings,
+-- with titles left-justified and ratings right-justified
 showAlbums :: Artist -> Text
 showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $ albums artist
     where showAlbums' _ [] = T.empty
           showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x) <> (T.pack $ printf "%d\n" (getAverageScore $ albumRatings x)) <> showAlbums' padding xs
 
+-- Sort albums in list according to their average scores (ratings), highest score first
 sortAlbums :: [Album] -> [Album]
 sortAlbums albumList = reverse $ sortOn (getAverageScore . albumRatings) albumList
 
+-- Return the length of the longest name of all albums in list
 longestName :: [Album] -> Int
 longestName albums' = case listToMaybe $ reverse $ sort $ map (T.length . albumName) albums' of
     Nothing -> 0
