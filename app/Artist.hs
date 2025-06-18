@@ -45,6 +45,8 @@ data ArtistError = NoArtistFound | AlbumsRequestFailed
 showArtistName :: Artist -> Text
 showArtistName artist = wikiLabel $ name artist
 
+-- TODO: Integrate this function in showAlbums?
+-- Show artist's albums after filtering the list on critic name
 showFilteredAlbums :: Text -> Artist -> Text
 showFilteredAlbums filterQuery artist = showAlbums $ Artist (name artist) (map (filterRatings filterQuery) (albums artist))
 
