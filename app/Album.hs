@@ -7,6 +7,7 @@ module Album (
     , getAlbumRatings
     , getAverageScore
     , showRatings
+    , filterRatings
 ) where
 
 import Data.Maybe (catMaybes)
@@ -29,7 +30,7 @@ data Rating = Rating
     { ratio :: Double
     , score :: Double
     , maxScore :: Double
-    , title :: Text
+    , criticName :: Text
     , ref :: Text
     } deriving (Show)
 
@@ -44,12 +45,12 @@ getAlbumRatings wikip =
                     Left _ -> Just $ Album (wikiLabel albName <> " (no ratings)") []  -- We keep named albums with failed ratings
             where findRatingsBlock w = T.isInfixOf "{{Music ratings" w || T.isInfixOf "{{Album ratings" w || T.isInfixOf "{{Album reviews" w
 
--- Take an Album and create a Text where the first line is its title
+-- Take an Album and create a Text where the first line is its critic name
 -- and subsequent lines contain its ratings, e.g. "Allmusic: 0.8"
 showRatings :: Album -> Text
 showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
     where showRatings' [] = ""
-          showRatings' (x:xs) = T.pack (printf "%s: %d\n" (title x) (ratioToPercent $ ratio x)) <> showRatings' xs
+          showRatings' (x:xs) = T.pack (printf "%s: %d\n" (criticName x) (ratioToPercent $ ratio x)) <> showRatings' xs
 
 -- Take a list of ratings and return the average score (ratio) of all of them, converted to percentage
 -- (return 0 if list is empty)
@@ -60,6 +61,10 @@ getAverageScore scores = ratioToPercent $ (sum [ratio s | s <- scores]) / (fromI
 -- Convert value from Double with decimals to 100 times that, without decimals
 ratioToPercent :: Double -> Int
 ratioToPercent r = fromInteger $ round $ r * (10^(2::Int))
+
+filterRatings :: Text -> Album -> Album
+filterRatings "" album = album
+filterRatings subText album = Album (albumName album) (filter (T.isInfixOf (T.toCaseFold subText) . T.toCaseFold . criticName) $ albumRatings album)
 
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
@@ -77,13 +82,13 @@ reviewParser :: P.Parsec Text () (Maybe Rating)
 reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
     -- In the title, '' around it are optional, but [[ ]] is not
-    title' <- P.optional (P.string "''") *> P.string "[[" *> P.manyTill P.anyChar (P.try (P.string "|" <|> P.string "]]")) <* P.manyTill P.anyChar (P.string "\n")
+    critic' <- P.optional (P.string "''") *> P.string "[[" *> P.manyTill P.anyChar (P.try (P.string "|" <|> P.string "]]")) <* P.manyTill P.anyChar (P.string "\n")
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
     _ <- P.optional noteParser
     reftag <- (P.try refParser) <|> refSingle <|> (P.string "\n")
     case (scr, maxScr) of
-        (Just scr', Just maxScr') -> return $ Just $ Rating (scr' / maxScr') scr' maxScr' (T.pack title') (T.pack reftag)
+        (Just scr', Just maxScr') -> return $ Just $ Rating (scr' / maxScr') scr' maxScr' (T.pack critic') (T.pack reftag)
         (_, _) -> return Nothing
 
 -- Parser for scores that look like this: {{Rating|3.5|5}}

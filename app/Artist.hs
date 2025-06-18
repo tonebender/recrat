@@ -4,6 +4,7 @@ module Artist (
     getAlbums
     , showArtistName
     , showAlbums
+    , showFilteredAlbums
     , ArtistError (NoArtistFound, AlbumsRequestFailed)
 ) where
 
@@ -29,7 +30,8 @@ import Album (Album
     , getAlbumRatings
     , getAverageScore
     , albumName
-    , albumRatings)
+    , albumRatings
+    , filterRatings)
 
 
 data Artist = Artist
@@ -43,7 +45,10 @@ data ArtistError = NoArtistFound | AlbumsRequestFailed
 showArtistName :: Artist -> Text
 showArtistName artist = wikiLabel $ name artist
 
--- Return a Text with artist's album titles and their ratings,
+showFilteredAlbums :: Text -> Artist -> Text
+showFilteredAlbums filterQuery artist = showAlbums $ Artist (name artist) (map (filterRatings filterQuery) (albums artist))
+
+-- Return a Text with album titles and their ratings,
 -- with titles left-justified and ratings right-justified
 showAlbums :: Artist -> Text
 showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $ albums artist

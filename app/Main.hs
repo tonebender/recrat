@@ -21,6 +21,7 @@ data Inputargs = Inputargs
     { optAlbum :: Text
     , optArtist :: Text
     , optCategory :: Text
+    , optCritic :: Text
     }
 
 -- Parser for command line arguments
@@ -41,6 +42,11 @@ commandLineParser = Inputargs
         <> value "Studio"
         <> metavar "CATEGORY"
         <> help "A subsection of the artist discography, such as \"studio\" or \"live\"")
+    <*> strOption
+        (long "critic"
+        <> value ""
+        <> metavar "CRITIC"
+        <> help "Include ratings only from sources with names containing this string")
 
 -- Help text and info for command line
 appDescription :: ParserInfo Inputargs
@@ -57,6 +63,7 @@ main = do
     let albumTitle = optAlbum inputargs
     let artistName = optArtist inputargs
     let category = optCategory inputargs
+    let critic = optCritic inputargs
     let query = if (albumTitle /= T.empty) then albumTitle else artistName <> " discography"
     maybeWikiresults <- requestWikiSearch query
     case maybeWikiresults of
@@ -73,7 +80,7 @@ main = do
                             case (albumTitle, artistName) of  -- TODO: Change the case block to something better (if?)
                                 (_, "") -> case getAlbumRatings wtext of  -- One album
                                     Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> firstResultTitle <> "'"
-                                    Just alb -> Tio.putStrLn $ showRatings alb
+                                    Just alb -> Tio.putStrLn $ showRatings $ filterRatings critic alb
                                 ("", _) -> do
                                     eitherArtist <- getAlbums wtext category              -- Artist/discography
                                     case eitherArtist of
@@ -81,5 +88,5 @@ main = do
                                         Left NoArtistFound -> Tio.putStrLn $ firstResultTitle <> " does not appear to be an artist"
                                         Right artist -> do
                                             Tio.putStrLn $ showArtistName artist
-                                            Tio.putStr $ showAlbums artist
+                                            Tio.putStr $ showFilteredAlbums critic artist
                                 (_, _) -> putStrLn "No album title or artist/band specified."
