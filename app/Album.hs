@@ -11,7 +11,7 @@ module Album (
     , musicRatingsParser2
 ) where
 
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, listToMaybe)
 import Data.Text.Internal (Text)
 import Options.Applicative ((<|>))
 import Text.Printf (printf)
@@ -29,6 +29,11 @@ import Wiki (parseInfobox
 data Album = Album
     { albumName :: Text
     , albumRatings :: [Rating]
+    } deriving (Show)
+
+data Album2 = Album2
+    { albumName2 :: Text
+    , albumRatings2 :: [[Rating]]
     } deriving (Show)
 
 -- Type for one review
@@ -50,7 +55,25 @@ getAlbumRatings wikip =
                     Right ratings -> Just $ Album (wikiLabel albName) ratings
                     Left _ -> Just $ Album (wikiLabel albName <> " (no ratings)") []  -- We keep named albums with failed ratings
             where findRatingsBlock = T.isInfixOf "{{**"
-                  wikip' = T.replace "{{Music ratings" "{{**" $ T.replace "{{Album ratings" "{{**" $ T.replace "{{Album reviews" "{{**" wikip
+                  wikip' = equalizeRatingTempl wikip
+
+getAlbumRatings2 :: Text -> Maybe Album2
+getAlbumRatings2 wikip =
+    case findInfoboxProperty "name" (parseInfobox wikip) of
+        Nothing -> Nothing  -- Doesn't seem to be an album at all
+        Just albName -> case getAllRatingBlocks $ equalizeRatingTempl wikip of
+            [] -> Just $ Album2 (wikiLabel albName <> " (no ratings)") []  -- We keep named albums without ratings
+            ratBlocks -> Just $ Album2 (wikiLabel albName) (map applyParser ratBlocks)
+                where applyParser r = case P.parse musicRatingsParser (show $ wikiLabel albName) r of
+                          Right ratings -> ratings
+                          Left _ -> []  -- We keep named albums with failed ratings
+
+equalizeRatingTempl :: Text -> Text
+equalizeRatingTempl = T.replace "{{Music ratings" "{{**" . T.replace "{{Album ratings" "{{**" . T.replace "{{Album reviews" "{{**"
+
+-- Get a list of the contents of all music ratings blocks in the given wiki page
+getAllRatingBlocks :: Text -> [Text]
+getAllRatingBlocks wikip = catMaybes $ map listToMaybe $ map (take 1 . T.splitOn "}}") $ drop 1 $ T.splitOn "{{**" wikip
 
 -- Take an Album and create a Text where the first line is its critic name
 -- and subsequent lines contain its ratings, e.g. "Allmusic: 0.8"
@@ -89,12 +112,10 @@ musicRatingsParser = do
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
     return $ catMaybes revs
 
--- Only for testing
-musicRatingsParser2 :: P.Parsec Text () [Maybe Rating]
+musicRatingsParser2 :: P.Parsec Text () [Rating]
 musicRatingsParser2 = do
-    _ <- P.manyTill P.anyChar (P.try (P.string "{{**\n"))
-    revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
-    return revs
+    revs <- P.many (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing))
+    return $ catMaybes revs
 
 -- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.
