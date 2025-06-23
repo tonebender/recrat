@@ -58,10 +58,16 @@ getAverageScore :: [Rating] -> Int
 getAverageScore [] = 0
 getAverageScore scores = ratioToPercent $ (sum [ratio s | s <- scores]) / (fromIntegral (length scores))
 
+-- Simple helper to change scores to something mathematically useful,
+-- based on zero, e.g. score 1 to 5 becomes 0 to 4, and 1 to 10 becomes 0 to 9.
+normaliseScore :: (Double, Double) -> (Double, Double)
+normaliseScore (scr, maxScr) = (scr - 1, maxScr - 1)
+
 -- Convert value from Double with decimals to 100 times that, without decimals
 ratioToPercent :: Double -> Int
 ratioToPercent r = fromInteger $ round $ r * (10^(2::Int))
 
+-- Filter out ratings that don't include subText within their critic names
 filterRatings :: Text -> Album -> Album
 filterRatings "" album = album
 filterRatings subText album = Album (albumName album) (filter (T.isInfixOf (T.toCaseFold subText) . T.toCaseFold . criticName) $ albumRatings album)
@@ -92,11 +98,6 @@ reviewParser = do
             let (nScore, nMaxScore) = normaliseScore (scr', maxScr')
             return $ Just $ Rating (nScore / nMaxScore) nScore nMaxScore (T.pack critic') (T.pack reftag)
         (_, _) -> return Nothing
-
--- Simple helper to change scores to something mathematically useful,
--- based on zero, e.g. score 1 to 5 becomes 0 to 4, and 1 to 10 becomes 0 to 9.
-normaliseScore :: (Double, Double) -> (Double, Double)
-normaliseScore (scr, maxScr) = (scr - 1, maxScr - 1)
 
 -- Parser for scores that look like this: {{Rating|3.5|5}}
 scoreInRatingTemplParser :: P.Parsec Text () (Maybe Double, Maybe Double)
