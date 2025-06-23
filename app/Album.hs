@@ -44,12 +44,13 @@ getAlbumRatings :: Text -> Maybe Album
 getAlbumRatings wikip =
     case findInfoboxProperty "name" (parseInfobox wikip) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
-        Just albName -> case findRatingsBlock wikip of
+        Just albName -> case findRatingsBlock wikip' of
                 False -> Just $ Album (wikiLabel albName <> " (no ratings)") []  -- We keep named albums without ratings
-                True -> case P.parse musicRatingsParser (show $ wikiLabel albName) wikip of
+                True -> case P.parse musicRatingsParser (show $ wikiLabel albName) wikip' of
                     Right ratings -> Just $ Album (wikiLabel albName) ratings
                     Left _ -> Just $ Album (wikiLabel albName <> " (no ratings)") []  -- We keep named albums with failed ratings
-            where findRatingsBlock w = T.isInfixOf "{{Music ratings" w || T.isInfixOf "{{Album ratings" w || T.isInfixOf "{{Album reviews" w
+            where findRatingsBlock = T.isInfixOf "{{**"
+                  wikip' = T.replace "{{Music ratings" "{{**" $ T.replace "{{Album ratings" "{{**" $ T.replace "{{Album reviews" "{{**" wikip
 
 -- Take an Album and create a Text where the first line is its critic name
 -- and subsequent lines contain its ratings, e.g. "Allmusic: 0.8"
@@ -84,14 +85,14 @@ filterRatings subText album = Album (albumName album) $ filter (T.isInfixOf (T.t
 -- aggregate reviews are skipped.
 musicRatingsParser :: P.Parsec Text () [Rating]
 musicRatingsParser = do
-    _ <- P.manyTill P.anyChar ((P.try (P.string "{{Music ratings\n")) <|> (P.try (P.string "{{Album ratings\n")) <|> (P.try (P.string "{{Album reviews\n")))
+    _ <- P.manyTill P.anyChar (P.try (P.string "{{**\n"))
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
     return $ catMaybes revs
 
 -- Only for testing
 musicRatingsParser2 :: P.Parsec Text () [Maybe Rating]
 musicRatingsParser2 = do
-    _ <- P.manyTill P.anyChar ((P.try (P.string "{{Music ratings\n")) <|> (P.try (P.string "{{Album ratings\n")) <|> (P.try (P.string "{{Album reviews\n")))
+    _ <- P.manyTill P.anyChar (P.try (P.string "{{**\n"))
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
     return revs
 
