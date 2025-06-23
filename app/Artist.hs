@@ -50,12 +50,17 @@ showArtistName artist = wikiLabel $ name artist
 showFilteredAlbums :: Text -> Artist -> Text
 showFilteredAlbums filterQuery artist = showAlbums $ Artist (name artist) (map (filterRatings filterQuery) (albums artist))
 
--- Return a Text with album titles and their ratings,
--- with titles left-justified and ratings right-justified
+-- Return a Text with album titles and their average ratings followed by number of ratings,
+-- with titles left-justified and numbers right-justified
 showAlbums :: Artist -> Text
 showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $ albums artist
-    where showAlbums' _ [] = T.empty
-          showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x) <> (T.pack $ printf "%d\n" (getAverageScore $ albumRatings x)) <> showAlbums' padding xs
+    where
+        showAlbums' _ [] = T.empty
+        showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x) <> showNumbers x <> showAlbums' padding xs
+            where
+                showNumbers a = case length $ albumRatings a of
+                    0 -> "-- (0)\n"
+                    _ -> T.pack $ printf "%d (%d)\n" (getAverageScore $ albumRatings a) (length $ albumRatings a)
 
 -- Sort albums in list according to their average scores (ratings), highest score first
 sortAlbums :: [Album] -> [Album]
