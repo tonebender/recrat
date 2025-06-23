@@ -8,6 +8,7 @@ module Album (
     , getAverageScore
     , showRatings
     , filterRatings
+    , musicRatingsParser2
 ) where
 
 import Data.Maybe (catMaybes)
@@ -18,8 +19,13 @@ import Text.Read (readMaybe)
 import qualified Data.Text as T
 import qualified Text.Parsec as P
 
-import Wiki (parseInfobox, findInfoboxProperty, wikiLabel)
+import Wiki (parseInfobox
+    , findInfoboxProperty
+    , WikiAnchor
+    , wikiLabel
+    , parseWikiAnchor)
 
+-- Type for an album including a list of ratings (reviews)
 data Album = Album
     { albumName :: Text
     , albumRatings :: [Rating]
@@ -30,7 +36,7 @@ data Rating = Rating
     { ratio :: Double
     , score :: Double
     , maxScore :: Double
-    , criticName :: Text
+    , criticName :: WikiAnchor
     , ref :: Text
     } deriving (Show)
 
@@ -50,7 +56,7 @@ getAlbumRatings wikip =
 showRatings :: Album -> Text
 showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
     where showRatings' [] = ""
-          showRatings' (x:xs) = T.pack (printf "%s: %d\n" (criticName x) (ratioToPercent $ ratio x)) <> showRatings' xs
+          showRatings' (x:xs) = T.pack (printf "%s: %d\n" (wikiLabel $ criticName x) (ratioToPercent $ ratio x)) <> showRatings' xs
 
 -- Take a list of ratings and return the average score (ratio) of all of them, converted to percentage
 -- (return 0 if list is empty)
@@ -70,7 +76,7 @@ ratioToPercent r = fromInteger $ round $ r * (10^(2::Int))
 -- Filter out ratings that don't include subText within their critic names
 filterRatings :: Text -> Album -> Album
 filterRatings "" album = album
-filterRatings subText album = Album (albumName album) (filter (T.isInfixOf (T.toCaseFold subText) . T.toCaseFold . criticName) $ albumRatings album)
+filterRatings subText album = Album (albumName album) $ filter (T.isInfixOf (T.toCaseFold subText) . T.toCaseFold . wikiLabel . criticName) $ albumRatings album
 
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
@@ -82,13 +88,21 @@ musicRatingsParser = do
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
     return $ catMaybes revs
 
+-- Only for testing
+musicRatingsParser2 :: P.Parsec Text () [Maybe Rating]
+musicRatingsParser2 = do
+    _ <- P.manyTill P.anyChar ((P.try (P.string "{{Music ratings\n")) <|> (P.try (P.string "{{Album ratings\n")) <|> (P.try (P.string "{{Album reviews\n")))
+    revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
+    return revs
+
 -- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.
 reviewParser :: P.Parsec Text () (Maybe Rating)
 reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
     -- In the title, '' around it are optional, but [[ ]] is not
-    critic' <- P.optional (P.string "''") *> P.string "[[" *> P.manyTill P.anyChar (P.try (P.string "|" <|> P.string "]]")) <* P.manyTill P.anyChar (P.string "\n")
+    critic' <- P.manyTill (P.try P.anyChar) (P.string "\n")
+    -- critic' <- P.optional (P.string "''") *> P.string "[[" *> P.manyTill P.anyChar (P.try (P.string "|" <|> P.string "]]")) <* P.manyTill P.anyChar (P.string "\n")
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
     _ <- P.optional noteParser
@@ -96,7 +110,7 @@ reviewParser = do
     case (scr, maxScr) of
         (Just scr', Just maxScr') -> do
             let (nScore, nMaxScore) = normaliseScore (scr', maxScr')
-            return $ Just $ Rating (nScore / nMaxScore) nScore nMaxScore (T.pack critic') (T.pack reftag)
+            return $ Just $ Rating (nScore / nMaxScore) nScore nMaxScore (parseWikiAnchor (T.pack critic')) (T.pack reftag)
         (_, _) -> return Nothing
 
 -- Parser for scores that look like this: {{Rating|3.5|5}}
