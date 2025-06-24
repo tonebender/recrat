@@ -11,14 +11,14 @@ module Album (
     , showRatings2
     , filterRatings
     , musicRatingsParser2
-    , getAllRatingBlocks
+    , getAllratingBlocks
     , equalizeRatingTempl
     , Album2
     , albumName2
-    , albumRatings2
+    , ratingBlocks
 ) where
 
-import Data.Maybe (catMaybes, listToMaybe)
+import Data.Maybe (catMaybes)
 import Data.Text.Internal (Text)
 import Options.Applicative ((<|>))
 import Text.Printf (printf)
@@ -40,7 +40,12 @@ data Album = Album
 
 data Album2 = Album2
     { albumName2 :: Text
-    , albumRatings2 :: [[Rating]]
+    , ratingBlocks :: [RatingBlock]
+    } deriving (Show)
+
+data RatingBlock = RatingBlock
+    { header :: Text
+    , ratings :: [Rating]
     } deriving (Show)
 
 -- Type for one review
@@ -59,7 +64,7 @@ getAlbumRatings wikip =
         Just albName -> case findRatingsBlock wikip' of
                 False -> Just $ Album (wikiLabel albName <> " (no ratings)") []  -- We keep named albums without ratings
                 True -> case P.parse musicRatingsParser (show $ wikiLabel albName) wikip' of
-                    Right ratings -> Just $ Album (wikiLabel albName) ratings
+                    Right rats -> Just $ Album (wikiLabel albName) rats
                     Left _ -> Just $ Album (wikiLabel albName <> " (no ratings)") []  -- We keep named albums with failed ratings
             where findRatingsBlock = T.isInfixOf "{{**"
                   wikip' = equalizeRatingTempl wikip
@@ -68,22 +73,22 @@ getAlbumRatings2 :: Text -> Maybe Album2
 getAlbumRatings2 wikip =
     case findInfoboxProperty "name" (parseInfobox wikip) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
-        Just albName -> case getAllRatingBlocks $ equalizeRatingTempl wikip of
+        Just albName -> case getAllratingBlocks $ equalizeRatingTempl wikip of
             [] -> Just $ Album2 (wikiLabel albName <> " (no ratings)") []  -- We keep named albums without ratings
             ratBlocks -> Just $ Album2 (wikiLabel albName) (map applyParser ratBlocks)
                 where applyParser r = case P.parse musicRatingsParser2 (show $ wikiLabel albName) r of
-                          Right ratings -> ratings
-                          Left _ -> []  -- Failed ratings yield empty lists
+                          Right rats -> rats
+                          Left err -> RatingBlock ("Could not parse ratings block: " <> T.pack (show err)) []
 
 -- Change all ratings blocks headers to one single indicator (rating block contents are the same format anyway)
 equalizeRatingTempl :: Text -> Text
 equalizeRatingTempl = T.replace "{{Music ratings" "{{**" . T.replace "{{Album ratings" "{{**" . T.replace "{{Album reviews" "{{**"
 
 -- Get a list of the contents of all music ratings blocks in the given wiki page
-getAllRatingBlocks :: Text -> [Text]
-getAllRatingBlocks wikip = drop 1 $ T.splitOn "{{**" wikip
+getAllratingBlocks :: Text -> [Text]
+getAllratingBlocks wikip = drop 1 $ T.splitOn "{{**" wikip
 
--- Take an Album and create a Text where the first line is its critic name
+-- Take an Album and create a Text where the first line is the album name
 -- and subsequent lines contain its ratings, e.g. "Allmusic: 0.8"
 showRatings :: Album -> Text
 showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
@@ -91,7 +96,10 @@ showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
           showRatings' (x:xs) = T.pack (printf "%s: %d\n" (wikiLabel $ criticName x) (ratioToPercent $ ratio x)) <> showRatings' xs
 
 showRatings2 :: Album2 -> Text
-showRatings2 album = albumName2 album <> "\n" <> (T.concat $ map showRatings' $ albumRatings2 album)
+showRatings2 album = albumName2 album <> "\n" <> (T.concat $ map showRatingBlock $ ratingBlocks album)
+
+showRatingBlock :: RatingBlock -> Text
+showRatingBlock rblock = header rblock <> "\n" <> (showRatings' $ ratings rblock)
     where showRatings' [] = ""
           showRatings' (x:xs) = T.pack (printf "%s: %d\n" (wikiLabel $ criticName x) (ratioToPercent $ ratio x)) <> showRatings' xs
 
@@ -99,7 +107,7 @@ showRatings2 album = albumName2 album <> "\n" <> (T.concat $ map showRatings' $ 
 -- (return 0 if list is empty)
 getAverageScore :: [Rating] -> Int
 getAverageScore [] = 0
-getAverageScore scores = ratioToPercent $ (sum [ratio s | s <- scores]) / (fromIntegral (length scores))
+getAverageScore scores = ratioToPercent $ (sum [ratio s | s <- scores]) / (fromIntegral $ length scores)
 
 -- Simple helper to change scores to something mathematically useful,
 -- based on zero, e.g. score 1 to 5 becomes 0 to 4, and 1 to 10 becomes 0 to 9.
@@ -125,11 +133,16 @@ musicRatingsParser = do
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
     return $ catMaybes revs
 
-musicRatingsParser2 :: P.Parsec Text () [Rating]
+musicRatingsParser2 :: P.Parsec Text () RatingBlock
 musicRatingsParser2 = do
-    -- revs <- P.many (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing))
+    subtitle <- (P.try subtitleParser) <|> (return "(no subtitle)")
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
-    return $ catMaybes revs
+    return $ RatingBlock subtitle (catMaybes revs)
+
+subtitleParser :: P.Parsec Text () Text
+subtitleParser = do
+    subtitle <- P.char '|' >> P.spaces >> P.string "subtitle" >> P.spaces >> P.string "=" >> P.spaces >> P.manyTill (P.try P.anyChar) P.endOfLine
+    return $ T.pack subtitle
 
 -- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.
@@ -194,4 +207,4 @@ refSingle = (P.string "<ref") *> P.manyTill P.anyChar (P.try (P.string "/>")) <*
 
 -- Parser for note such as {{sfn|Graff|Durchholz|1999|p=88}}
 noteParser :: P.Parsec Text () String
-noteParser = P.string "{{" *> P.manyTill P.anyChar (P.string "}}") 
+noteParser = P.string "{{" *> P.manyTill P.anyChar (P.string "}}")
