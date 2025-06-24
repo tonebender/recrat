@@ -30,7 +30,7 @@ synopsis:
 -- description:
 
 -- URL for the project homepage or repository.
-homepage:           https://github.com/tonebender/album-ratings
+homepage:           https://github.com/tonebender/recrat
 
 -- The license under which the package is released.
 license:            NONE
