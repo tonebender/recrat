@@ -6,7 +6,7 @@ module Wiki (
     , requestWikiPages
     , parseInfobox
     , findInfoboxProperty
-    , WikiAnchor
+    , WikiAnchor (WikiAnchor)
     , wikiURI
     , wikiLabel
     , getWikiAnchor

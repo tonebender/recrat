@@ -8,17 +8,18 @@ module Album (
     , getAlbumRatings2
     , getAverageScore
     , showRatings
-    , showRatings2
+    , showAlbum
     , filterRatings
     , musicRatingsParser2
-    , getAllratingBlocks
+    , getAllRatingBlocks
     , equalizeRatingTempl
     , Album2
     , albumName2
     , ratingBlocks
 ) where
 
-import Data.Maybe (catMaybes)
+import Data.List (sort)
+import Data.Maybe (catMaybes, listToMaybe)
 import Data.Text.Internal (Text)
 import Options.Applicative ((<|>))
 import Text.Printf (printf)
@@ -28,7 +29,7 @@ import qualified Text.Parsec as P
 
 import Wiki (parseInfobox
     , findInfoboxProperty
-    , WikiAnchor
+    , WikiAnchor (WikiAnchor)
     , wikiLabel
     , parseWikiAnchor)
 
@@ -40,6 +41,7 @@ data Album = Album
 
 data Album2 = Album2
     { albumName2 :: Text
+    , artistName :: WikiAnchor
     , ratingBlocks :: [RatingBlock]
     } deriving (Show)
 
@@ -73,20 +75,24 @@ getAlbumRatings2 :: Text -> Maybe Album2
 getAlbumRatings2 wikip =
     case findInfoboxProperty "name" (parseInfobox wikip) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
-        Just albName -> case getAllratingBlocks $ equalizeRatingTempl wikip of
-            [] -> Just $ Album2 (wikiLabel albName <> " (no ratings)") []  -- We keep named albums without ratings
-            ratBlocks -> Just $ Album2 (wikiLabel albName) (map applyParser ratBlocks)
-                where applyParser r = case P.parse musicRatingsParser2 (show $ wikiLabel albName) r of
-                          Right rats -> rats
-                          Left err -> RatingBlock ("Could not parse ratings block: " <> T.pack (show err)) []
+        Just albName -> case getAllRatingBlocks $ equalizeRatingTempl wikip of  -- TODO: Move equalize into getAllRatingBlocks
+            [] -> Just $ Album2 (wikiLabel albName <> " (no ratings)") (getArtistName wikip) []  -- We keep albums without ratings
+            ratBlocks -> Just $ Album2 (wikiLabel albName) (getArtistName wikip) (map applyParser ratBlocks)
+            where
+                  applyParser r = case P.parse musicRatingsParser2 (show $ wikiLabel albName) r of
+                      Right rats -> rats
+                      Left err -> RatingBlock ("Could not parse ratings block: " <> T.pack (show err)) []
+                  getArtistName w = case findInfoboxProperty "artist" (parseInfobox w) of
+                      Nothing -> WikiAnchor "" "(no artist name)"
+                      Just artName -> artName
 
 -- Change all ratings blocks headers to one single indicator (rating block contents are the same format anyway)
 equalizeRatingTempl :: Text -> Text
 equalizeRatingTempl = T.replace "{{Music ratings" "{{**" . T.replace "{{Album ratings" "{{**" . T.replace "{{Album reviews" "{{**"
 
 -- Get a list of the contents of all music ratings blocks in the given wiki page
-getAllratingBlocks :: Text -> [Text]
-getAllratingBlocks wikip = drop 1 $ T.splitOn "{{**\n" wikip
+getAllRatingBlocks :: Text -> [Text]
+getAllRatingBlocks wikip = drop 1 $ T.splitOn "{{**\n" wikip
 
 -- Take an Album and create a Text where the first line is the album name
 -- and subsequent lines contain its ratings, e.g. "Allmusic: 0.8"
@@ -95,13 +101,16 @@ showRatings album = albumName album <> "\n" <> showRatings' (albumRatings album)
     where showRatings' [] = ""
           showRatings' (x:xs) = T.pack (printf "%s: %d\n" (wikiLabel $ criticName x) (ratioToPercent $ ratio x)) <> showRatings' xs
 
-showRatings2 :: Album2 -> Text
-showRatings2 album = albumName2 album <> "\n" <> (T.concat $ map showRatingBlock $ ratingBlocks album)
+showAlbum :: Album2 -> Text
+showAlbum album = (wikiLabel . artistName $ album) <> " - " <> albumName2 album <> "\n" <> (T.concat $ map showRatingBlock $ ratingBlocks album)
 
 showRatingBlock :: RatingBlock -> Text
-showRatingBlock rblock = header rblock <> "\n" <> (showRatings' $ ratings rblock)
-    where showRatings' [] = ""
-          showRatings' (x:xs) = T.pack (printf "%s: %d\n" (wikiLabel $ criticName x) (ratioToPercent $ ratio x)) <> showRatings' xs
+showRatingBlock rblock = header rblock <> "\n" <> (showRatings' (longestCriticName rblock + 2) $ ratings rblock)
+    where showRatings' _ [] = ""
+          showRatings' padding (x:xs) = "  " <> T.justifyLeft padding ' ' (wikiLabel $ criticName x) <> T.pack (printf "%d\n" (ratioToPercent $ ratio x)) <> showRatings' padding xs
+          longestCriticName block' = case listToMaybe $ reverse $ sort $ map (T.length . wikiLabel . criticName) $ ratings block' of
+              Nothing -> 0
+              Just x -> x
 
 -- Take a list of ratings and return the average score (ratio) of all of them, converted to percentage
 -- (return 0 if list is empty)
@@ -142,7 +151,7 @@ musicRatingsParser2 = do
 subtitleParser :: P.Parsec Text () Text
 subtitleParser = do
     subtitle <- P.char '|' >> P.spaces >> P.string "subtitle" >> P.spaces >> P.string "=" >> P.spaces >> P.manyTill (P.try P.anyChar) P.endOfLine
-    return $ T.pack subtitle
+    return $ T.replace "'" "" $ T.pack subtitle
 
 -- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.
