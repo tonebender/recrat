@@ -86,7 +86,7 @@ equalizeRatingTempl = T.replace "{{Music ratings" "{{**" . T.replace "{{Album ra
 
 -- Get a list of the contents of all music ratings blocks in the given wiki page
 getAllratingBlocks :: Text -> [Text]
-getAllratingBlocks wikip = drop 1 $ T.splitOn "{{**" wikip
+getAllratingBlocks wikip = drop 1 $ T.splitOn "{{**\n" wikip
 
 -- Take an Album and create a Text where the first line is the album name
 -- and subsequent lines contain its ratings, e.g. "Allmusic: 0.8"
@@ -135,7 +135,7 @@ musicRatingsParser = do
 
 musicRatingsParser2 :: P.Parsec Text () RatingBlock
 musicRatingsParser2 = do
-    subtitle <- (P.try subtitleParser) <|> (return "(no subtitle)")
+    subtitle <- (P.optional P.endOfLine) >> (P.try subtitleParser) <|> (return "(no subtitle)")
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
     return $ RatingBlock subtitle (catMaybes revs)
 
