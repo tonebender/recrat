@@ -4,7 +4,7 @@ module Artist (
     getAlbums
     , showArtistName
     , showAlbums
-    , showFilteredAlbums
+ --   , showFilteredAlbums
     , ArtistError (NoArtistFound, AlbumsRequestFailed)
 ) where
 
@@ -30,7 +30,8 @@ import Album (Album
     , getAlbumRatings
     , getAverageScore
     , albumName
-    , albumRatings
+    , ratingBlocks
+    , ratings
     , filterRatings)
 
 
@@ -47,8 +48,8 @@ showArtistName artist = wikiLabel $ name artist
 
 -- TODO: Integrate this function in showAlbums?
 -- Show artist's albums after filtering the list on critic name
-showFilteredAlbums :: Text -> Artist -> Text
-showFilteredAlbums filterQuery artist = showAlbums $ Artist (name artist) (map (filterRatings filterQuery) (albums artist))
+-- showFilteredAlbums :: Text -> Artist -> Text
+-- showFilteredAlbums filterQuery artist = showAlbums $ Artist (name artist) (map (filterRatings filterQuery) (albums artist))
 
 -- Return a Text with album titles and their average ratings followed by number of ratings,
 -- with titles left-justified and numbers right-justified
@@ -58,13 +59,13 @@ showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $
         showAlbums' _ [] = T.empty
         showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x) <> showNumbers x <> showAlbums' padding xs
             where
-                showNumbers a = case length $ albumRatings a of
+                showNumbers a = case length $ concat $ map ratings $ ratingBlocks a of
                     0 -> "-- (0)\n"
-                    _ -> T.pack $ printf "%d (%d)\n" (getAverageScore $ albumRatings a) (length $ albumRatings a)
+                    _ -> T.pack $ printf "%d (%d)\n" (getAverageScore $ ratingBlocks a) (length $ concat $ map ratings $ ratingBlocks a)
 
 -- Sort albums in list according to their average scores (ratings), highest score first
 sortAlbums :: [Album] -> [Album]
-sortAlbums albumList = reverse $ sortOn (getAverageScore . albumRatings) albumList
+sortAlbums albumList = reverse $ sortOn (getAverageScore . ratingBlocks) albumList
 
 -- Return the length of the longest name of all albums in list
 longestName :: [Album] -> Int

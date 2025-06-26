@@ -6,7 +6,6 @@ module Main where
 import Control.Lens
 import Data.Aeson.Lens (_String, _Array, key, nth)
 import Data.Text.Internal (Text)
-import Data.Maybe (catMaybes)
 import Options.Applicative
 import qualified Data.Text as T
 import qualified Data.Text.IO as Tio
@@ -78,7 +77,7 @@ main = do
                         Nothing -> Tio.putStrLn $ "Failed to fetch wikipedia page content for '" <> firstResultTitle <> "'"
                         Just wtext -> do
                             case (albumTitle, artistName) of  -- TODO: Change the case block to something better (if?)
-                                (_, "") -> case getAlbumRatings2 wtext of  -- One album
+                                (_, "") -> case getAlbumRatings wtext of  -- One album
                                     Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> firstResultTitle <> "'"
                                     Just alb -> Tio.putStr $ showAlbum $ alb -- filterRatings critic alb
                                 ("", _) -> do
@@ -88,5 +87,5 @@ main = do
                                         Left NoArtistFound -> Tio.putStrLn $ firstResultTitle <> " does not appear to be an artist"
                                         Right artist -> do
                                             Tio.putStrLn $ showArtistName artist
-                                            Tio.putStr $ showFilteredAlbums critic artist
+                                            Tio.putStr $ showAlbums artist -- showFilteredAlbums critic artist
                                 (_, _) -> putStrLn "No album title or artist/band specified."
