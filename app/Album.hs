@@ -75,20 +75,27 @@ getAllRatingBlocks wikip = drop 1 $ T.splitOn "{{**\n" wikip
 
 -- TODO: add average score at the end
 showAlbum :: Album -> Text
-showAlbum album = (wikiLabel . artistName $ album) <> " - " <> albumName album <> "\n" <> (T.concat $ map (showRatingBlock longestCriticName) $ ratingBlocks album)
-    where longestCriticName = case listToMaybe $ reverse $ sort $ map (T.length . wikiLabel . criticName) $ concat $ map ratings $ ratingBlocks album of
-              Nothing -> 0
-              Just x -> x + 2
+showAlbum album =
+    (wikiLabel . artistName $ album) <> " - " <> albumName album <> "\n"
+    <> (T.concat $ map (showRatingBlock longestCriticName) $ ratingBlocks album)
+    <> (T.justifyLeft longestCriticName ' ' "Average score") <> (T.pack $ printf "  %d\n" $ getAverageScore album)
+    where
+        longestCriticName = case listToMaybe $ reverse $ sort $ map (T.length . wikiLabel . criticName)
+            $ concat $ map ratings $ ratingBlocks album of
+                Nothing -> 0
+                Just x -> x + 2
 
 showRatingBlock :: Int -> RatingBlock -> Text
-showRatingBlock padding rblock = header rblock <> "\n" <> (showRatings' padding $ ratings rblock)
-    where showRatings' _ [] = ""
-          showRatings' pad (x:xs) = "  " <> T.justifyLeft pad ' ' (wikiLabel $ criticName x) <> T.pack (printf "%d\n" (ratioToPercent $ ratio x)) <> showRatings' pad xs
+showRatingBlock padding rblock = header rblock <> "\n" <> (showRatingsList padding $ ratings rblock)
+    where showRatingsList _ [] = ""
+          showRatingsList pad (x:xs) =
+              "  " <> T.justifyLeft pad ' ' (wikiLabel $ criticName x)
+              <> T.pack (printf "%d\n" (ratioToPercent $ ratio x)) <> showRatingsList pad xs
 
 -- Take a list of rating blocks and return the overall average score of all of them,
 -- converted to percentage
-getAverageScore :: [RatingBlock] -> Int
-getAverageScore rblocks = getAverageScore' $ concat $ map ratings rblocks  -- All blocks' ratings in one flat list
+getAverageScore :: Album -> Int
+getAverageScore album = getAverageScore' $ concat $ map ratings $ ratingBlocks album  -- All blocks' ratings in one flat list
     where getAverageScore' [] = 0
           getAverageScore' scores = ratioToPercent $ (sum [ratio s | s <- scores]) / (fromIntegral $ length scores)
 

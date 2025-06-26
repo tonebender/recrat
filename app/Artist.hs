@@ -61,11 +61,11 @@ showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $
             where
                 showNumbers a = case length $ concat $ map ratings $ ratingBlocks a of
                     0 -> "-- (0)\n"
-                    _ -> T.pack $ printf "%d (%d)\n" (getAverageScore $ ratingBlocks a) (length $ concat $ map ratings $ ratingBlocks a)
+                    _ -> T.pack $ printf "%d (%d)\n" (getAverageScore a) (length $ concat $ map ratings $ ratingBlocks a)
 
 -- Sort albums in list according to their average scores (ratings), highest score first
 sortAlbums :: [Album] -> [Album]
-sortAlbums albumList = reverse $ sortOn (getAverageScore . ratingBlocks) albumList
+sortAlbums albumList = reverse $ sortOn getAverageScore albumList
 
 -- Return the length of the longest name of all albums in list
 longestName :: [Album] -> Int
