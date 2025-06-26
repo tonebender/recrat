@@ -9,11 +9,8 @@ module Album (
     , getAverageScore
     , showAlbum
     , filterRatings
-    , musicRatingsParser
     , getAllRatingBlocks
     , equalizeRatingTempl
-    , scoreAsLetterParser
-    , reviewParser
 ) where
 
 import Data.List (sort)
