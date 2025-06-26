@@ -73,7 +73,6 @@ equalizeRatingTempl = T.replace "{{Music ratings" "{{**" . T.replace "{{Album ra
 getAllRatingBlocks :: Text -> [Text]
 getAllRatingBlocks wikip = drop 1 $ T.splitOn "{{**\n" wikip
 
--- TODO: add average score at the end
 showAlbum :: Album -> Text
 showAlbum album =
     (wikiLabel . artistName $ album) <> " - " <> albumName album <> "\n"
@@ -136,7 +135,7 @@ reviewParser = do
     critic' <- P.manyTill (P.try P.anyChar) ((P.string "{{" >> (P.manyTill (P.try P.anyChar) P.endOfLine)) <|> P.string "\n")
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
-    _ <- P.optional noteParser
+    _ <- P.spaces >> P.optional noteParser
     reftag <- (P.try refParser) <|> refSingle <|> (P.string "\n")
     case (scr, maxScr) of
         (Just scr', Just maxScr') -> do
