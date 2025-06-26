@@ -73,18 +73,17 @@ equalizeRatingTempl = T.replace "{{Music ratings" "{{**" . T.replace "{{Album ra
 getAllRatingBlocks :: Text -> [Text]
 getAllRatingBlocks wikip = drop 1 $ T.splitOn "{{**\n" wikip
 
--- TODO: Move longestCriticName to hear (let it operate on all rating blocks flattened)
---       and add average score at the end
+-- TODO: add average score at the end
 showAlbum :: Album -> Text
-showAlbum album = (wikiLabel . artistName $ album) <> " - " <> albumName album <> "\n" <> (T.concat $ map showRatingBlock $ ratingBlocks album)
-
-showRatingBlock :: RatingBlock -> Text
-showRatingBlock rblock = header rblock <> "\n" <> (showRatings' (longestCriticName rblock + 2) $ ratings rblock)
-    where showRatings' _ [] = ""
-          showRatings' padding (x:xs) = "  " <> T.justifyLeft padding ' ' (wikiLabel $ criticName x) <> T.pack (printf "%d\n" (ratioToPercent $ ratio x)) <> showRatings' padding xs
-          longestCriticName block' = case listToMaybe $ reverse $ sort $ map (T.length . wikiLabel . criticName) $ ratings block' of
+showAlbum album = (wikiLabel . artistName $ album) <> " - " <> albumName album <> "\n" <> (T.concat $ map (showRatingBlock longestCriticName) $ ratingBlocks album)
+    where longestCriticName = case listToMaybe $ reverse $ sort $ map (T.length . wikiLabel . criticName) $ concat $ map ratings $ ratingBlocks album of
               Nothing -> 0
-              Just x -> x
+              Just x -> x + 2
+
+showRatingBlock :: Int -> RatingBlock -> Text
+showRatingBlock padding rblock = header rblock <> "\n" <> (showRatings' padding $ ratings rblock)
+    where showRatings' _ [] = ""
+          showRatings' pad (x:xs) = "  " <> T.justifyLeft pad ' ' (wikiLabel $ criticName x) <> T.pack (printf "%d\n" (ratioToPercent $ ratio x)) <> showRatings' pad xs
 
 -- Take a list of rating blocks and return the overall average score of all of them,
 -- converted to percentage
