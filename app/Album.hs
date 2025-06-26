@@ -12,6 +12,8 @@ module Album (
     , musicRatingsParser
     , getAllRatingBlocks
     , equalizeRatingTempl
+    , scoreAsLetterParser
+    , reviewParser
 ) where
 
 import Data.List (sort)
@@ -146,7 +148,7 @@ scoreInRatingTemplParser = do
     scr <- P.many1 (P.digit <|> P.char '.')
     _ <- P.char '|'
     mx <- P.many1 P.digit
-    _ <- P.string "}}"
+    _ <- P.manyTill P.anyChar (P.string "}}")
     return (readMaybe scr, readMaybe mx)
 
 -- Parser for scores that look like this: 5.5/10
@@ -163,6 +165,7 @@ scoreAsLetterParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreAsLetterParser = do
     letter <- P.oneOf "ABCDE"
     sign <- P.optionMaybe (P.oneOf "+-−")
+    _ <- P.many (P.noneOf ("<{\n" :: String))
     let s = case sign of
          Just '+' -> 1
          Just _ -> (-1)
