@@ -6,6 +6,7 @@ module Artist (
     , showAlbums
  --   , showFilteredAlbums
     , ArtistError (NoArtistFound, AlbumsRequestFailed)
+    , parseDiscographyAlbums
 ) where
 
 import Control.Lens ((^.), (^..))
@@ -101,7 +102,7 @@ parseDiscographyAlbums disco category =
     let subtitle = findDiscoSubtitle (T.lines disco) category in
     case drop 1 $ T.splitOn subtitle disco of
         [] -> []
-        a:_ -> case T.splitOn "|}" a of  -- End of table
+        a:_ -> case T.splitOn "|}\n" a of  -- End of table
             [] -> []
             b:_ -> parseWikiAnchor <$> getWikiAnchor <$> (filterAlbums $ T.lines b)
 
