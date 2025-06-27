@@ -32,7 +32,7 @@ import Album (
       Album
     , getAlbumRatings
     , getAverageScore
-    , getNumberOfRatings
+    , getRatingsFlat
     , albumName
     , ratingBlocks
     , ratings
@@ -76,7 +76,7 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
                avr2 = getAverageScore album2 in
            if avr1 > avr2 then GT
            else if avr1 < avr2 then LT
-           else if getNumberOfRatings album1 < getNumberOfRatings album2 then LT
+           else if (length $ getRatingsFlat album1) < (length $ getRatingsFlat album2) then LT
            else GT
 
 -- Return the length of the longest name of all albums in list

@@ -7,7 +7,7 @@ module Album (
     , ratings
     , getAlbumRatings
     , getAverageScore
-    , getNumberOfRatings
+    , getRatingsFlat
     , showAlbum
     , filterRatings
 ) where
@@ -79,10 +79,9 @@ showAlbum album =
     <> (T.concat $ map (showRatingBlock longestCriticName) $ ratingBlocks album)
     <> (T.justifyLeft longestCriticName ' ' "Average score") <> (T.pack $ printf "  %3d\n" $ getAverageScore album)
     where
-        longestCriticName = case listToMaybe $ reverse $ sort $ map (T.length . wikiLabel . criticName)
-            $ concat $ map ratings $ ratingBlocks album of
-                Nothing -> 0
-                Just x -> x + 2
+        longestCriticName = case listToMaybe $ reverse $ sort $ map (T.length . wikiLabel . criticName) $ getRatingsFlat album of
+            Nothing -> 0
+            Just x -> x + 2
 
 showRatingBlock :: Int -> RatingBlock -> Text
 showRatingBlock padding rblock = header rblock <> "\n" <> (showRatingsList padding $ ratings rblock)
@@ -94,13 +93,13 @@ showRatingBlock padding rblock = header rblock <> "\n" <> (showRatingsList paddi
 -- Take a list of rating blocks and return the overall average score of all of them,
 -- converted to percentage
 getAverageScore :: Album -> Int
-getAverageScore album = getAverageScore' $ concat $ map ratings $ ratingBlocks album  -- All blocks' ratings in one flat list
+getAverageScore album = getAverageScore' $ getRatingsFlat album  -- All blocks' ratings in one flat list
     where getAverageScore' [] = 0
           getAverageScore' scores = ratioToPercent $ (sum [ratio s | s <- scores]) / (fromIntegral $ length scores)
 
 -- Return the total number of ratings (from all rating blocks) for an album
-getNumberOfRatings :: Album -> Int
-getNumberOfRatings album = length $ concat $ map ratings $ ratingBlocks album
+getRatingsFlat :: Album -> [Rating]
+getRatingsFlat album = concat $ map ratings $ ratingBlocks album
 
 -- Simple helper to change scores to something mathematically useful,
 -- based on zero, e.g. score 1 to 5 becomes 0 to 4, and 1 to 10 becomes 0 to 9.
@@ -114,7 +113,8 @@ ratioToPercent r = fromInteger $ round $ r * (10^(2::Int))
 -- Filter out ratings that don't include subText within their critic names
 filterRatings :: Text -> RatingBlock -> RatingBlock
 filterRatings "" rblock = rblock
-filterRatings subText rblock = RatingBlock (header rblock) $ filter (T.isInfixOf (T.toCaseFold subText) . T.toCaseFold . wikiLabel . criticName) $ ratings rblock
+filterRatings subText rblock = RatingBlock (header rblock)
+    $ filter (T.isInfixOf (T.toCaseFold subText) . T.toCaseFold . wikiLabel . criticName) $ ratings rblock
 
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
