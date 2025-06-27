@@ -77,7 +77,7 @@ showAlbum :: Album -> Text
 showAlbum album =
     (wikiLabel . artistName $ album) <> " - " <> albumName album <> "\n"
     <> (T.concat $ map (showRatingBlock longestCriticName) $ ratingBlocks album)
-    <> (T.justifyLeft longestCriticName ' ' "Average score") <> (T.pack $ printf "  %d\n" $ getAverageScore album)
+    <> (T.justifyLeft longestCriticName ' ' "Average score") <> (T.pack $ printf "  %3d\n" $ getAverageScore album)
     where
         longestCriticName = case listToMaybe $ reverse $ sort $ map (T.length . wikiLabel . criticName)
             $ concat $ map ratings $ ratingBlocks album of
@@ -89,7 +89,7 @@ showRatingBlock padding rblock = header rblock <> "\n" <> (showRatingsList paddi
     where showRatingsList _ [] = ""
           showRatingsList pad (x:xs) =
               "  " <> T.justifyLeft pad ' ' (wikiLabel $ criticName x)
-              <> T.pack (printf "%d\n" (ratioToPercent $ ratio x)) <> showRatingsList pad xs
+              <> T.pack (printf "%3d\n" (ratioToPercent $ ratio x)) <> showRatingsList pad xs
 
 -- Take a list of rating blocks and return the overall average score of all of them,
 -- converted to percentage
