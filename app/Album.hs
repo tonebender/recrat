@@ -1,16 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Album (
-    Album
+      Album
     , albumName
     , ratingBlocks
     , ratings
     , getAlbumRatings
     , getAverageScore
+    , getNumberOfRatings
     , showAlbum
     , filterRatings
-    , getAllRatingBlocks
-    , equalizeRatingTempl
 ) where
 
 import Data.List (sort)
@@ -22,7 +21,8 @@ import Text.Read (readMaybe)
 import qualified Data.Text as T
 import qualified Text.Parsec as P
 
-import Wiki (parseInfobox
+import Wiki (
+      parseInfobox
     , findInfoboxProperty
     , WikiAnchor (WikiAnchor)
     , wikiLabel
@@ -97,6 +97,10 @@ getAverageScore :: Album -> Int
 getAverageScore album = getAverageScore' $ concat $ map ratings $ ratingBlocks album  -- All blocks' ratings in one flat list
     where getAverageScore' [] = 0
           getAverageScore' scores = ratioToPercent $ (sum [ratio s | s <- scores]) / (fromIntegral $ length scores)
+
+-- Return the total number of ratings (from all rating blocks) for an album
+getNumberOfRatings :: Album -> Int
+getNumberOfRatings album = length $ concat $ map ratings $ ratingBlocks album
 
 -- Simple helper to change scores to something mathematically useful,
 -- based on zero, e.g. score 1 to 5 becomes 0 to 4, and 1 to 10 becomes 0 to 9.

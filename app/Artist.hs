@@ -12,13 +12,14 @@ module Artist (
 import Control.Lens ((^.), (^..))
 import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key, nth, values)
-import Data.List (sort, sortOn)
+import Data.List (sort, sortBy)
 import Data.Maybe (catMaybes, listToMaybe)
 import Text.Printf (printf)
 import qualified Data.Text as T
 import Data.Text.Internal (Text)
 
-import Wiki (requestWikiPages
+import Wiki (
+      requestWikiPages
     , parseInfobox
     , findInfoboxProperty
     , WikiAnchor
@@ -27,9 +28,11 @@ import Wiki (requestWikiPages
     , wikiURI
     , wikiLabel)
 
-import Album (Album
+import Album (
+      Album
     , getAlbumRatings
     , getAverageScore
+    , getNumberOfRatings
     , albumName
     , ratingBlocks
     , ratings
@@ -62,11 +65,19 @@ showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $
             where
                 showNumbers a = case length $ concat $ map ratings $ ratingBlocks a of
                     0 -> "-- (0)\n"
-                    _ -> T.pack $ printf "%3d (%2d)\n" (getAverageScore a) (length $ concat $ map ratings $ ratingBlocks a)
+                    _ -> T.pack $ printf "%3d (%d)\n" (getAverageScore a) (length $ concat $ map ratings $ ratingBlocks a)
 
--- Sort albums in list according to their average scores (ratings), highest score first
+-- Sort albums in list according to their average score, and, when score is equal,
+-- according to their number of ratings (more ratings -> higher rank)
 sortAlbums :: [Album] -> [Album]
-sortAlbums albumList = reverse $ sortOn getAverageScore albumList
+sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
+    where weightedCriteria album1 album2 =
+           let avr1 = getAverageScore album1
+               avr2 = getAverageScore album2 in
+           if avr1 > avr2 then GT
+           else if avr1 < avr2 then LT
+           else if getNumberOfRatings album1 < getNumberOfRatings album2 then LT
+           else GT
 
 -- Return the length of the longest name of all albums in list
 longestName :: [Album] -> Int
