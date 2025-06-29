@@ -20,6 +20,7 @@ import Text.Printf (printf)
 import Text.Read (readMaybe)
 import qualified Data.Text as T
 import qualified Text.Parsec as P
+import qualified Text.HTMLEntity as HTML (decode')
 
 import Wiki (
       parseInfobox
@@ -57,7 +58,7 @@ getAlbumRatings wikip =
     case findInfoboxProperty "name" (parseInfobox wikip) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
         Just albName -> case getAllRatingBlocks wikip of
-            [] -> Just $ Album (wikiLabel albName <> " (no ratings)") (getArtistName wikip) []  -- We keep albums without ratings
+            [] -> Just $ Album (wikiLabel albName) (getArtistName wikip) []  -- We keep albums without ratings
             ratBlocks -> Just $ Album (wikiLabel albName) (getArtistName wikip) (map applyParser ratBlocks)
             where
                   applyParser r = case P.parse musicRatingsParser (show $ wikiLabel albName) r of
@@ -134,7 +135,7 @@ musicRatingsParser = do
 subtitleParser :: P.Parsec Text () Text
 subtitleParser = do
     subtitle <- P.char '|' >> P.spaces >> P.string "subtitle" >> P.spaces >> P.string "=" >> P.spaces >> P.manyTill (P.try P.anyChar) P.endOfLine
-    return $ T.replace "'" "" $ T.pack subtitle
+    return $ HTML.decode' . T.replace "'" "" . T.pack $ subtitle
 
 -- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.

@@ -20,6 +20,7 @@ import Data.Text.Internal (Text)
 import qualified Network.Wreq as W (getWith, defaults, params, param, header, responseBody)
 import qualified Data.Text as T
 import Data.Maybe (catMaybes, listToMaybe)
+import qualified Text.HTMLEntity as HTML (decode')
 
 wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
@@ -90,7 +91,10 @@ parseInfobox text =
 -- If no [[ ]] found, return WikiAnchor with only the label part set.
 parseWikiAnchor :: Text -> WikiAnchor
 parseWikiAnchor markup =
-    let anchor = T.replace "''" "" markup in
+    let anchor = HTML.decode'
+               . T.replace "''" ""
+               . T.replace "<br>" " " . T.replace "<br />" " "
+               $ markup in
     case T.isPrefixOf "[[" anchor of
         False -> WikiAnchor "" anchor
         True -> case T.splitOn "|" $ T.replace "[[" "" $ T.replace "]]" "" anchor of
