@@ -144,7 +144,7 @@ reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
     critic' <- P.manyTill (P.try P.anyChar) ((P.string "{{" >> (P.manyTill (P.try P.anyChar) P.endOfLine)) <|> P.string "\n")
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
-    (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser
+    (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser <|> christgauParser
     _ <- P.spaces >> P.optional noteParser
     reftag <- (P.try refParser) <|> refSingle <|> (P.string "\n")
     case (scr, maxScr) of
@@ -156,7 +156,7 @@ reviewParser = do
 -- Parser for scores that look like this: {{Rating|3.5|5}}
 scoreInRatingTemplParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreInRatingTemplParser = do
-    _ <- P.try (P.string "{{Rating|") <|> (P.string "{{rating|")
+    _ <- P.try (P.string "{{Rating|") <|> P.try (P.string "{{rating|")
     scr <- P.many1 (P.digit <|> P.char '.')
     _ <- P.char '|'
     mx <- P.many1 P.digit
@@ -190,6 +190,26 @@ scoreAsLetterParser = do
          'A' -> 9 + s
          _ -> 0
     return (Just scr, Just 10)
+
+-- Parser for ratings following the template {{Rating-Christgau}}
+-- Not all that common (although Christgau scores often show up as simple letter scores)
+-- (https://en.wikipedia.org/wiki/Template:Rating-Christgau)
+christgauParser :: P.Parsec Text () (Maybe Double, Maybe Double)
+christgauParser = (P.try (P.string "{{rating-Christgau|") <|> P.string "{{Rating-Christgau|")
+                  *> (christgauSymbolParser <|> scoreAsLetterParser) <* P.string "}}"
+
+christgauSymbolParser :: P.Parsec Text () (Maybe Double, Maybe Double)
+christgauSymbolParser = do
+    rat <- P.try (P.string "hm1") <|> P.try (P.string "hm2") <|> P.string "hm3"
+           <|> P.string "neither" <|> P.string "dud"
+    let r = case rat of
+         "hm1" -> 7
+         "hm2" -> 6
+         "hm3" -> 5
+         "neither" -> 5
+         "dud" -> 2
+         _ -> 0
+    return (Just r, Just 10)
 
 -- Parser that gets everything inside <ref></ref> that follows most scores
 refParser :: P.Parsec Text () String
