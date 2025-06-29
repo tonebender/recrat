@@ -5,7 +5,6 @@ module Artist (
     , showArtistName
     , showAlbums
     , ArtistError (NoArtistFound, AlbumsRequestFailed)
-    , parseDiscographyAlbums
     , filterAlbumsByCritic
 ) where
 
@@ -50,11 +49,6 @@ data ArtistError = NoArtistFound | AlbumsRequestFailed
 showArtistName :: Artist -> Text
 showArtistName artist = wikiLabel $ name artist
 
--- TODO: Integrate this function in showAlbums?
--- Show artist's albums after filtering the list on critic name
--- showFilteredAlbums :: Text -> Artist -> Text
--- showFilteredAlbums filterQuery artist = showAlbums $ Artist (name artist) (map (filterRatings filterQuery) (albums artist))
-
 -- Return a Text with album titles and their average ratings followed by (number of ratings),
 -- with titles left-justified and numbers right-justified
 showAlbums :: Artist -> Text
@@ -67,6 +61,7 @@ showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $
                     0 -> "-- (0)\n"
                     _ -> T.pack $ printf "%3d (%d)\n" (getAverageScore a) (length $ concat $ map ratings $ ratingBlocks a)
 
+-- Get the artist but include only ratings whose critic name includes critic
 filterAlbumsByCritic :: Text -> Artist -> Artist
 filterAlbumsByCritic critic artist = Artist (name artist) $ map (filterAlbumByCritic critic) (albums artist)
 

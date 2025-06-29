@@ -36,6 +36,7 @@ data Album = Album
     , ratingBlocks :: [RatingBlock]
     } deriving (Show)
 
+-- Type for a block of ratings (one box on a wiki page) for an album
 data RatingBlock = RatingBlock
     { header :: Text
     , ratings :: [Rating]
@@ -50,11 +51,12 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
+-- Get all album ratings that can be found on a wiki page
 getAlbumRatings :: Text -> Maybe Album
 getAlbumRatings wikip =
     case findInfoboxProperty "name" (parseInfobox wikip) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
-        Just albName -> case getAllRatingBlocks $ equalizeRatingTempl wikip of  -- TODO: Move equalize into getAllRatingBlocks
+        Just albName -> case getAllRatingBlocks wikip of
             [] -> Just $ Album (wikiLabel albName <> " (no ratings)") (getArtistName wikip) []  -- We keep albums without ratings
             ratBlocks -> Just $ Album (wikiLabel albName) (getArtistName wikip) (map applyParser ratBlocks)
             where
@@ -64,16 +66,12 @@ getAlbumRatings wikip =
                   getArtistName w = case findInfoboxProperty "artist" (parseInfobox w) of
                       Nothing -> WikiAnchor "" "(no artist name)"
                       Just artName -> artName
+                  getAllRatingBlocks = drop 1 . T.splitOn "{{**\n"
+                                      . T.replace "{{Music ratings" "{{**"
+                                      . T.replace "{{Album ratings" "{{**"
+                                      . T.replace "{{Album reviews" "{{**"
 
--- TODO: The two functions below can probably be moved to the where above
--- Change all ratings blocks headers to one single indicator (rating block contents are the same format anyway)
-equalizeRatingTempl :: Text -> Text
-equalizeRatingTempl = T.replace "{{Music ratings" "{{**" . T.replace "{{Album ratings" "{{**" . T.replace "{{Album reviews" "{{**"
-
--- Get a list of the contents of all music ratings blocks in the given wiki page
-getAllRatingBlocks :: Text -> [Text]
-getAllRatingBlocks wikip = drop 1 $ T.splitOn "{{**\n" wikip
-
+-- Create a text with all ratings for an album, plus its artist and title, etc.
 showAlbum :: Album -> Text
 showAlbum album =
     (wikiLabel . artistName $ album) <> " - " <> albumName album <> "\n"
@@ -85,6 +83,8 @@ showAlbum album =
                 Nothing -> 0
                 Just x -> x + 2
 
+-- Create a text with the ratings from one rating block
+-- (TODO: Move this to the where above, or leave it independent so it can be called from the ui?)
 showRatingBlock :: Int -> RatingBlock -> Text
 showRatingBlock padding rblock = header rblock <> "\n" <> (showRatingsList padding $ ratings rblock)
     where showRatingsList _ [] = ""
@@ -130,6 +130,7 @@ musicRatingsParser = do
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
     return $ RatingBlock subtitle (catMaybes revs)
 
+-- Parser for subtitle of rating block
 subtitleParser :: P.Parsec Text () Text
 subtitleParser = do
     subtitle <- P.char '|' >> P.spaces >> P.string "subtitle" >> P.spaces >> P.string "=" >> P.spaces >> P.manyTill (P.try P.anyChar) P.endOfLine
