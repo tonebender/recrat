@@ -4,9 +4,9 @@ module Artist (
     getAlbums
     , showArtistName
     , showAlbums
- --   , showFilteredAlbums
     , ArtistError (NoArtistFound, AlbumsRequestFailed)
     , parseDiscographyAlbums
+    , filterAlbumsByCritic
 ) where
 
 import Control.Lens ((^.), (^..))
@@ -30,13 +30,13 @@ import Wiki (
 
 import Album (
       Album
-    , getAlbumRatings
-    , getAverageScore
-    , getRatingsFlat
     , albumName
     , ratingBlocks
+    , getAlbumRatings
+    , getAverageScore
     , ratings
-    , filterRatings)
+    , getRatingsFlat
+    , filterAlbumByCritic)
 
 
 data Artist = Artist
@@ -67,7 +67,10 @@ showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $
                     0 -> "-- (0)\n"
                     _ -> T.pack $ printf "%3d (%d)\n" (getAverageScore a) (length $ concat $ map ratings $ ratingBlocks a)
 
--- Sort albums in list according to their average score, and, when score is equal,
+filterAlbumsByCritic :: Text -> Artist -> Artist
+filterAlbumsByCritic critic artist = Artist (name artist) $ map (filterAlbumByCritic critic) (albums artist)
+
+-- Sort albums in a list according to their average score, and, when score is equal,
 -- according to their number of ratings (more ratings -> higher rank)
 sortAlbums :: [Album] -> [Album]
 sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
@@ -76,8 +79,8 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
                avr2 = getAverageScore album2 in
            if avr1 > avr2 then GT
            else if avr1 < avr2 then LT
-           else if (length $ getRatingsFlat album1) < (length $ getRatingsFlat album2) then LT
-           else GT
+           else if (length $ getRatingsFlat album1) > (length $ getRatingsFlat album2) then GT
+           else LT
 
 -- Return the length of the longest name of all albums in list
 longestName :: [Album] -> Int
@@ -115,7 +118,7 @@ parseDiscographyAlbums disco category =
         [] -> []
         a:_ -> case T.splitOn "|}\n" a of  -- End of table
             [] -> []
-            b:_ -> parseWikiAnchor <$> getWikiAnchor <$> (filterAlbums $ T.lines b)
+            b:_ -> parseWikiAnchor <$> getWikiAnchor <$> (filterAlbumsInDisco $ T.lines b)
 
 -- Take a discography wiki page as a list of text lines and return
 -- the one that contains the header query (if not found, just return query itself)
@@ -127,8 +130,8 @@ findDiscoSubtitle (x:xs) query =
 -- Get the rows that fit the (loose) criteria for containing an album inside the discography table,
 -- i.e. contains '' and starts with either | or !
 -- (This can be fairly tolerant; wrong entries will eventually be discarded later)
-filterAlbums :: [Text] -> [Text]
-filterAlbums = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isInfixOf "scope=\"row\"" r))
+filterAlbumsInDisco :: [Text] -> [Text]
+filterAlbumsInDisco = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isInfixOf "scope=\"row\"" r))
 
 -- Create a string such as "Bleach (Nirvana album)|Nevermind|In Utero" from an Artist's
 -- albums list, for use in a multi-page wiki request

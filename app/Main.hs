@@ -12,8 +12,24 @@ import qualified Data.Text.IO as Tio
 
 -- This app's modules
 import Album
+    (
+      showAlbum
+    , getAlbumRatings
+    , filterAlbumByCritic
+    )
 import Artist
-import Wiki
+    (
+      showArtistName
+    , showAlbums
+    , getAlbums
+    , filterAlbumsByCritic
+    , ArtistError (AlbumsRequestFailed, NoArtistFound)
+    )
+import Wiki 
+    (
+      requestWikiSearch
+    , requestWikiParse
+    )
 
 -- Type for command line args
 data Inputargs = Inputargs
@@ -79,13 +95,13 @@ main = do
                             case (albumTitle, artistName) of  -- TODO: Change the case block to something better (if?)
                                 (_, "") -> case getAlbumRatings wtext of  -- One album
                                     Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> firstResultTitle <> "'"
-                                    Just alb -> Tio.putStr $ showAlbum $ alb -- filterRatings critic alb
+                                    Just alb -> Tio.putStr $ showAlbum $ filterAlbumByCritic critic alb
                                 ("", _) -> do
-                                    eitherArtist <- getAlbums wtext category              -- Artist/discography
+                                    eitherArtist <- getAlbums wtext category  -- Artist/discography
                                     case eitherArtist of
                                         Left AlbumsRequestFailed -> Tio.putStrLn $ "Failed to fetch albums for '" <> firstResultTitle <> "'"
                                         Left NoArtistFound -> Tio.putStrLn $ firstResultTitle <> " does not appear to be an artist"
                                         Right artist -> do
                                             Tio.putStrLn $ showArtistName artist
-                                            Tio.putStr $ showAlbums artist -- showFilteredAlbums critic artist
+                                            Tio.putStr $ showAlbums $ filterAlbumsByCritic critic artist
                                 (_, _) -> putStrLn "No album title or artist/band specified."
