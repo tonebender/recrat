@@ -4,7 +4,7 @@ module Wiki (
     requestWikiSearch
     , requestWikiParse
     , requestWikiPages
-    , parseInfobox
+    , parseAlbumInfobox
     , findInfoboxProperty
     , WikiAnchor (WikiAnchor)
     , wikiURI
@@ -71,11 +71,11 @@ findInfoboxProperty query props = case (listToMaybe $ dropWhile (\e -> T.toCaseF
     Nothing -> Nothing
     Just (_, val) -> Just $ parseWikiAnchor val
 
--- Get the first {{Infobox ...}} in the specified wiki page text and return all its
+-- Get the first {{Infobox album ...}} in the specified wiki page text and return all its
 -- "|Key = Value" lines as a list of (Text, Text) tuples
-parseInfobox :: Text -> [(Text, Text)]
-parseInfobox text =
-    case drop 1 $ T.splitOn "{{Infobox" text of
+parseAlbumInfobox :: Text -> [(Text, Text)]
+parseAlbumInfobox text =
+    case drop 1 $ T.splitOn "{{Infobox album" text of
         [] -> []
         a:_ -> case T.splitOn "}}" a of  -- End of infobox
             [] -> []

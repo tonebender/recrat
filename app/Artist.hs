@@ -2,7 +2,7 @@
 
 module Artist (
     getAlbums
-    , showArtistName
+    , name
     , showAlbums
     , ArtistError (NoArtistFound, AlbumsRequestFailed)
     , filterAlbumsByCritic
@@ -19,13 +19,10 @@ import Data.Text.Internal (Text)
 
 import Wiki (
       requestWikiPages
-    , parseInfobox
-    , findInfoboxProperty
     , WikiAnchor
     , getWikiAnchor
     , parseWikiAnchor
-    , wikiURI
-    , wikiLabel)
+    , wikiURI)
 
 import Album (
       Album
@@ -39,15 +36,15 @@ import Album (
 
 
 data Artist = Artist
-    { name :: WikiAnchor
+    { name :: Text
     , albums :: [Album]
     } deriving (Show)
 
 data ArtistError = NoArtistFound | AlbumsRequestFailed
 
 -- Get the artist name as Text
-showArtistName :: Artist -> Text
-showArtistName artist = wikiLabel $ name artist
+-- showArtistName :: Artist -> Text
+-- showArtistName artist = wikiLabel $ name artist
 
 -- Return a Text with album titles and their average ratings followed by (number of ratings),
 -- with titles left-justified and numbers right-justified
@@ -58,7 +55,7 @@ showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $
         showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x) <> showNumbers x <> showAlbums' padding xs
             where
                 showNumbers a = case length $ concat $ map ratings $ ratingBlocks a of
-                    0 -> "-- (0)\n"
+                    0 -> "  - (0)\n"
                     _ -> T.pack $ printf "%3d (%d)\n" (getAverageScore a) (length $ concat $ map ratings $ ratingBlocks a)
 
 -- Get the artist but include only ratings whose critic name includes critic
@@ -83,20 +80,18 @@ longestName albums' = case listToMaybe $ reverse $ sort $ map (T.length . albumN
     Nothing -> 0
     Just x -> x
 
--- Take a discography wiki page text and a category (such as "studio") and
--- request all of the Wikipedia pages for the albums found under that category
--- in the discography (with a single request). Also find the artist name
--- and finally parse the album ratings for every requested album.
-getAlbums :: Text -> Text -> IO (Either ArtistError Artist)
-getAlbums discography category = do
-    case findInfoboxProperty "artist" (parseInfobox discography) of
-        Nothing -> return $ Left NoArtistFound
-        Just artistName -> do
-            r <- requestWikiPages $ artistToAlbumsQuery $ parseDiscographyAlbums discography category
-            case r of
-                Nothing -> return $ Left AlbumsRequestFailed
-                Just wikiJson ->
-                    return $ Right $ Artist artistName (catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (wikiJson ^.. values))
+-- Take a discography wiki title, its page text and a category (such as "studio")
+-- and request all of the Wikipedia pages for the albums found under that category
+-- in the discography (with a single request). Then parse the album ratings
+-- for every requested album.
+getAlbums :: Text -> Text -> Text -> IO (Either ArtistError Artist)
+getAlbums wikiTitle discography category = do
+    let artistName = T.replace " discography" "" wikiTitle
+    r <- requestWikiPages $ artistToAlbumsQuery $ parseDiscographyAlbums discography category
+    case r of
+        Nothing -> return $ Left AlbumsRequestFailed
+        Just wikiJson ->
+            return $ Right $ Artist artistName (catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (wikiJson ^.. values))
 
 -- Lens stuff to get the page contents of the first revision
 -- listed in a json object from a request to the MediaWiki Revisions API

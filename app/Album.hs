@@ -23,7 +23,7 @@ import qualified Text.Parsec as P
 import qualified Text.HTMLEntity as HTML (decode')
 
 import Wiki (
-      parseInfobox
+      parseAlbumInfobox
     , findInfoboxProperty
     , WikiAnchor (WikiAnchor)
     , wikiLabel
@@ -55,7 +55,7 @@ data Rating = Rating
 -- Get all album ratings that can be found on a wiki page
 getAlbumRatings :: Text -> Maybe Album
 getAlbumRatings wikip =
-    case findInfoboxProperty "name" (parseInfobox wikip) of
+    case findInfoboxProperty "name" (parseAlbumInfobox wikip) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
         Just albName -> case getAllRatingBlocks wikip of
             [] -> Just $ Album (wikiLabel albName) (getArtistName wikip) []  -- We keep albums without ratings
@@ -64,7 +64,7 @@ getAlbumRatings wikip =
                   applyParser r = case P.parse musicRatingsParser (show $ wikiLabel albName) r of
                       Right rats -> rats
                       Left err -> RatingBlock ("Could not parse ratings block: " <> T.pack (show err)) []
-                  getArtistName w = case findInfoboxProperty "artist" (parseInfobox w) of
+                  getArtistName w = case findInfoboxProperty "artist" (parseAlbumInfobox w) of
                       Nothing -> WikiAnchor "" "(no artist name)"
                       Just artName -> artName
                   getAllRatingBlocks = drop 1 . T.splitOn "{{**\n"
@@ -192,8 +192,8 @@ scoreAsLetterParser = do
     return (Just scr, Just 10)
 
 -- Parser for ratings following the template {{Rating-Christgau}}
--- Not all that common (although Christgau scores often show up as simple letter scores)
 -- (https://en.wikipedia.org/wiki/Template:Rating-Christgau)
+-- Not very common, although Christgau scores often show up as simple letter scores
 christgauParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 christgauParser = (P.try (P.string "{{rating-Christgau|") <|> P.string "{{Rating-Christgau|")
                   *> (christgauSymbolParser <|> scoreAsLetterParser) <* P.string "}}"
