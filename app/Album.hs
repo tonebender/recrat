@@ -175,7 +175,7 @@ scoreAsFragmentParser = do
 -- and C- to A+ becomes 2 to 10.
 scoreAsLetterParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreAsLetterParser = do
-    letter <- P.oneOf "ABCDE"
+    letter <- P.optional (P.string "(") >> P.oneOf "ABCDE"
     sign <- P.optionMaybe (P.oneOf "+-−")
     _ <- P.many (P.noneOf ("<{\n" :: String))
     let s = case sign of
