@@ -27,6 +27,7 @@ wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
 userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
 
+-- This type represents a wikipedia link such as [[Revolver|Revolver_(Beatles_album)]]
 data WikiAnchor = WikiAnchor
     { wikiURI :: Text
     , wikiLabel :: Text
