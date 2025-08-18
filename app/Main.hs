@@ -70,6 +70,16 @@ appDescription = info (commandLineParser <**> helper)
       <> progDesc "Lists music albums by artist and rating"
       <> header "album-ratings - find ratings for music albums" )
 
+searchWikipedia :: Text -> IO (Either Text Text)
+searchWikipedia query = do
+    maybeWikiresults <- requestWikiSearch query
+    case maybeWikiresults of
+        Nothing -> return $ Left ("Search request to Wikipedia failed for '" <> query <> "'")
+        Just wikijson -> do
+            if length (wikijson ^. _Array) == 0
+                then return $ Left ("No results found for search query '" <> query <> "'")
+                else return $ Right (wikijson ^. nth 0 . key "title" . _String)
+
 -- TODO: Instead of the staircase, divide this into a couple of separate functions
 -- that can be called by both (and other) cases
 main :: IO ()
