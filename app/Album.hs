@@ -142,15 +142,16 @@ subtitleParser = do
 reviewParser :: P.Parsec Text () (Maybe Rating)
 reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
-    critic' <- P.manyTill (P.try P.anyChar) ((P.string "{{" >> (P.manyTill (P.try P.anyChar) P.endOfLine)) <|> P.string "\n")
-    P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
+    criticAndStartOfNextRev <- P.manyTill (P.try P.anyChar) (P.try ((P.string "|") >> P.spaces >> (P.string "rev")))
+    let critic' = T.takeWhile (/= '\n') $ T.pack criticAndStartOfNextRev 
+    P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser <|> christgauParser
     _ <- P.spaces >> P.optional noteParser
     reftag <- (P.try refParser) <|> refSingle <|> (P.string "\n")
     case (scr, maxScr) of
         (Just scr', Just maxScr') -> do
             let (nScore, nMaxScore) = normaliseScore (scr', maxScr')
-            return $ Just $ Rating (nScore / nMaxScore) nScore nMaxScore (parseWikiAnchor (T.pack critic')) (T.pack reftag)
+            return $ Just $ Rating (nScore / nMaxScore) nScore nMaxScore (parseWikiAnchor critic') (T.pack reftag)
         (_, _) -> return Nothing
 
 -- Parser for scores that look like this: {{Rating|3.5|5}}
