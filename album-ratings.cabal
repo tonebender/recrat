@@ -71,7 +71,7 @@ executable album-ratings
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.20.0.0,
+    build-depends:    base >=4.20.0.0,
                       wreq >= 0.5.0.1,
                       optparse-applicative >= 0.18.1.0,
                       lens >= 5.3.4,
