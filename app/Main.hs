@@ -71,21 +71,34 @@ appDescription = info (commandLineParser <**> helper)
       <> header "album-ratings - find ratings for music albums" )
 
 
-data WikiSearchError = WikiSearchError Text
+data WikiError = WikiError Text
     deriving (Show, Eq)
 
-searchWikipedia :: Text -> IO (Either WikiSearchError Text)
-searchWikipedia query = do
+-- Search for a query on Wikipedia and return the title and contents
+-- of the first page found as a Text tuple, or WikiError otherwise
+searchAndGetWiki :: Text -> IO (Either WikiError (Text, Text))
+searchAndGetWiki query = do
     maybeWikiresults <- requestWikiSearch query
     case maybeWikiresults of
-        Nothing -> return $ Left $ WikiSearchError ("Search request to Wikipedia failed for '" <> query <> "'")
-        Just wikijson -> do
-            if length (wikijson ^. _Array) == 0
-                then return $ Left $ WikiSearchError ("No results found for search query '" <> query <> "'")
-                else return $ Right (wikijson ^. nth 0 . key "title" . _String)
+        Nothing -> return $ Left $ WikiError ("Search request to Wikipedia failed for '" <> query <> "'")
+        Just wikiResultsJson -> do
+            if length (wikiResultsJson ^. _Array) == 0
+                then return $ Left $ WikiError ("No results found for search query '" <> query <> "'")
+                else return =<< getWikipage (wikiResultsJson ^. nth 0 . key "title" . _String)
 
--- TODO: Instead of the staircase, divide this into a couple of separate functions
--- that can be called by both (and other) cases
+-- Request the contents of the Wikipedia page with pageTitle
+-- Return as Text on success, WikiError otherwise
+getWikipage :: Text -> IO (Either WikiError (Text, Text))
+getWikipage pageTitle = do
+    maybeWikiContents <- requestWikiParse pageTitle
+    case maybeWikiContents of
+        Nothing -> return $ Left $ WikiError $ "Failed to fetch wikipedia page content for '" <> pageTitle <> "'"
+        Just wikiContents -> return $ Right (pageTitle, wikiContents)
+
+-- TODO: The getWikipage function feels a bit redundant. If the wiki request functions in Wiki.hs
+-- are modified to return different errors/codes (probably with Either), getWikipage can perhaps
+-- be removed, and the Wiki.hs functions called more directly.
+
 main :: IO ()
 main = do
     inputargs <- execParser appDescription
@@ -94,25 +107,21 @@ main = do
     let category = optCategory inputargs
     let critic = optCritic inputargs
     let query = if (albumTitle /= T.empty) then albumTitle else artistName <> " discography"
-    eitherWiki <- searchWikipedia query
-    case eitherWiki of
-        Left (WikiSearchError t) -> Tio.putStrLn t
-        Right firstResultTitle -> do
-            maybeWikitext <- requestWikiParse firstResultTitle
-            case maybeWikitext of
-                Nothing -> Tio.putStrLn $ "Failed to fetch wikipedia page content for '" <> firstResultTitle <> "'"
-                Just wtext -> do
-                    case (albumTitle, artistName) of  -- TODO: Change the case block to something better (if?)
-                        (_, "") -> case getAlbumRatings wtext of  -- One album
-                            Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> firstResultTitle <> "'"
-                            Just alb -> Tio.putStr $ showAlbum $ filterAlbumByCritic critic alb
-                        ("", _) -> do
-                            eitherArtist <- getAlbums firstResultTitle wtext category  -- Artist/discography
-                            case eitherArtist of
-                                Left AlbumsRequestFailed -> Tio.putStrLn $ "Failed to fetch albums for '" <> firstResultTitle <> "'"
-                                Left NoArtistFound -> Tio.putStrLn $ "'" <> firstResultTitle <> "' does not appear to contain an artist discography"
-                                Right artist -> do
-                                    Tio.putStrLn $ name artist
-                                    Tio.putStrLn $ T.replicate (T.length $ name artist) "-"
-                                    Tio.putStr $ showAlbums $ filterAlbumsByCritic critic artist
-                        (_, _) -> putStrLn "No album title or artist/band specified."
+    eitherWikiContent <- searchAndGetWiki query
+    case eitherWikiContent of
+        Left (WikiError t) -> Tio.putStrLn t
+        Right (wTitle, wText) -> do
+            case (albumTitle, artistName) of
+                (_, "") -> case getAlbumRatings wText of  -- One album
+                    Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> wTitle <> "'"
+                    Just alb -> Tio.putStr $ showAlbum $ filterAlbumByCritic critic alb
+                ("", _) -> do
+                    eitherArtist <- getAlbums wTitle wText category  -- Artist/discography
+                    case eitherArtist of
+                        Left AlbumsRequestFailed -> Tio.putStrLn $ "Failed to fetch albums for '" <> wTitle <> "'"
+                        Left NoArtistFound -> Tio.putStrLn $ "'" <> wTitle <> "' does not appear to contain an artist discography"
+                        Right artist -> do
+                            Tio.putStrLn $ name artist
+                            Tio.putStrLn $ T.replicate (T.length $ name artist) "-"
+                            Tio.putStr $ showAlbums $ filterAlbumsByCritic critic artist
+                (_, _) -> Tio.putStrLn "No album title or artist/band specified."
