@@ -4,5 +4,4 @@ tags
 build/
 dist/
 dist-newstyle/
-musicratings_exile.txt
-test.json
+mistral-key.txt
