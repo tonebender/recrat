@@ -17,7 +17,7 @@ import Control.Lens
 import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key)
 import Data.Text.Internal (Text)
-import qualified Network.Wreq as W (getWith, defaults, params, param, header, responseBody)
+import qualified Network.Wreq as W (getWith, defaults, params, header, responseBody)
 import qualified Data.Text as T
 import Data.Maybe (catMaybes, listToMaybe)
 import qualified Text.HTMLEntity as HTML (decode')
