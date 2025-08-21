@@ -41,8 +41,8 @@ data WikiAnchor = WikiAnchor
 -- See https://haskell-docs.netlify.app/packages/lens/#json for all the ^. stuff
 requestWikiSearch :: Text -> IO (Maybe Value)
 requestWikiSearch searchQuery = do
-    let urlParams = [ ("action", "query"), ("format", "json"), ("list", "search"), ("srprop", "redirecttitle") ]
-    let opts = W.defaults & W.params .~ urlParams & W.param "srsearch" .~ [searchQuery] & W.header "User-Agent" .~ [userAgent]
+    let urlParams = [ ("action", "query"), ("format", "json"), ("list", "search"), ("srprop", "redirecttitle"), ("srsearch", searchQuery) ]
+    let opts = W.defaults & W.params .~ urlParams & W.header "User-Agent" .~ [userAgent]
     r <- W.getWith opts wikipediaApiUrl
     return $ r ^? W.responseBody . key "query" . key "search"
 
