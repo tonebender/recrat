@@ -21,10 +21,12 @@ import qualified Network.Wreq as W (getWith, defaults, params, header, responseB
 import qualified Data.Text as T
 import Data.Maybe (catMaybes, listToMaybe)
 import qualified Text.HTMLEntity as HTML (decode')
+import Data.ByteString (ByteString)
 
 wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
+userAgent :: ByteString
 userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
 
 -- This type represents a wikipedia link such as [[Revolver|Revolver_(Beatles_album)]]

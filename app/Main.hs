@@ -30,6 +30,10 @@ import Wiki
       requestWikiSearch
     , requestWikiParse
     )
+import LLM
+    (
+      llmRequest
+    )
 
 -- Type for command line args
 data Inputargs = Inputargs
