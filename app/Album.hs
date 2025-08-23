@@ -70,11 +70,11 @@ getAlbumRatings wikip =
                       Nothing -> WikiAnchor "" "(no artist name)"
                       Just artName -> artName
                   getAlbumYear w = case findInfoboxProperty "released" (parseAlbumInfobox w) of
-                      Nothing -> "xxxx"
+                      Nothing -> ""  -- Silently return empty if no release year was found
                       Just year -> parseYearEntry $ wikiLabel year
                   parseYearEntry str = let subStrings = if T.isPrefixOf "{{" str then T.splitOn "|" str else T.splitOn " " str in
                                             case filter (\s -> T.length s == 4) $ map (T.takeWhile (`T.elem` "0123456789")) subStrings of
-                                                [] -> ""
+                                                [] -> ""  -- This also gives empty if the year couldn't be parsed
                                                 y:_ -> y
                   getAllRatingBlocks = drop 1 . T.splitOn "{{**\n"
                                       . T.replace "{{Music ratings" "{{**"
