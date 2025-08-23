@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module LLM (llmRequest) where
+module LLM (
+      llmRequest
+    , llmMockRequest
+) where
 
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -71,14 +74,18 @@ llmData = fromJust $ decode $ BL.fromStrict $ TE.encodeUtf8 $ T.replace "'" "\""
 -- llmRequest :: IO (W.Response BL.ByteString)  -- <- use then when returning r
 llmRequest :: IO (Maybe Text)
 llmRequest = do
-    mistralKeyFromFile <- readFile "mistral-key.txt"
-    let mistralKey = (reverse . dropWhile (=='\n') . reverse) mistralKeyFromFile
+    mistralKey <- readFile "mistral-key.txt"
     let opts = W.defaults & W.header "User-Agent" .~ [userAgent]
                           & W.header "Content-Type" .~ ["application/json"]
                           & W.header "Accept" .~ ["application/json"]
                           & W.header "Authorization" .~ ["Bearer " <> (BS8.pack mistralKey)]
     r <- W.postWith opts llmURL llmData
     return $ r ^? W.responseBody . key "choices" . nth 0 . key "message" . key "content" . _String
+
+llmMockRequest :: IO Text
+llmMockRequest = do
+    contents <- readFile "mock_responseBody.json"
+    return $ T.pack contents
 
     -- Then convert this Text to ByteString, then convert to Lazy ByteString (with fromStrict),
     -- then use Aeson's eitherDecode or similar to create a value:

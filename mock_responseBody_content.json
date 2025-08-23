@@ -1,0 +1,54 @@
+{
+  "albums": [
+    {
+      "title": "Sticky Fingers",
+      "year": "1971",
+      "description": "Sticky Fingers is often regarded as one of the Rolling Stones' best albums, featuring hits like 'Brown Sugar' and 'Wild Horses'."
+    },
+    {
+      "title": "Exile on Main St.",
+      "year": "1972",
+      "description": "A double album that captures the essence of the Rolling Stones' sound, blending rock, blues, and gospel."
+    },
+    {
+      "title": "Beggars Banquet",
+      "year": "1968",
+      "description": "Marking a return to their blues roots, this album includes classics like 'Sympathy for the Devil' and 'Street Fighting Man'."
+    },
+    {
+      "title": "Let It Bleed",
+      "year": "1969",
+      "description": "This album features iconic tracks such as 'Gimme Shelter' and 'You Can't Always Get What You Want'."
+    },
+    {
+      "title": "Aftermath",
+      "year": "1966",
+      "description": "Aftermath is notable for being one of the first rock albums to feature all original compositions by the band."
+    },
+    {
+      "title": "Between the Buttons",
+      "year": "1967",
+      "description": "This album showcases the band's versatility with a mix of rock, pop, and psychedelic influences."
+    },
+    {
+      "title": "Out of Our Heads",
+      "year": "1965",
+      "description": "Featuring the hit single '(I Can't Get No) Satisfaction', this album is a cornerstone of the Rolling Stones' early success."
+    },
+    {
+      "title": "The Rolling Stones, Now!",
+      "year": "1965",
+      "description": "This album includes a mix of original songs and covers, highlighting the band's blues and R&B influences."
+    },
+    {
+      "title": "Tattoo You",
+      "year": "1981",
+      "description": "A compilation of outtakes and new recordings, Tattoo You features hits like 'Start Me Up' and 'Waiting on a Friend'."
+    },
+    {
+      "title": "Some Girls",
+      "year": "1978",
+      "description": "This album is known for its diverse musical styles, including disco, punk, and country influences, with hits like 'Miss You' and 'Beast of Burden'."
+    }
+  ]
+}
