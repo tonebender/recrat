@@ -2,12 +2,12 @@
 
 module LLM (llmRequest) where
 
-import qualified Data.Text.Lazy as TL (replace, concat)
 import Data.Text (Text)
-import Data.Aeson (decode, Value)
-import Data.Aeson.Lens (_String, key)
-import qualified Data.Text.Lazy.Encoding as TLE (encodeUtf8)
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Lazy as BL
+import Data.Aeson (decode, Value)
+import Data.Aeson.Lens (key, nth, _String)
 import Data.Maybe (fromJust)
 import qualified Network.Wreq as W (postWith, defaults, params, header, responseBody, responseStatus, Response)
 import Control.Lens
@@ -20,10 +20,10 @@ userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
 llmURL :: String
 llmURL = "https://api.mistral.ai/v1/chat/completions"
 
--- For readability, first create a list of lazy texts, then concat, replace,
--- decode to bytestring and decode the whole thing to an Aeson.Value
+-- For readability, first create a list of texts, then concat, replace, decode to bytestring,
+-- then to lazy bytestring and finally decode the whole thing to an Aeson.Value
 llmData :: Value
-llmData = fromJust $ decode $ TLE.encodeUtf8 $ TL.replace "'" "\"" $ TL.concat [
+llmData = fromJust $ decode $ BL.fromStrict $ TE.encodeUtf8 $ T.replace "'" "\"" $ T.concat [
     "{",
     "    'model': 'mistral-medium-latest',",
     "    'messages': [",
@@ -68,7 +68,8 @@ llmData = fromJust $ decode $ TLE.encodeUtf8 $ TL.replace "'" "\"" $ TL.concat [
     "}"
    ]
 
-llmRequest :: IO (W.Response BL.ByteString)
+-- llmRequest :: IO (W.Response BL.ByteString)  -- <- use then when returning r
+llmRequest :: IO (Maybe Text)
 llmRequest = do
     mistralKeyFromFile <- readFile "mistral-key.txt"
     let mistralKey = (reverse . dropWhile (=='\n') . reverse) mistralKeyFromFile
@@ -77,4 +78,10 @@ llmRequest = do
                           & W.header "Accept" .~ ["application/json"]
                           & W.header "Authorization" .~ ["Bearer " <> (BS8.pack mistralKey)]
     r <- W.postWith opts llmURL llmData
-    return r
+    return $ r ^? W.responseBody . key "choices" . nth 0 . key "message" . key "content" . _String
+
+    -- Then convert this Text to ByteString, then convert to Lazy ByteString (with fromStrict),
+    -- then use Aeson's eitherDecode or similar to create a value:
+    -- let result = eitherDecode byteString :: Either String Value
+    -- Then start again with all these lens operations to get what you want out of it... or maybe
+    -- return it as is to a web client?
