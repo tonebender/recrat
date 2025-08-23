@@ -80,11 +80,11 @@ parseAlbumInfobox :: Text -> [(Text, Text)]
 parseAlbumInfobox text =
     case drop 1 $ T.splitOn "{{Infobox album" text of
         [] -> []
-        a:_ -> case T.splitOn "}}" a of  -- End of infobox
+        a:_ -> case T.splitOn "\n}}" a of  -- End of infobox
             [] -> []
             b:_ -> catMaybes $ map parseInfoboxLine $ filter (T.isInfixOf "=") $ T.lines b
-                where parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`elem` ("| " :: String)) line of
-                        ky:vl:[] -> Just (ky, vl)
+                where parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`T.elem` "| ") line of
+                        ky:vl:_ -> Just (ky, vl)
                         _:_ -> Nothing
                         [] -> Nothing
 

@@ -27,6 +27,7 @@ import Wiki (
 import Album (
       Album
     , albumName
+    , yearOfRelease
     , ratingBlocks
     , getAlbumRatings
     , getAverageScore
@@ -49,14 +50,15 @@ data ArtistError = NoArtistFound | AlbumsRequestFailed
 -- Return a Text with album titles and their average ratings followed by (number of ratings),
 -- with titles left-justified and numbers right-justified
 showAlbums :: Artist -> Text
-showAlbums artist = showAlbums' (longestName (albums artist) + 2) $ sortAlbums $ albums artist
+showAlbums artist = showAlbums' (longestName (albums artist) + 8) $ sortAlbums $ albums artist
     where
         showAlbums' _ [] = T.empty
-        showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x) <> showNumbers x <> showAlbums' padding xs
+        showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x <> showYear x) <> showNumbers x <> showAlbums' padding xs
             where
                 showNumbers a = case length $ concat $ map ratings $ ratingBlocks a of
                     0 -> "  - (0)\n"
                     _ -> T.pack $ printf "%3d (%d)\n" (getAverageScore a) (length $ concat $ map ratings $ ratingBlocks a)
+                showYear a = if yearOfRelease a == "" then "" else " (" <> yearOfRelease a <> ")"
 
 -- Get the artist but include only ratings whose critic name includes critic
 filterAlbumsByCritic :: Text -> Artist -> Artist

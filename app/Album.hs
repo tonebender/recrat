@@ -3,6 +3,7 @@
 module Album (
       Album
     , albumName
+    , yearOfRelease
     , ratingBlocks
     , ratings
     , getAlbumRatings
@@ -34,6 +35,7 @@ import Wiki (
 data Album = Album
     { albumName :: Text
     , artistName :: WikiAnchor
+    , yearOfRelease :: Text
     , ratingBlocks :: [RatingBlock]
     } deriving (Show)
 
@@ -58,8 +60,8 @@ getAlbumRatings wikip =
     case findInfoboxProperty "name" (parseAlbumInfobox wikip) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
         Just albName -> case getAllRatingBlocks wikip of
-            [] -> Just $ Album (wikiLabel albName) (getArtistName wikip) []  -- We keep albums without ratings
-            ratBlocks -> Just $ Album (wikiLabel albName) (getArtistName wikip) (map applyParser ratBlocks)
+            [] -> Just $ Album (wikiLabel albName) (getArtistName wikip) (getAlbumYear wikip) []  -- We keep albums without ratings
+            ratBlocks -> Just $ Album (wikiLabel albName) (getArtistName wikip) (getAlbumYear wikip) (map applyParser ratBlocks)
             where
                   applyParser r = case P.parse musicRatingsParser (show $ wikiLabel albName) r of
                       Right rats -> rats
@@ -67,6 +69,13 @@ getAlbumRatings wikip =
                   getArtistName w = case findInfoboxProperty "artist" (parseAlbumInfobox w) of
                       Nothing -> WikiAnchor "" "(no artist name)"
                       Just artName -> artName
+                  getAlbumYear w = case findInfoboxProperty "released" (parseAlbumInfobox w) of
+                      Nothing -> "xxxx"
+                      Just year -> parseYearEntry $ wikiLabel year
+                  parseYearEntry str = let subStrings = if T.isPrefixOf "{{" str then T.splitOn "|" str else T.splitOn " " str in
+                                            case filter (\s -> T.length s == 4) $ map (T.takeWhile (`T.elem` "0123456789")) subStrings of
+                                                [] -> ""
+                                                y:_ -> y
                   getAllRatingBlocks = drop 1 . T.splitOn "{{**\n"
                                       . T.replace "{{Music ratings" "{{**"
                                       . T.replace "{{Album ratings" "{{**"
@@ -75,10 +84,11 @@ getAlbumRatings wikip =
 -- Create a text with all ratings for an album, plus its artist and title, etc.
 showAlbum :: Album -> Text
 showAlbum album =
-    (wikiLabel . artistName $ album) <> " - " <> albumName album <> "\n"
+    (wikiLabel . artistName $ album) <> " - " <> albumName album <> getYear album <> "\n"
     <> (T.concat $ map (showRatingBlock (longestCriticName album)) $ ratingBlocks album)
     <> (T.justifyLeft (longestCriticName album) ' ' "Average score") <> (T.pack $ printf "  %3d\n" $ getAverageScore album)
     where
+        getYear album' = if yearOfRelease album' == "" then "" else " (" <> yearOfRelease album' <> ")"
         longestCriticName album' =
             case listToMaybe $ reverse $ sort $ map (T.length . wikiLabel . criticName) $ getRatingsFlat album' of
                 Nothing -> 0
@@ -106,7 +116,7 @@ getRatingsFlat album = concat $ map ratings $ ratingBlocks album
 
 -- Get an album but include only ratings whose critic names include the provided text
 filterAlbumByCritic :: Text -> Album -> Album
-filterAlbumByCritic critic album = Album (albumName album) (artistName album) $ map (filterRatings critic) (ratingBlocks album)
+filterAlbumByCritic critic album = Album (albumName album) (artistName album) (yearOfRelease album) $ map (filterRatings critic) (ratingBlocks album)
     where
         filterRatings "" rblock = rblock
         filterRatings subText rblock = RatingBlock (header rblock)
