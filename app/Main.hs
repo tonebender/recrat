@@ -24,6 +24,9 @@ import Artist
     , getAlbums
     , filterAlbumsByCritic
     , ArtistError (AlbumsRequestFailed, NoArtistFound)
+    , requestFiftyPages
+    , parseDiscographyAlbums
+    , albums
     )
 import Wiki 
     (
@@ -105,6 +108,10 @@ getWikipage pageTitle = do
 -- TODO: The getWikipage function feels a bit redundant. If the wiki request functions in Wiki.hs
 -- are modified to return different errors/codes (probably with Either), getWikipage can perhaps
 -- be removed, and the Wiki.hs functions called more directly.
+--
+--
+-- TODO: Debug the "Frank Zappa problem" by checking the contents of getAlbums instead of printing
+-- it
 
 main :: IO ()
 main = do
@@ -130,5 +137,6 @@ main = do
                         Right artist -> do
                             Tio.putStrLn $ name artist
                             Tio.putStrLn $ T.replicate (T.length $ name artist) "-"
-                            Tio.putStr $ showAlbums $ filterAlbumsByCritic critic artist
+                            Tio.putStrLn $ T.show $ length $ albums artist
+                            -- Tio.putStr $ showAlbums $ filterAlbumsByCritic critic artist
                 (_, _) -> Tio.putStrLn "No album title or artist/band specified."

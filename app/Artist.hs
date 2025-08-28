@@ -6,6 +6,12 @@ module Artist (
     , showAlbums
     , ArtistError (NoArtistFound, AlbumsRequestFailed)
     , filterAlbumsByCritic
+    , filterAlbumsInDisco
+    , findDiscoSubtitle
+    , parseDiscographyAlbums
+    , requestFiftyPages
+    , Artist
+    , albums
 ) where
 
 import Control.Lens ((^.), (^..))
@@ -83,17 +89,25 @@ longestName albums' = case listToMaybe $ reverse $ sort $ map (T.length . albumN
     Just x -> x
 
 -- Take a discography wiki title, its page text and a category (such as "studio")
--- and request all of the Wikipedia pages for the albums found under that category
--- in the discography (with a single request). Then parse the album ratings
--- for every requested album.
+-- and request all of the Wikipedia pages (their contents) for the albums found under
+-- that category in the discography (with a single request, to json). Then parse the
+-- album ratings for every requested album.
 getAlbums :: Text -> Text -> Text -> IO (Either ArtistError Artist)
 getAlbums wikiTitle discography category = do
     let artistName = T.replace " discography" "" wikiTitle
-    r <- requestWikiPages $ artistToAlbumsQuery $ parseDiscographyAlbums discography category
-    case r of
-        Nothing -> return $ Left AlbumsRequestFailed
-        Just wikiJson ->
-            return $ Right $ Artist artistName (catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (wikiJson ^.. values))
+    pages <- requestFiftyPages $ parseDiscographyAlbums discography category
+    case catMaybes pages of
+        [] -> return $ Left AlbumsRequestFailed
+        albumPages ->
+            return $ Right $ Artist artistName (catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (concat $ map (^.. values) albumPages))
+            -- return $ Right $ Artist artistName (catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (wikiJson ^.. values))
+
+requestFiftyPages :: [WikiAnchor] -> IO [Maybe Value]
+requestFiftyPages [] = return []
+requestFiftyPages titles = do
+    r <- requestWikiPages $ artistToAlbumsQuery $ take 50 titles
+    rest <- requestFiftyPages (drop 50 titles)
+    return $ r:rest
 
 -- Lens stuff to get the page contents of the first revision
 -- listed in a json object from a request to the MediaWiki Revisions API
