@@ -131,6 +131,11 @@ normaliseScore (scr, maxScr) = (scr - 1, maxScr - 1)
 ratioToPercent :: Double -> Int
 ratioToPercent r = fromInteger $ round $ r * (10^(2::Int))
 
+ratioToStars :: Double -> Int -> Text
+ratioToStars ratio' topScore = T.replicate numStars (T.singleton '★') <> T.replicate (topScore - numStars) (T.singleton '☆')
+    where numStars = 1 + round (ratio' * (fromIntegral topScore)) :: Int
+
+
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
 -- list. Note that for now only reviews (including ref tags when found) and title are saved; stuff like
