@@ -133,7 +133,7 @@ ratioToPercent r = fromInteger $ round $ r * (10^(2::Int))
 
 ratioToStars :: Double -> Int -> Text
 ratioToStars ratio' topScore = T.replicate numStars (T.singleton '★') <> T.replicate (topScore - numStars) (T.singleton '☆')
-    where numStars = 1 + round (ratio' * (fromIntegral topScore)) :: Int
+    where numStars = 1 + round (ratio' * (fromIntegral (topScore - 1))) :: Int  -- The +/-1 is because 1 is the lowest star, not 0
 
 
 -- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
