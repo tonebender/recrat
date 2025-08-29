@@ -9,7 +9,7 @@ module Artist (
     , filterAlbumsInDisco
     , findDiscoSubtitle
     , parseDiscographyAlbums
-    , requestFiftyPages
+    , request50by50
     , Artist
     , albums
 ) where
@@ -53,8 +53,8 @@ data ArtistError = NoArtistFound | AlbumsRequestFailed
 -- showArtistName :: Artist -> Text
 -- showArtistName artist = wikiLabel $ name artist
 
--- Return a Text with album titles and their average ratings followed by (number of ratings),
--- with titles left-justified and numbers right-justified
+-- Return a Text with album titles + year and their average ratings followed 
+-- by "(number of ratings)", with titles left-justified and numbers right-justified
 showAlbums :: Artist -> Text
 showAlbums artist = showAlbums' (longestName (albums artist) + 8) $ sortAlbums $ albums artist
     where
@@ -88,29 +88,34 @@ longestName albums' = case listToMaybe $ reverse $ sort $ map (T.length . albumN
     Nothing -> 0
     Just x -> x
 
--- Take a discography wiki title, its page text and a category (such as "studio")
--- and request all of the Wikipedia pages (their contents) for the albums found under
--- that category in the discography (with a single request, to json). Then parse the
--- album ratings for every requested album.
+-- Take a discography wiki title, its contents and a category (such as "studio") and request all of
+-- the Wikipedia pages (their contents, in a json object, via the Mediawiki Revisions API) for the albums found under that category
+-- in the discography. Then get the album ratings for every requested album and return as an
+-- Artist. When requesting the pages, take 50 at a time because that's the Mediawiki API's limit,
+-- and concat the list of json Values of max 50 pages each into a flattened list, to which
+-- getPageFromWikiRevJson and getAlbumRatings are applied ...
 getAlbums :: Text -> Text -> Text -> IO (Either ArtistError Artist)
 getAlbums wikiTitle discography category = do
     let artistName = T.replace " discography" "" wikiTitle
-    pages <- requestFiftyPages $ parseDiscographyAlbums discography category
+    pages <- request50by50 $ parseDiscographyAlbums discography category
     case catMaybes pages of
-        [] -> return $ Left AlbumsRequestFailed
-        albumPages ->
-            return $ Right $ Artist artistName (catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (concat $ map (^.. values) albumPages))
-            -- return $ Right $ Artist artistName (catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (wikiJson ^.. values))
+        [] -> return $ Left AlbumsRequestFailed  -- If none of the requests worked, give error
+        listOfJsons ->
+            return $ Right $ Artist artistName $ catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
 
-requestFiftyPages :: [WikiAnchor] -> IO [Maybe Value]
-requestFiftyPages [] = return []
-requestFiftyPages titles = do
+-- Run requestWikiPages on a maximum of 50 titles each and return a list
+-- with each call's results. (For most artists, there'll be much less
+-- than 50 in total, so this will be run just once and the result will
+-- be a list with only one element; but try Frank Zappa's discography ...
+request50by50 :: [WikiAnchor] -> IO [Maybe Value]
+request50by50 [] = return []
+request50by50 titles = do
     r <- requestWikiPages $ artistToAlbumsQuery $ take 50 titles
-    rest <- requestFiftyPages (drop 50 titles)
+    rest <- request50by50 (drop 50 titles)
     return $ r:rest
 
--- Lens stuff to get the page contents of the first revision
--- listed in a json object from a request to the MediaWiki Revisions API
+-- Lens stuff to get the contents of the first wiki page revision
+-- in a json object from a request to the MediaWiki Revisions API
 getPageFromWikiRevJson :: Value -> Text
 getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
 

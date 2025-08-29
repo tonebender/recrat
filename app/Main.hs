@@ -24,16 +24,11 @@ import Artist
     , getAlbums
     , filterAlbumsByCritic
     , ArtistError (AlbumsRequestFailed, NoArtistFound)
-    , requestFiftyPages
-    , parseDiscographyAlbums
-    , albums
     )
 import Wiki 
     (
       requestWikiSearch
     , requestWikiParse
-    , parseAlbumInfobox
-    , findInfoboxProperty
     )
 import LLM
     (
@@ -137,6 +132,5 @@ main = do
                         Right artist -> do
                             Tio.putStrLn $ name artist
                             Tio.putStrLn $ T.replicate (T.length $ name artist) "-"
-                            Tio.putStrLn $ T.show $ length $ albums artist
-                            -- Tio.putStr $ showAlbums $ filterAlbumsByCritic critic artist
+                            Tio.putStr $ showAlbums $ filterAlbumsByCritic critic artist
                 (_, _) -> Tio.putStrLn "No album title or artist/band specified."
