@@ -61,9 +61,9 @@ showAlbums artist = showAlbums' (longestName (albums artist) + 8) $ sortAlbums $
         showAlbums' _ [] = T.empty
         showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x <> showYear x) <> showNumbers x <> showAlbums' padding xs
             where
-                showNumbers a = case length $ concat $ map ratings $ ratingBlocks a of
+                showNumbers a = case length $ getRatingsFlat a of
                     0 -> "  - (0)\n"
-                    _ -> T.pack $ printf "%3d (%d)\n" (getAverageScore a) (length $ concat $ map ratings $ ratingBlocks a)
+                    _ -> T.pack $ printf "%3d (%d)\n" (getAverageScore a) (length $ getRatingsFlat a)
                 showYear a = if yearOfRelease a == "" then "" else " (" <> yearOfRelease a <> ")"
 
 -- Get the artist but include only ratings whose critic name includes critic
