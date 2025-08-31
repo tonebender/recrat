@@ -7,7 +7,6 @@ module Artist (
     , ArtistError (NoArtistFound, AlbumsRequestFailed)
     , filterAlbumsByCritic
     , filterAlbumsInDisco
-    , findDiscoSubtitle
     , parseDiscographyAlbums
     , request50by50
     , Artist
@@ -124,19 +123,29 @@ getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slo
 -- (such as "=== Studio albums ===", where category is "Studio")
 parseDiscographyAlbums :: Text -> Text -> [WikiAnchor]
 parseDiscographyAlbums disco category =
-    let subtitle = findDiscoSubtitle (T.lines disco) category in
+    let subtitle = findBestSubtitle (T.lines disco) [category, "studio", "official"] in
     case drop 1 $ T.splitOn subtitle disco of
         [] -> []
         a:_ -> case T.splitOn "|}\n" a of  -- End of table
             [] -> []
             b:_ -> parseWikiAnchor <$> getWikiAnchor <$> (filterAlbumsInDisco $ T.lines b)
 
--- Take a discography wiki page as a list of text lines and return
--- the one that contains the header query (if not found, just return query itself)
-findDiscoSubtitle :: [Text] -> Text -> Text
-findDiscoSubtitle [] query = query
-findDiscoSubtitle (x:xs) query =
-    if T.isInfixOf (T.toCaseFold query) (T.toCaseFold x) && T.isInfixOf "==" x then x else findDiscoSubtitle xs query
+-- Take the discography wiki as a list of lines, and a list of subtitle words such as "studio",
+-- "live", "official", etc. and return the first discography line that contains any of the
+-- subtitle words, starting with the first, plus "==". If nothing found, return the line "albums
+-- ==". For example, we can search for ["studio", "official", "live"], in order, which will try to find
+-- "== Studio albums ==" but will return "== Official albums ==" if only that subtitle happens to
+-- exist in the page.
+findBestSubtitle :: [Text] -> [Text] -> Text
+findBestSubtitle _ [] = "albums =="
+findBestSubtitle disco' (s:subtitles) =
+    case findDiscoSubtitle disco' s of
+        Nothing -> findBestSubtitle disco' subtitles
+        Just subtitle -> subtitle
+    where findDiscoSubtitle [] _ = Nothing
+          findDiscoSubtitle (d:discolines) query' =
+              if T.isInfixOf (T.toCaseFold query') (T.toCaseFold d) && T.isInfixOf "==" d then Just d else findDiscoSubtitle discolines query'
+
 
 -- Get the rows that fit the (loose) criteria for containing an album inside the discography table,
 -- i.e. contains '' and starts with either | or !
