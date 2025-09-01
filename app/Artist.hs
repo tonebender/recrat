@@ -33,10 +33,8 @@ import Album (
       Album
     , albumName
     , yearOfRelease
-    , ratingBlocks
     , getAlbumRatings
     , getAverageScore
-    , ratings
     , getRatingsFlat
     , filterAlbumByCritic)
 
