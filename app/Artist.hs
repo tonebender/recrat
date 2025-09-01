@@ -123,7 +123,7 @@ getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slo
 -- (such as "=== Studio albums ===", where category is "Studio")
 parseDiscographyAlbums :: Text -> Text -> [WikiAnchor]
 parseDiscographyAlbums disco category =
-    let subtitle = findBestSubtitle (T.lines disco) [category, "studio", "official"] in
+    let subtitle = findBestHeading (T.lines disco) [category, "studio", "official"] in
     case drop 1 $ T.splitOn subtitle disco of
         [] -> []
         a:_ -> case T.splitOn "|}\n" a of  -- End of table
@@ -132,20 +132,20 @@ parseDiscographyAlbums disco category =
 
 -- Take the discography wiki as a list of lines, and a list of subtitle words such as "studio",
 -- "live", "official", etc. and return the first discography line that contains any of the
--- subtitle words, starting with the first, plus "==". If nothing found, return the line "albums
+-- subtitle words, starting with the first, combined with "==". If nothing found, return the line "albums
 -- ==". For example, we can search for ["studio", "official", "live"], in order, which will try to find
 -- "== Studio albums ==" but will return "== Official albums ==" if only that subtitle happens to
 -- exist in the page.
-findBestSubtitle :: [Text] -> [Text] -> Text
-findBestSubtitle _ [] = "albums =="
-findBestSubtitle disco' (s:subtitles) =
-    case findDiscoSubtitle disco' s of
-        Nothing -> findBestSubtitle disco' subtitles
+findBestHeading :: [Text] -> [Text] -> Text
+findBestHeading _ [] = "albums =="
+findBestHeading disco' (s:subtitles) =
+    case findDiscoHeading disco' s of
+        Nothing -> findBestHeading disco' subtitles
         Just subtitle -> subtitle
-    where findDiscoSubtitle [] _ = Nothing
-          findDiscoSubtitle (d:discolines) query' =
-              if T.isInfixOf (T.toCaseFold query') (T.toCaseFold d) && T.isInfixOf "==" d then Just d else findDiscoSubtitle discolines query'
-
+    where findDiscoHeading [] _ = Nothing
+          findDiscoHeading (d:discolines) query' =
+              if T.isInfixOf (T.toCaseFold query') (T.toCaseFold d) && T.isInfixOf "==" d
+              then Just d else findDiscoHeading discolines query'
 
 -- Get the rows that fit the (loose) criteria for containing an album inside the discography table,
 -- i.e. contains '' and starts with either | or !
