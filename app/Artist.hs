@@ -119,8 +119,8 @@ getPageFromWikiRevJson :: Value -> Text
 getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
 
 -- Take a discography Wikipedia page and get a list of albums
--- (each a WikiAnchor) from the table under the subtitle specified by category
--- (such as "=== Studio albums ===", where category is "Studio")
+-- (each a WikiAnchor) from the table under the subheading specified by
+-- category or any of the fallbacks (such as "=== Studio albums ===")
 parseDiscographyAlbums :: Text -> Text -> [WikiAnchor]
 parseDiscographyAlbums disco category =
     let subtitle = findBestHeading (T.lines disco) [category, "studio", "official"] in
