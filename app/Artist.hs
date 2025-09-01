@@ -55,6 +55,7 @@ data ArtistError = NoArtistFound | AlbumsRequestFailed
 showAlbums :: Artist -> Text
 showAlbums artist = showAlbums' (longestName (albums artist) + 8) $ sortAlbums $ albums artist
     where
+        showAlbums' :: Int -> [Album] -> Text
         showAlbums' _ [] = T.empty
         showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x <> showYear x) <> showNumbers x <> showAlbums' padding xs
             where
@@ -62,6 +63,12 @@ showAlbums artist = showAlbums' (longestName (albums artist) + 8) $ sortAlbums $
                     0 -> "  - (0)\n"
                     _ -> T.pack $ printf "%3d (%d)\n" (getAverageScore a) (length $ getRatingsFlat a)
                 showYear a = if yearOfRelease a == "" then "" else " (" <> yearOfRelease a <> ")"
+        -- Return the length of the longest name of all albums in list
+        longestName :: [Album] -> Int
+        longestName albums' = case listToMaybe $ reverse $ sort $ map (T.length . albumName) albums' of
+            Nothing -> 0
+            Just x -> x
+
 
 -- Get the artist but include only ratings whose critic name includes critic
 filterAlbumsByCritic :: Text -> Artist -> Artist
@@ -79,12 +86,6 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
            else if (length $ getRatingsFlat album1) > (length $ getRatingsFlat album2) then GT
            else LT
 
--- Return the length of the longest name of all albums in list
-longestName :: [Album] -> Int
-longestName albums' = case listToMaybe $ reverse $ sort $ map (T.length . albumName) albums' of
-    Nothing -> 0
-    Just x -> x
-
 -- Take a discography wiki title, its contents and a category (such as "studio") and request all of
 -- the Wikipedia pages (their contents, in a json object, via the Mediawiki Revisions API) for the albums found under that category
 -- in the discography. Then get the album ratings for every requested album and return as an
@@ -100,10 +101,10 @@ getAlbums wikiTitle discography category = do
         listOfJsons ->
             return $ Right $ Artist artistName $ catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
 
--- Run requestWikiPages on a maximum of 50 titles each and return a list
--- with each call's results. (For most artists, there'll be much less
--- than 50 in total, so this will be run just once and the result will
--- be a list with only one element; but try Frank Zappa's discography ...
+-- Run requestWikiPages on a maximum of 50 titles at a time, several times if needed, and return a
+-- list with each call's results. (For most artists, there'll be much less than 50 in total, so this
+-- will be run just once and the result will be a list with only one element; but try Frank Zappa's
+-- discography ...
 request50by50 :: [WikiAnchor] -> IO [Maybe Value]
 request50by50 [] = return []
 request50by50 titles = do
@@ -116,9 +117,8 @@ request50by50 titles = do
 getPageFromWikiRevJson :: Value -> Text
 getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
 
--- Take a discography Wikipedia page and get a list of albums
--- (each a WikiAnchor) from the table under the subheading specified by
--- category or any of the fallbacks (such as "=== Studio albums ===")
+-- Take a discography Wikipedia page and get a list of albums (each a WikiAnchor) from the table
+-- under the subheading specified by category or any of the fallbacks (such as "=== Studio albums ===")
 parseDiscographyAlbums :: Text -> Text -> [WikiAnchor]
 parseDiscographyAlbums disco category =
     let subtitle = findBestHeading (T.lines disco) [category, "studio", "official"] in
