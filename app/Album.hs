@@ -77,9 +77,9 @@ getAlbumRatings wikip =
                                                 [] -> ""  -- This also gives empty if the year couldn't be parsed
                                                 y:_ -> y
                   getAllRatingBlocks = drop 1 . T.splitOn "{{**\n"
-                                      . T.replace "{{Music ratings" "{{**"
-                                      . T.replace "{{Album ratings" "{{**"
-                                      . T.replace "{{Album reviews" "{{**"
+                                      . T.replace "{{Music ratings" "{{**\n"
+                                      . T.replace "{{Album ratings" "{{**\n"
+                                      . T.replace "{{Album reviews" "{{**\n"
 
 -- Create a text with all ratings for an album, plus its artist and title, etc.
 showAlbum :: Album -> Text
