@@ -4,10 +4,9 @@ module Artist (
     getAlbums
     , name
     , showAlbums
-    , ArtistError (NoArtistFound, AlbumsRequestFailed)
+    , ArtistError (NoDiscographyFound, AlbumsRequestFailed)
     , filterAlbumsByCritic
     , filterAlbumsInDisco
-    , parseDiscographyAlbums
     , request50by50
     , Artist
     , albums
@@ -44,7 +43,7 @@ data Artist = Artist
     , albums :: [Album]
     } deriving (Show)
 
-data ArtistError = NoArtistFound | AlbumsRequestFailed
+data ArtistError = NoDiscographyFound | AlbumsRequestFailed
 
 -- Get the artist name as Text
 -- showArtistName :: Artist -> Text
@@ -94,12 +93,15 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
 -- getPageFromWikiRevJson and getAlbumRatings are applied ...
 getAlbums :: Text -> Text -> Text -> IO (Either ArtistError Artist)
 getAlbums wikiTitle discography category = do
-    let artistName = T.replace " discography" "" wikiTitle
-    pages <- request50by50 $ parseDiscographyAlbums discography category
-    case catMaybes pages of
-        [] -> return $ Left AlbumsRequestFailed  -- If none of the requests worked, give error
-        listOfJsons ->
-            return $ Right $ Artist artistName $ catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
+    case parseDiscographyAlbums discography category of
+        [] -> return $ Left NoDiscographyFound
+        albumTitles -> do
+            pages <- request50by50 albumTitles
+            case catMaybes pages of
+                [] -> return $ Left AlbumsRequestFailed  -- If none of the requests worked, give error (theoretically a fraction can fail, but won't)
+                listOfJsons ->
+                    return $ Right $ Artist (T.replace " discography" "" wikiTitle)
+                       $ catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
 
 -- Run requestWikiPages on a maximum of 50 titles at a time, several times if needed, and return a
 -- list with each call's results. (For most artists, there'll be much less than 50 in total, so this
@@ -118,7 +120,8 @@ getPageFromWikiRevJson :: Value -> Text
 getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
 
 -- Take a discography Wikipedia page and get a list of albums (each a WikiAnchor) from the table
--- under the subheading specified by category or any of the fallbacks (such as "=== Studio albums ===")
+-- under the subheading specified by category or any of the fallbacks (such as "=== Studio albums ===").
+-- Return empty list if no subheading or table end were found.
 parseDiscographyAlbums :: Text -> Text -> [WikiAnchor]
 parseDiscographyAlbums disco category =
     let subtitle = findBestHeading (T.lines disco) [category, "studio", "official"] in

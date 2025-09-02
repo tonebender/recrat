@@ -23,7 +23,7 @@ import Artist
     , showAlbums
     , getAlbums
     , filterAlbumsByCritic
-    , ArtistError (AlbumsRequestFailed, NoArtistFound)
+    , ArtistError (AlbumsRequestFailed, NoDiscographyFound)
     )
 import Wiki 
     (
@@ -103,10 +103,6 @@ getWikipage pageTitle = do
 -- TODO: The getWikipage function feels a bit redundant. If the wiki request functions in Wiki.hs
 -- are modified to return different errors/codes (probably with Either), getWikipage can perhaps
 -- be removed, and the Wiki.hs functions called more directly.
---
---
--- TODO: Debug the "Frank Zappa problem" by checking the contents of getAlbums instead of printing
--- it
 
 main :: IO ()
 main = do
@@ -121,14 +117,14 @@ main = do
         Left (WikiError t) -> Tio.putStrLn t
         Right (wTitle, wText) -> do
             case (albumTitle, artistName) of
-                (_, "") -> case getAlbumRatings wText of  -- One album
+                (_, "") -> case getAlbumRatings wText of  -- Album mode: list ratings for that album
                     Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> wTitle <> "'"
                     Just alb -> Tio.putStr $ showAlbum $ filterAlbumByCritic critic alb
                 ("", _) -> do
-                    eitherArtist <- getAlbums wTitle wText category  -- Artist/discography
+                    eitherArtist <- getAlbums wTitle wText category  -- Artist/discography mode: list all the albums
                     case eitherArtist of
-                        Left AlbumsRequestFailed -> Tio.putStrLn $ "Failed to fetch albums for '" <> wTitle <> "'"
-                        Left NoArtistFound -> Tio.putStrLn $ "'" <> wTitle <> "' does not appear to contain an artist discography"
+                        Left AlbumsRequestFailed -> Tio.putStrLn $ "Failed to fetch albums from '" <> wTitle <> "'"
+                        Left NoDiscographyFound -> Tio.putStrLn $ "'" <> wTitle <> "' does not appear to contain an artist discography. Try refining your search query by appending the word 'discography' or 'albums' or similar to it."
                         Right artist -> do
                             Tio.putStrLn $ name artist
                             Tio.putStrLn $ T.replicate (T.length $ name artist) "-"
