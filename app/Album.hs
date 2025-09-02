@@ -4,8 +4,6 @@ module Album (
       Album
     , albumName
     , yearOfRelease
-    , ratingBlocks
-    , ratings
     , getAlbumRatings
     , getAverageScore
     , getRatingsFlat

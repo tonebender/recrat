@@ -6,10 +6,6 @@ module Artist (
     , showAlbums
     , ArtistError (NoDiscographyFound, AlbumsRequestFailed)
     , filterAlbumsByCritic
-    , filterAlbumsInDisco
-    , request50by50
-    , Artist
-    , albums
 ) where
 
 import Control.Lens ((^.), (^..))
