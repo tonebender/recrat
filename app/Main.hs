@@ -11,13 +11,13 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as Tio
 
 -- This app's modules
-import Album
+import Wiki.Album
     (
       showAlbum
     , getAlbumRatings
     , filterAlbumByCritic
     )
-import Artist
+import Wiki.Artist
     (
       name
     , showAlbums
@@ -25,7 +25,7 @@ import Artist
     , filterAlbumsByCritic
     , ArtistError (AlbumsRequestFailed, NoDiscographyFound)
     )
-import Wiki 
+import Wiki.Wiki 
     (
       requestWikiSearch
     , requestWikiParse
