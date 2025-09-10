@@ -3,12 +3,10 @@
 module Main where
 
 -- External modules
-import Control.Lens
-import Data.Aeson.Lens (_String, _Array, key, nth)
-import Data.Text.Internal (Text)
-import Options.Applicative
+import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as Tio
+import Options.Applicative
 
 -- This app's modules
 import Wiki.Album
@@ -27,8 +25,8 @@ import Wiki.Artist
     )
 import Wiki.Wiki 
     (
-      requestWikiSearch
-    , requestWikiParse
+      searchAndGetWiki
+    , WikiError (WikiError)
     )
 import LLM
     (
@@ -75,34 +73,6 @@ appDescription = info (commandLineParser <**> helper)
       <> progDesc "Lists music albums by artist and rating"
       <> header "album-ratings - find ratings for music albums" )
 
-
-data WikiError = WikiError Text
-    deriving (Show, Eq)
-
--- Search for a query on Wikipedia and return the title and contents
--- of the first page found as a Text tuple, or WikiError otherwise
-searchAndGetWiki :: Text -> IO (Either WikiError (Text, Text))
-searchAndGetWiki query = do
-    maybeWikiresults <- requestWikiSearch query
-    case maybeWikiresults of
-        Nothing -> return $ Left $ WikiError ("Search request to Wikipedia failed for '" <> query <> "'")
-        Just wikiResultsJson -> do
-            if length (wikiResultsJson ^. _Array) == 0
-                then return $ Left $ WikiError ("No results found for search query '" <> query <> "'")
-                else return =<< getWikipage (wikiResultsJson ^. nth 0 . key "title" . _String)
-
--- Request the contents of the Wikipedia page with pageTitle
--- Return as Text on success, WikiError otherwise
-getWikipage :: Text -> IO (Either WikiError (Text, Text))
-getWikipage pageTitle = do
-    maybeWikiContents <- requestWikiParse pageTitle
-    case maybeWikiContents of
-        Nothing -> return $ Left $ WikiError $ "Failed to fetch wikipedia page content for '" <> pageTitle <> "'"
-        Just wikiContents -> return $ Right (pageTitle, wikiContents)
-
--- TODO: The getWikipage function feels a bit redundant. If the wiki request functions in Wiki.hs
--- are modified to return different errors/codes (probably with Either), getWikipage can perhaps
--- be removed, and the Wiki.hs functions called more directly.
 
 main :: IO ()
 main = do

@@ -1,12 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Wiki.Wiki (
-    requestWikiSearch
+    searchAndGetWiki
+    , getWikipage
+    , requestWikiSearch
     , requestWikiParse
     , requestWikiPages
     , parseAlbumInfobox
     , findInfoboxProperty
     , WikiAnchor (WikiAnchor)
+    , WikiError (WikiError)
     , wikiURI
     , wikiLabel
     , getWikiAnchor
@@ -15,8 +18,8 @@ module Wiki.Wiki (
 
 import Control.Lens
 import Data.Aeson (Value)
-import Data.Aeson.Lens (_String, key)
-import Data.Text.Internal (Text)
+import Data.Aeson.Lens (_String, _Array, nth, key)
+import Data.Text (Text)
 import qualified Network.Wreq as W (getWith, defaults, params, header, responseBody)
 import qualified Data.Text as T
 import Data.Maybe (catMaybes, listToMaybe)
@@ -35,6 +38,34 @@ data WikiAnchor = WikiAnchor
     , wikiLabel :: Text
     } deriving (Show)
 
+data WikiError = WikiError Text
+    deriving (Show, Eq)
+
+
+-- Search for a query on Wikipedia and return the title and contents
+-- of the first page found as a Text tuple, or WikiError otherwise
+searchAndGetWiki :: Text -> IO (Either WikiError (Text, Text))
+searchAndGetWiki query = do
+    maybeWikiresults <- requestWikiSearch query
+    case maybeWikiresults of
+        Nothing -> return $ Left $ WikiError ("Search request to Wikipedia failed for '" <> query <> "'")
+        Just wikiResultsJson -> do
+            if length (wikiResultsJson ^. _Array) == 0
+                then return $ Left $ WikiError ("No results found for search query '" <> query <> "'")
+                else return =<< getWikipage (wikiResultsJson ^. nth 0 . key "title" . _String)
+
+-- Request the contents of the Wikipedia page with pageTitle
+-- Return as Text on success, WikiError otherwise
+getWikipage :: Text -> IO (Either WikiError (Text, Text))
+getWikipage pageTitle = do
+    maybeWikiContents <- requestWikiParse pageTitle
+    case maybeWikiContents of
+        Nothing -> return $ Left $ WikiError $ "Failed to fetch wikipedia page content for '" <> pageTitle <> "'"
+        Just wikiContents -> return $ Right (pageTitle, wikiContents)
+
+-- TODO: The getWikipage function feels a bit redundant. If the wiki request functions in Wiki.hs
+-- are modified to return different errors/codes (probably with Either), getWikipage can perhaps
+-- be removed, and the Wiki.hs functions called more directly.
 
 -- TODO: Handle several results, like different http response codes etc.
 
