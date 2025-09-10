@@ -67,6 +67,7 @@ getWikipage pageTitle = do
 -- are modified to return different errors/codes (probably with Either), getWikipage can perhaps
 -- be removed, and the Wiki.hs functions called more directly.
 
+
 -- TODO: Handle several results, like different http response codes etc.
 
 -- Make a request to the MediaWiki Action API on Wikipedia, asking it to search for the supplied query

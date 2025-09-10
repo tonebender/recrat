@@ -1,0 +1,1 @@
+module Wiki.Console where
