@@ -9,6 +9,10 @@ import qualified Data.Text.IO as Tio
 import Options.Applicative
 
 -- This app's modules
+import Wiki.Console
+    (
+      printAlbumRatings
+    )
 import Wiki.Album
     (
       showAlbum
@@ -73,6 +77,16 @@ appDescription = info (commandLineParser <**> helper)
       <> progDesc "Lists music albums by artist and rating"
       <> header "album-ratings - find ratings for music albums" )
 
+newMain :: IO ()
+newMain = do
+    inputargs <- execParser appDescription
+    let albumTitle = optAlbum inputargs
+    let artistName = optArtist inputargs
+    let category = optCategory inputargs
+    let critic = optCritic inputargs
+    if (albumTitle /= T.empty)
+        then printAlbumRatings albumTitle critic
+        else Tio.putStrLn ""
 
 main :: IO ()
 main = do

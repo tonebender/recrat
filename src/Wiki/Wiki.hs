@@ -63,7 +63,7 @@ getWikipage pageTitle = do
         Nothing -> return $ Left $ WikiError $ "Failed to fetch wikipedia page content for '" <> pageTitle <> "'"
         Just wikiContents -> return $ Right (pageTitle, wikiContents)
 
--- TODO: The getWikipage function feels a bit redundant. If the wiki request functions in Wiki.hs
+-- TODO: The getWikipage function feels a bit redundant. If the wiki request functions below
 -- are modified to return different errors/codes (probably with Either), getWikipage can perhaps
 -- be removed, and the Wiki.hs functions called more directly.
 
