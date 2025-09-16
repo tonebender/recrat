@@ -17,7 +17,7 @@ import Text.Printf (printf)
 import qualified Data.Text as T
 import Data.Text.Internal (Text)
 
-import Wiki.Wiki (
+import Wiki.MediaWiki (
       requestWikiPages
     , WikiAnchor
     , getWikiAnchor

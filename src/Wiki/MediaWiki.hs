@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Wiki.Wiki (
+module Wiki.MediaWiki (
     searchAndGetWiki
     , getWikipage
     , requestWikiSearch

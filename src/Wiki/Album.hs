@@ -21,7 +21,7 @@ import qualified Data.Text as T
 import qualified Text.Parsec as P
 import qualified Text.HTMLEntity as HTML (decode')
 
-import Wiki.Wiki (
+import Wiki.MediaWiki (
       parseAlbumInfobox
     , findInfoboxProperty
     , WikiAnchor (WikiAnchor)

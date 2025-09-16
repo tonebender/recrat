@@ -5,7 +5,7 @@ module Wiki.Console (
     , printArtistAlbums
 ) where
 
-import Wiki.Wiki 
+import Wiki.MediaWiki 
     (
       searchAndGetWiki
     , WikiError (WikiError)
