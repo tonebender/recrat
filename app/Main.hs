@@ -12,25 +12,7 @@ import Options.Applicative
 import Wiki.Console
     (
       printAlbumRatings
-    )
-import Wiki.Album
-    (
-      showAlbum
-    , getAlbumRatings
-    , filterAlbumByCritic
-    )
-import Wiki.Artist
-    (
-      name
-    , showAlbums
-    , getAlbums
-    , filterAlbumsByCritic
-    , ArtistError (AlbumsRequestFailed, NoDiscographyFound)
-    )
-import Wiki.Wiki 
-    (
-      searchAndGetWiki
-    , WikiError (WikiError)
+    , printArtistAlbums
     )
 import LLM
     (
@@ -77,17 +59,6 @@ appDescription = info (commandLineParser <**> helper)
       <> progDesc "Lists music albums by artist and rating"
       <> header "album-ratings - find ratings for music albums" )
 
-newMain :: IO ()
-newMain = do
-    inputargs <- execParser appDescription
-    let albumTitle = optAlbum inputargs
-    let artistName = optArtist inputargs
-    let category = optCategory inputargs
-    let critic = optCritic inputargs
-    if (albumTitle /= T.empty)
-        then printAlbumRatings albumTitle critic
-        else Tio.putStrLn ""
-
 main :: IO ()
 main = do
     inputargs <- execParser appDescription
@@ -95,22 +66,8 @@ main = do
     let artistName = optArtist inputargs
     let category = optCategory inputargs
     let critic = optCritic inputargs
-    let query = if (albumTitle /= T.empty) then albumTitle else artistName <> " discography"
-    eitherWikiContent <- searchAndGetWiki query
-    case eitherWikiContent of
-        Left (WikiError t) -> Tio.putStrLn t
-        Right (wTitle, wText) -> do
-            case (albumTitle, artistName) of
-                (_, "") -> case getAlbumRatings wText of  -- Album mode: list ratings for that album
-                    Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> wTitle <> "'"
-                    Just alb -> Tio.putStr $ showAlbum $ filterAlbumByCritic critic alb
-                ("", _) -> do
-                    eitherArtist <- getAlbums wTitle wText category  -- Artist/discography mode: list all the albums
-                    case eitherArtist of
-                        Left AlbumsRequestFailed -> Tio.putStrLn $ "Failed to fetch albums from '" <> wTitle <> "'"
-                        Left NoDiscographyFound -> Tio.putStrLn $ "'" <> wTitle <> "' does not appear to contain an artist discography. Try refining your search query by appending the word 'discography' or 'albums' or similar to it."
-                        Right artist -> do
-                            Tio.putStrLn $ name artist
-                            Tio.putStrLn $ T.replicate (T.length $ name artist) "-"
-                            Tio.putStr $ showAlbums $ filterAlbumsByCritic critic artist
-                (_, _) -> Tio.putStrLn "No album title or artist/band specified."
+    if (albumTitle /= T.empty)
+        then printAlbumRatings albumTitle critic
+        else if (artistName /= T.empty)
+            then printArtistAlbums (artistName <> " discography") critic category
+            else Tio.putStrLn "No album title or artist/band specified."
