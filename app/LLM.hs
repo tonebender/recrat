@@ -7,15 +7,16 @@ module LLM (
 
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.IO as Tio
 import qualified Data.Text.Encoding as TE
+import qualified Data.ByteString as BS (ByteString, dropWhileEnd)
+import qualified Data.ByteString.Char8 as BS8 (pack)
 import qualified Data.ByteString.Lazy as BL
 import Data.Aeson (decode, Value)
 import Data.Aeson.Lens (key, nth, _String)
 import Data.Maybe (fromJust)
 import qualified Network.Wreq as W (postWith, defaults, params, header, responseBody, responseStatus, Response)
 import Control.Lens
-import qualified Data.ByteString as BS (ByteString, dropWhileEnd)
-import qualified Data.ByteString.Char8 as BS8 (pack)
 
 userAgent :: BS.ByteString
 userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
@@ -92,3 +93,7 @@ llmMockRequest = do
     -- let result = eitherDecode byteString :: Either String Value
     -- Then start again with all these lens operations to get what you want out of it... or maybe
     -- return it as is to a web client?
+
+llmPrintArtist :: IO ()
+llmPrintArtist = do
+    Tio.putStrLn =<< llmMockRequest

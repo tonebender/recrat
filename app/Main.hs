@@ -26,6 +26,7 @@ data Inputargs = Inputargs
     , optArtist :: Text
     , optCategory :: Text
     , optCritic :: Text
+    , optLLM :: Bool
     }
 
 -- Parser for command line arguments
@@ -51,6 +52,10 @@ commandLineParser = Inputargs
         <> value ""
         <> metavar "CRITIC"
         <> help "Include ratings only from sources with names containing this string")
+    <*> switch
+        (long "llm"
+        <> long "ai"
+        <> help "Use an LLM (ai) to get a list of the best albums by the specified artist")
 
 -- Help text and info for command line
 appDescription :: ParserInfo Inputargs
@@ -66,6 +71,7 @@ main = do
     let artistName = optArtist inputargs
     let category = optCategory inputargs
     let critic = optCritic inputargs
+    let llm = optLLM inputargs
     if (albumTitle /= T.empty)
         then printAlbumRatings albumTitle critic
         else if (artistName /= T.empty)
