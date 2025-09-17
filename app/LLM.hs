@@ -3,20 +3,32 @@
 module LLM (
       llmRequest
     , llmMockRequest
+    , llmPrintArtist
 ) where
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.IO as Tio
-import qualified Data.Text.Encoding as TE
-import qualified Data.ByteString as BS (ByteString, dropWhileEnd)
+import qualified Data.Text.IO as Tio (putStrLn)
+import qualified Data.Text.Encoding as TE (encodeUtf8)
+import qualified Data.ByteString as BS (ByteString)
 import qualified Data.ByteString.Char8 as BS8 (pack)
-import qualified Data.ByteString.Lazy as BL
-import Data.Aeson (decode, Value)
-import Data.Aeson.Lens (key, nth, _String)
+import qualified Data.ByteString.Lazy as BL (fromStrict)
+import Data.Aeson (decode, eitherDecode, Value)
+import Data.Aeson.Lens (key, nth, _String, _Object)
 import Data.Maybe (fromJust)
 import qualified Network.Wreq as W (postWith, defaults, params, header, responseBody, responseStatus, Response)
 import Control.Lens
+
+data Album = Album
+    { albumName :: Text
+    , albumYear :: Text
+    , albumDesc :: Text
+    } deriving (Show)
+
+data Artist = Artist
+    { name :: Text
+    , albums :: [Album]
+    } deriving (Show)
 
 userAgent :: BS.ByteString
 userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
@@ -83,10 +95,10 @@ llmRequest = do
     r <- W.postWith opts llmURL llmData
     return $ r ^? W.responseBody . key "choices" . nth 0 . key "message" . key "content" . _String
 
-llmMockRequest :: IO Text
+llmMockRequest :: IO (Either String Value)
 llmMockRequest = do
-    contents <- readFile "mock_responseBody.json"
-    return $ T.pack contents
+    contents <- readFile "mock_responseBody_content.json"
+    return $ eitherDecode $ BL.fromStrict $ TE.encodeUtf8 $ T.pack contents
 
     -- Then convert this Text to ByteString, then convert to Lazy ByteString (with fromStrict),
     -- then use Aeson's eitherDecode or similar to create a value:
@@ -96,4 +108,9 @@ llmMockRequest = do
 
 llmPrintArtist :: IO ()
 llmPrintArtist = do
-    Tio.putStrLn =<< llmMockRequest
+    eitherValue <- llmMockRequest
+    case eitherValue of
+        Left err -> putStrLn $ "Error decoding json: " <> err
+        Right val -> do
+            Tio.putStrLn "Got json:"
+            Tio.putStrLn $ val ^. _String

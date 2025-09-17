@@ -16,8 +16,9 @@ import Wiki.Console
     )
 import LLM
     (
-      llmRequest,
-      llmMockRequest
+      llmRequest
+    , llmMockRequest
+    , llmPrintArtist
     )
 
 -- Type for command line args
@@ -72,6 +73,9 @@ main = do
     let category = optCategory inputargs
     let critic = optCritic inputargs
     let llm = optLLM inputargs
+    if llm
+        then llmPrintArtist
+        else Tio.putStrLn "No LLM"
     if (albumTitle /= T.empty)
         then printAlbumRatings albumTitle critic
         else if (artistName /= T.empty)
