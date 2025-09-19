@@ -17,12 +17,11 @@ import qualified Data.ByteString as BS (ByteString)
 import qualified Data.ByteString.Char8 as BS8 (strip, readFile)
 import qualified Data.ByteString.Lazy as BL (fromStrict, readFile)
 import Data.Aeson
-import Data.Aeson.Types
-import Data.Aeson.Lens (key, nth, _String, _Array, _Object, values)
-import Data.Maybe (fromJust, mapMaybe, catMaybes)
+import Data.Aeson.Types (parseMaybe)
+import Data.Aeson.Lens (key, nth, _String, _Object, values)
+import Data.Maybe (fromJust)
 import qualified Network.Wreq as W (postWith, defaults, params, header, responseBody, responseStatus, Response)
 import Control.Lens
-import Control.Applicative
 import GHC.Generics
 
 data Album = Album
