@@ -1,9 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeApplications #-}
 
 module LLM (
       llmRequest
     , llmMockRequest
     , llmPrintArtist
+    , Album (Album)
 ) where
 
 import Data.Text (Text)
@@ -11,19 +14,24 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as Tio (putStrLn)
 import qualified Data.Text.Encoding as TE (encodeUtf8)
 import qualified Data.ByteString as BS (ByteString)
-import qualified Data.ByteString.Char8 as BS8 (pack)
-import qualified Data.ByteString.Lazy as BL (fromStrict)
-import Data.Aeson (decode, eitherDecode, Value)
-import Data.Aeson.Lens (key, nth, _String, _Object)
-import Data.Maybe (fromJust)
+import qualified Data.ByteString.Char8 as BS8 (strip, readFile)
+import qualified Data.ByteString.Lazy as BL (fromStrict, readFile)
+import Data.Aeson
+import Data.Aeson.Types
+import Data.Aeson.Lens (key, nth, _String, _Array, _Object, values)
+import Data.Maybe (fromJust, mapMaybe, catMaybes)
 import qualified Network.Wreq as W (postWith, defaults, params, header, responseBody, responseStatus, Response)
 import Control.Lens
+import Control.Applicative
+import GHC.Generics
 
 data Album = Album
-    { albumName :: Text
-    , albumYear :: Text
-    , albumDesc :: Text
-    } deriving (Show)
+    { title :: Text
+    , year :: Text
+    , description :: Text
+    } deriving (Show, Generic)
+
+instance FromJSON Album
 
 data Artist = Artist
     { name :: Text
@@ -87,30 +95,43 @@ llmData = fromJust $ decode $ BL.fromStrict $ TE.encodeUtf8 $ T.replace "'" "\""
 -- llmRequest :: IO (W.Response BL.ByteString)  -- <- use then when returning r
 llmRequest :: IO (Maybe Text)
 llmRequest = do
-    mistralKey <- readFile "mistral-key.txt"
+    mistralKey <- BS8.readFile "mistral-key.txt"
     let opts = W.defaults & W.header "User-Agent" .~ [userAgent]
                           & W.header "Content-Type" .~ ["application/json"]
                           & W.header "Accept" .~ ["application/json"]
-                          & W.header "Authorization" .~ ["Bearer " <> (BS8.pack mistralKey)]
+                          & W.header "Authorization" .~ ["Bearer " <> (BS8.strip mistralKey)]
     r <- W.postWith opts llmURL llmData
     return $ r ^? W.responseBody . key "choices" . nth 0 . key "message" . key "content" . _String
-
-llmMockRequest :: IO (Either String Value)
-llmMockRequest = do
-    contents <- readFile "mock_responseBody_content.json"
-    return $ eitherDecode $ BL.fromStrict $ TE.encodeUtf8 $ T.pack contents
 
     -- Then convert this Text to ByteString, then convert to Lazy ByteString (with fromStrict),
     -- then use Aeson's eitherDecode or similar to create a value:
     -- let result = eitherDecode byteString :: Either String Value
     -- Then start again with all these lens operations to get what you want out of it... or maybe
     -- return it as is to a web client?
+    --
+    -- When you have the "contents", maybe use this to get in to it:
+    -- contents ^.. key "albums" . values
+
+llmMockRequest :: IO (Maybe Value)
+llmMockRequest = do
+    contents <- BL.readFile "mock_responseBody_content.json"
+    return $ decode contents
+
+
+parseObjectsToAlbums :: [Object] -> [Maybe Album]
+parseObjectsToAlbums objects = map (parseMaybe objectToAlbumParser) objects
+    where objectToAlbumParser obj = Album <$> obj .: "title" <*> obj .: "year" <*> obj .: "description"
+
+-- llmPrintArtist :: IO ()
+-- llmPrintArtist = do
+--    Tio.putStrLn "hej"
+
 
 llmPrintArtist :: IO ()
 llmPrintArtist = do
-    eitherValue <- llmMockRequest
-    case eitherValue of
-        Left err -> putStrLn $ "Error decoding json: " <> err
-        Right val -> do
-            Tio.putStrLn "Got json:"
-            Tio.putStrLn $ val ^. _String
+    maybeValue <- llmMockRequest
+    case maybeValue of
+        Nothing -> Tio.putStrLn "Error decoding 'contents'"
+        Just contents -> do
+            let albms = parseObjectsToAlbums (contents ^.. key "albums" . values . _Object)
+            print albms
