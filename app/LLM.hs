@@ -19,7 +19,7 @@ import qualified Data.ByteString.Lazy as BL (fromStrict, readFile)
 import Data.Aeson
 import Data.Aeson.Types (parseMaybe)
 import Data.Aeson.Lens (key, nth, _String, _Object, values)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, catMaybes)
 import qualified Network.Wreq as W (postWith, defaults, params, header, responseBody, responseStatus, Response)
 import Control.Lens
 import GHC.Generics
@@ -43,8 +43,8 @@ userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
 llmURL :: String
 llmURL = "https://api.mistral.ai/v1/chat/completions"
 
--- For readability, first create a list of texts, then concat, replace, decode to bytestring,
--- then to lazy bytestring and finally decode the whole thing to an Aeson.Value
+-- For readability and less escaping, first create a list of texts, then concat, replace, decode to
+-- bytestring, then to lazy bytestring and finally decode the whole thing to an Aeson.Value (!)
 llmData :: Value
 llmData = fromJust $ decode $ BL.fromStrict $ TE.encodeUtf8 $ T.replace "'" "\"" $ T.concat [
     "{",
@@ -63,6 +63,9 @@ llmData = fromJust $ decode $ BL.fromStrict $ TE.encodeUtf8 $ T.replace "'" "\""
     "                '$schema': 'http://json-schema.org/draft-07/schema#',",
     "                'type': 'object',",
     "                'properties': {",
+    "                    'artistName': {",
+    "                        'type': 'string'",
+    "                    }",
     "                    'albums': {",
     "                        'type': 'array',",
     "                        'items': {",
@@ -102,29 +105,18 @@ llmRequest = do
     r <- W.postWith opts llmURL llmData
     return $ r ^? W.responseBody . key "choices" . nth 0 . key "message" . key "content" . _String
 
-    -- Then convert this Text to ByteString, then convert to Lazy ByteString (with fromStrict),
-    -- then use Aeson's eitherDecode or similar to create a value:
-    -- let result = eitherDecode byteString :: Either String Value
-    -- Then start again with all these lens operations to get what you want out of it... or maybe
-    -- return it as is to a web client?
-    --
-    -- When you have the "contents", maybe use this to get in to it:
-    -- contents ^.. key "albums" . values
-
 llmMockRequest :: IO (Maybe Value)
 llmMockRequest = do
     contents <- BL.readFile "mock_responseBody_content.json"
     return $ decode contents
 
-
 parseObjectsToAlbums :: [Object] -> [Maybe Album]
 parseObjectsToAlbums objects = map (parseMaybe objectToAlbumParser) objects
     where objectToAlbumParser obj = Album <$> obj .: "title" <*> obj .: "year" <*> obj .: "description"
 
--- llmPrintArtist :: IO ()
--- llmPrintArtist = do
---    Tio.putStrLn "hej"
-
+parseObjectsToAlbums2 :: [Value] -> [Album]
+parseObjectsToAlbums2 objects = map objectToAlbumParser2 objects
+    where objectToAlbumParser2 obj = Album (obj ^. key "title" . _String) (obj ^. key "year" . _String) (obj ^. key "description" . _String)
 
 llmPrintArtist :: IO ()
 llmPrintArtist = do
@@ -132,5 +124,5 @@ llmPrintArtist = do
     case maybeValue of
         Nothing -> Tio.putStrLn "Error decoding 'contents'"
         Just contents -> do
-            let albms = parseObjectsToAlbums (contents ^.. key "albums" . values . _Object)
-            print albms
+            let artst = Artist (contents ^. key "artistName" . _String) (catMaybes $ parseObjectsToAlbums $ contents ^.. key "albums" . values . _Object)
+            print artst

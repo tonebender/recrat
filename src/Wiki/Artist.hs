@@ -41,9 +41,6 @@ data Artist = Artist
 
 data ArtistError = NoDiscographyFound | AlbumsRequestFailed
 
--- Get the artist name as Text
--- showArtistName :: Artist -> Text
--- showArtistName artist = wikiLabel $ name artist
 
 -- Return a Text with album titles + year and their average ratings followed 
 -- by "(number of ratings)", with titles left-justified and numbers right-justified
@@ -82,11 +79,11 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
            else LT
 
 -- Take a discography wiki title, its contents and a category (such as "studio") and request all of
--- the Wikipedia pages (their contents, in a json object, via the Mediawiki Revisions API) for the albums found under that category
--- in the discography. Then get the album ratings for every requested album and return as an
--- Artist. When requesting the pages, take 50 at a time because that's the Mediawiki API's limit,
--- and concat the list of json Values of max 50 pages each into a flattened list, to which
--- getPageFromWikiRevJson and getAlbumRatings are applied ...
+-- the Wikipedia pages (their contents, in a json object, via the Mediawiki Revisions API) for the
+-- albums found under that category in the discography. Then get the album ratings for every
+-- requested album and return as an Artist. When requesting the pages, take 50 at a time because
+-- that's the Mediawiki API's limit, and concat the list of json Values of max 50 pages each into a
+-- flattened list, to which getPageFromWikiRevJson and getAlbumRatings are applied ...
 getAlbums :: Text -> Text -> Text -> IO (Either ArtistError Artist)
 getAlbums wikiTitle discography category = do
     case parseDiscographyAlbums discography category of
