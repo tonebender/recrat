@@ -16,7 +16,7 @@ import qualified Data.Text.Encoding as TE (encodeUtf8)
 import qualified Data.ByteString as BS (ByteString)
 import qualified Data.ByteString.Char8 as BS8 (strip, readFile)
 import qualified Data.ByteString.Lazy as BL (fromStrict, readFile)
-import Data.Aeson
+import Data.Aeson (decode, eitherDecode, Value, Object, FromJSON, (.:))
 import Data.Aeson.Types (parseMaybe)
 import Data.Aeson.Lens (key, nth, _String, _Object, values)
 import Data.Maybe (fromJust, catMaybes)
@@ -43,7 +43,7 @@ userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
 llmURL :: String
 llmURL = "https://api.mistral.ai/v1/chat/completions"
 
--- For readability and less escaping, first create a list of texts, then concat, replace, decode to
+-- | For readability and less escaping, first create a list of texts, then concat, replace, decode to
 -- bytestring, then to lazy bytestring and finally decode the whole thing to an Aeson.Value (!)
 llmData :: Value
 llmData = fromJust $ decode $ BL.fromStrict $ TE.encodeUtf8 $ T.replace "'" "\"" $ T.concat [
@@ -65,7 +65,7 @@ llmData = fromJust $ decode $ BL.fromStrict $ TE.encodeUtf8 $ T.replace "'" "\""
     "                'properties': {",
     "                    'artistName': {",
     "                        'type': 'string'",
-    "                    }",
+    "                    },",
     "                    'albums': {",
     "                        'type': 'array',",
     "                        'items': {",
@@ -94,9 +94,17 @@ llmData = fromJust $ decode $ BL.fromStrict $ TE.encodeUtf8 $ T.replace "'" "\""
     "}"
    ]
 
+-- | Get a Text representation of an Artist variable
+showArtist :: Artist -> Text
+showArtist artist' = name artist' <> "\n"
+    <> T.replicate (T.length $ name artist') "-" <> "\n"
+    <> T.intercalate "\n" (map showAlbum $ albums artist')
+    where showAlbum a = "* " <> title a <> " (" <> year a <> ")\n  " <> description a
+
+-- | Make a post request to an LLM
 -- llmRequest :: IO (W.Response BL.ByteString)  -- <- use then when returning r
-llmRequest :: IO (Maybe Text)
-llmRequest = do
+mistralRequest :: IO (Maybe Text)
+mistralRequest = do
     mistralKey <- BS8.readFile "mistral-key.txt"
     let opts = W.defaults & W.header "User-Agent" .~ [userAgent]
                           & W.header "Content-Type" .~ ["application/json"]
@@ -110,19 +118,34 @@ llmMockRequest = do
     contents <- BL.readFile "mock_responseBody_content.json"
     return $ decode contents
 
+-- | Take a json string with the LLM response (validating to the llmData schema above), decode it
+-- and return an Artist variable (containing an [Album]) from this json data.
+jsonToArtist :: Text -> Maybe Artist
+jsonToArtist jsonText =
+    let jsonString = BL.fromStrict $ TE.encodeUtf8 jsonText in
+    case eitherDecode jsonString :: (Either String Value) of
+        Left _ -> Nothing
+        Right jsonValue ->
+            Just $ Artist (jsonValue ^. key "artistName" . _String)
+                          (catMaybes $ parseObjectsToAlbums $ jsonValue ^.. key "albums" . values . _Object)
+
 parseObjectsToAlbums :: [Object] -> [Maybe Album]
 parseObjectsToAlbums objects = map (parseMaybe objectToAlbumParser) objects
     where objectToAlbumParser obj = Album <$> obj .: "title" <*> obj .: "year" <*> obj .: "description"
 
 parseObjectsToAlbums2 :: [Value] -> [Album]
 parseObjectsToAlbums2 objects = map objectToAlbumParser2 objects
-    where objectToAlbumParser2 obj = Album (obj ^. key "title" . _String) (obj ^. key "year" . _String) (obj ^. key "description" . _String)
+    where objectToAlbumParser2 obj =
+            Album (obj ^. key "title" . _String) (obj ^. key "year" . _String) (obj ^. key "description" . _String)
 
 llmPrintArtist :: IO ()
 llmPrintArtist = do
-    maybeValue <- llmMockRequest
+    maybeValue <- mistralRequest
     case maybeValue of
-        Nothing -> Tio.putStrLn "Error decoding 'contents'"
-        Just contents -> do
-            let artst = Artist (contents ^. key "artistName" . _String) (catMaybes $ parseObjectsToAlbums $ contents ^.. key "albums" . values . _Object)
-            print artst
+        Nothing -> Tio.putStrLn "Error when requesting data from LLM."
+        Just contents -> case jsonToArtist contents of
+            Nothing -> Tio.putStrLn "Error: Could not parse artist/album info from LLM."
+            Just art -> Tio.putStrLn $ showArtist art
+--        Just contents -> Tio.putStrLn $ showArtist
+--            $ Artist (contents ^. key "artistName" . _String)
+--                     (catMaybes $ parseObjectsToAlbums $ contents ^.. key "albums" . values . _Object)
