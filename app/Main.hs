@@ -8,15 +8,15 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as Tio
 import Options.Applicative
 
--- This app's modules
+-- This app's own modules
 import Wiki.Console
     (
       printAlbumRatings
     , printArtistAlbums
     )
-import LLM
+import LLM.LLM
     (
-      llmRequest
+      mistralRequest
     , llmMockRequest
     , llmPrintArtist
     )

@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeApplications #-}
 
-module LLM (
+module LLM.LLM (
       mistralRequest
     , llmMockRequest
     , llmPrintArtist
