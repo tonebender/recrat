@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeApplications #-}
 
 module LLM (
-      llmRequest
+      mistralRequest
     , llmMockRequest
     , llmPrintArtist
     , Album (Album)
