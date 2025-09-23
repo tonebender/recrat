@@ -75,9 +75,8 @@ main = do
     let llm = optLLM inputargs
     if llm
         then llmPrintArtist
-        else Tio.putStrLn "No LLM"
-    if (albumTitle /= T.empty)
-        then printAlbumRatings albumTitle critic
-        else if (artistName /= T.empty)
-            then printArtistAlbums (artistName <> " discography") critic category
-            else Tio.putStrLn "No album title or artist/band specified."
+        else if (albumTitle /= T.empty)
+            then printAlbumRatings albumTitle critic
+            else if (artistName /= T.empty)
+                then printArtistAlbums artistName critic category
+                else Tio.putStrLn "No album title or artist specified."

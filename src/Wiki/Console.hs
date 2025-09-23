@@ -40,7 +40,7 @@ printAlbumRatings query critic = do
 
 printArtistAlbums :: Text -> Text -> Text -> IO ()
 printArtistAlbums query critic category = do
-    eitherWikiContent <- searchAndGetWiki query  -- Search for query and take the first result (title, content)
+    eitherWikiContent <- searchAndGetWiki (query <> " discography") -- Search for query and take the first result (title, content)
     case eitherWikiContent of
         Left (WikiError t) -> Tio.putStrLn t
         Right (wTitle, wText) -> do
