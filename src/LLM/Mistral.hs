@@ -36,7 +36,7 @@ mistralJson = fromJust $ decode $ BL.concat [
    ]
 
 userAgent :: BS.ByteString
-userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
+userAgent = "recrat/0.1.0.0 (https://github.com/tonebender/recrat) haskell"
 
 -- | Make a post request to an LLM, sending a json object to the specified URL.
 -- llmRequest :: IO (W.Response BL.ByteString)  -- <- use then when returning r
