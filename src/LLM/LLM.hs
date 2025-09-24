@@ -33,8 +33,8 @@ data Artist = Artist
     , albums :: [Album]
     } deriving (Show)
 
-llmArtistSchema :: Value
-llmArtistSchema = fromJust $ decode $ BL.concat [
+artistJsonSchema :: Value
+artistJsonSchema = fromJust $ decode $ BL.concat [
     "{",
     "    \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
     "    \"type\": \"object\",",
@@ -107,7 +107,7 @@ parseObjectsToAlbums2 objects = map objectToAlbumParser2 objects
 
 llmPrintArtist :: IO ()
 llmPrintArtist = do
-    maybeValue <- mistralRequest
+    maybeValue <- mistralRequest artistJsonSchema
     case maybeValue of
         Nothing -> Tio.putStrLn "Error when requesting data from LLM."
         Just contents -> case parseJsonToArtist contents of
