@@ -7,12 +7,33 @@ module LLM.Mistral (
 import Data.Text (Text)
 import qualified Data.ByteString as BS (ByteString)
 import qualified Data.ByteString.Char8 as BS8 (strip, readFile)
-import qualified Data.ByteString.Lazy as BL (readFile)
+import qualified Data.ByteString.Lazy as BL (readFile, concat)
 import Data.Aeson (Value, decode)
 import Data.Aeson.Lens (nth, key, _String)
 import Data.Maybe (fromJust)
 import qualified Network.Wreq as W (postWith, defaults, header, responseBody, responseStatus, Response)
 import Control.Lens ((.~), (&), (^?))
+
+mistralJson :: Value
+mistralJson = fromJust $ decode $ BL.concat [
+    "{",
+    "    \"model\": \"mistral-medium-latest\",",
+    "    \"messages\": [",
+    "        {",
+    "            \"role\": \"user\",",
+    "            \"content\": \"Please list the ten best studio albums by the Rolling Stones.\"",
+    "        }",
+    "    ],",
+    "    \"response_format\": {",
+    "        \"type\": \"json_schema\",",
+    "        \"json_schema\": {",
+    "            \"name\": \"Albums json data\",",
+    "            \"schema\": {",
+    "            }",
+    "        }",
+    "    }",
+    "}"
+   ]
 
 userAgent :: BS.ByteString
 userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"

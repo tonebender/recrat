@@ -10,11 +10,11 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as Tio (putStrLn)
 import qualified Data.Text.Encoding as TE (encodeUtf8)
-import qualified Data.ByteString.Lazy as BL (fromStrict, readFile)
+import qualified Data.ByteString.Lazy as BL (fromStrict, readFile, concat)
 import Data.Aeson (decode, eitherDecode, Value, Object, (.:))
 import Data.Aeson.Types (parseMaybe)
 import Data.Aeson.Lens (key, _String, _Object, values)
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, fromJust)
 import Control.Lens ((^.), (^..))
 
 import LLM.Mistral
@@ -33,6 +33,41 @@ data Artist = Artist
     , albums :: [Album]
     } deriving (Show)
 
+llmArtistSchema :: Value
+llmArtistSchema = fromJust $ decode $ BL.concat [
+    "{",
+    "    \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
+    "    \"type\": \"object\",",
+    "    \"properties\": {",
+    "        \"artistName\": {",
+    "            \"type\": \"string\"",
+    "        },",
+    "        \"albums\": {",
+    "            \"type\": \"array\",",
+    "            \"items\": {",
+    "                \"type\": \"object\",",
+    "                \"properties\": {",
+    "                    \"title\": {",
+    "                        \"type\": \"string\"",
+    "                    },",
+    "                    \"year\": {",
+    "                        \"type\": \"string\"",
+    "                    },",
+    "                    \"description\": {",
+    "                        \"type\": \"string\"",
+    "                    }",
+    "                },",
+    "                \"required\": [\"title\", \"year\", \"description\"],",
+    "                \"additionalProperties\": false",
+    "            }",
+    "        }",
+    "    },",
+    "    \"required\": [\"artistName\", \"albums\"],",
+    "    \"additionalProperties\": false",
+    "}"
+   ]
+
+
 -- Note: to make an aeson Value from Text, use 
 -- decode $ BL.fromStrict $ TE.encodeUtf8 text
 
@@ -50,8 +85,8 @@ llmMockRequest = do
 
 -- | Take a json string with the LLM response (validating to the llmData schema above), decode it
 -- and return an Artist variable (containing an [Album]) from this json data.
-jsonToArtist :: Text -> Maybe Artist
-jsonToArtist jsonText =
+parseJsonToArtist :: Text -> Maybe Artist
+parseJsonToArtist jsonText =
     let jsonString = BL.fromStrict $ TE.encodeUtf8 jsonText in
     case eitherDecode jsonString :: (Either String Value) of
         Left _ -> Nothing
@@ -75,6 +110,6 @@ llmPrintArtist = do
     maybeValue <- mistralRequest
     case maybeValue of
         Nothing -> Tio.putStrLn "Error when requesting data from LLM."
-        Just contents -> case jsonToArtist contents of
+        Just contents -> case parseJsonToArtist contents of
             Nothing -> Tio.putStrLn "Error: Could not parse artist/album info from LLM."
             Just art -> Tio.putStrLn $ showArtist art
