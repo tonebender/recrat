@@ -9,11 +9,14 @@
     "response_format": {
         "type": "json_schema",
         "json_schema": {
-            "name": "Henriks json schema",
+            "name": "Albums json data",
             "schema": {
                 "$schema": "http://json-schema.org/draft-07/schema#",
                 "type": "object",
                 "properties": {
+                    "artistName": {
+                        "type": "string"
+                    },
                     "albums": {
                         "type": "array",
                         "items": {
@@ -40,4 +43,3 @@
         }
     }
 }
-
