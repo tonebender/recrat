@@ -1,10 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeApplications #-}
 
 module LLM.LLM (
-      mistralRequest
-    , llmMockRequest
+    llmMockRequest
     , llmPrintArtist
     , Album (Album)
 ) where
@@ -13,32 +10,28 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as Tio (putStrLn)
 import qualified Data.Text.Encoding as TE (encodeUtf8)
-import qualified Data.ByteString as BS (ByteString)
-import qualified Data.ByteString.Char8 as BS8 (strip, readFile)
 import qualified Data.ByteString.Lazy as BL (fromStrict, readFile)
-import Data.Aeson (decode, eitherDecode, Value, Object, FromJSON, (.:))
+import Data.Aeson (decode, eitherDecode, Value, Object, (.:))
 import Data.Aeson.Types (parseMaybe)
-import Data.Aeson.Lens (key, nth, _String, _Object, values)
-import Data.Maybe (fromJust, catMaybes)
-import qualified Network.Wreq as W (postWith, defaults, params, header, responseBody, responseStatus, Response)
-import Control.Lens
-import GHC.Generics
+import Data.Aeson.Lens (key, _String, _Object, values)
+import Data.Maybe (catMaybes)
+import Control.Lens ((^.), (^..))
+
+import LLM.Mistral
+    (
+    mistralRequest
+    )
 
 data Album = Album
     { title :: Text
     , year :: Text
     , description :: Text
-    } deriving (Show, Generic)
-
-instance FromJSON Album
+    } deriving (Show)
 
 data Artist = Artist
     { name :: Text
     , albums :: [Album]
     } deriving (Show)
-
-userAgent :: BS.ByteString
-userAgent = "recrat/0.9 (https://github.com/tonebender/recrat) haskell"
 
 -- Note: to make an aeson Value from Text, use 
 -- decode $ BL.fromStrict $ TE.encodeUtf8 text
@@ -49,21 +42,6 @@ showArtist artist' = name artist' <> "\n"
     <> T.replicate (T.length $ name artist') "-" <> "\n"
     <> T.intercalate "\n" (map showAlbum $ albums artist')
     where showAlbum a = "* " <> title a <> " (" <> year a <> ")\n  " <> description a
-
--- | Make a post request to an LLM, sending a json object to the specified URL.
--- llmRequest :: IO (W.Response BL.ByteString)  -- <- use then when returning r
-mistralRequest :: IO (Maybe Text)
-mistralRequest = do
-    let mistralURL = "https://api.mistral.ai/v1/chat/completions" :: String
-    mistralKey <- BS8.readFile "mistral-key.txt"
-    mistralRequestJson <- BL.readFile "mistral-request.json"
-    let jsonData = fromJust (decode mistralRequestJson :: Maybe Value)
-    let opts = W.defaults & W.header "User-Agent" .~ [userAgent]
-                          & W.header "Content-Type" .~ ["application/json"]
-                          & W.header "Accept" .~ ["application/json"]
-                          & W.header "Authorization" .~ ["Bearer " <> (BS8.strip mistralKey)]
-    r <- W.postWith opts mistralURL jsonData
-    return $ r ^? W.responseBody . key "choices" . nth 0 . key "message" . key "content" . _String
 
 llmMockRequest :: IO (Maybe Value)
 llmMockRequest = do

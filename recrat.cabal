@@ -76,7 +76,8 @@ library wiki
 
 library llm
     import:           warnings
-    exposed-modules:  LLM.LLM
+    exposed-modules:  LLM.LLM,
+                      LLM.Mistral
     build-depends:    aeson >= 2.2.3.0,
                       base >=4.20.0.0,
                       bytestring >= 0.12.2.0,

@@ -16,8 +16,7 @@ import Wiki.Console
     )
 import LLM.LLM
     (
-      mistralRequest
-    , llmMockRequest
+    llmMockRequest
     , llmPrintArtist
     )
 
