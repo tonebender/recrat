@@ -14,6 +14,8 @@ import Data.Maybe (fromJust)
 import qualified Network.Wreq as W (postWith, defaults, header, responseBody, responseStatus, Response)
 import Control.Lens ((.~), (&), (^?))
 
+-- | This json object is supposed to be sent as request data to the Mistral LLM
+-- after adding prompt and schema values.
 mistralJsonTemplate :: Value
 mistralJsonTemplate = fromJust $ decode $ BL.concat [
     "{",
@@ -40,7 +42,7 @@ userAgent = "recrat/0.1.0.0 (https://github.com/tonebender/recrat) haskell"
 mistralURL :: String
 mistralURL = "https://api.mistral.ai/v1/chat/completions"
 
--- | Make a post request to an LLM, sending a json object to the specified URL.
+-- | Make a post request to an LLM, sending a json object to the above URL.
 -- llmRequest :: IO (W.Response BL.ByteString)  -- <- use then when returning r
 mistralRequest :: Value -> Value -> IO (Maybe Text)
 mistralRequest schema prompt = do

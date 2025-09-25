@@ -73,7 +73,7 @@ main = do
     let critic = optCritic inputargs
     let llm = optLLM inputargs
     if llm
-        then llmPrintArtist artistName
+        then llmPrintArtist artistName category
         else if (albumTitle /= T.empty)
             then printAlbumRatings albumTitle critic
             else if (artistName /= T.empty)
