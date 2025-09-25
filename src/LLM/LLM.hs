@@ -71,8 +71,8 @@ artistJsonSchema = fromJust $ decode $ BL.concat [
     "}"
    ]
 
-promptTemplate :: Value
-promptTemplate = "\"Please list the ten best studio albums by the Rolling Stones\""
+promptTemplate :: Text
+promptTemplate = "\"Please list the ten best studio albums by $ARTIST. Try to list them starting with the most popular and/or critically acclaimed.\""
 
 -- Note: to make an aeson Value from Text, use 
 -- decode $ BL.fromStrict $ TE.encodeUtf8 text
@@ -89,17 +89,15 @@ llmMockRequest = do
     contents <- BL.readFile "mock_responseBody_content.json"
     return $ decode contents
 
--- | Take a json string with the LLM response (validating to the llmData schema above), decode it
--- and return an Artist variable (itself containing an [Album]) from this json data.
--- TODO: Change Maybe to Either and return more informative errors
-parseJsonToArtist :: Text -> Maybe Artist
+-- | Take a json string with the LLM response (validating to artistJsonSchema above), decode it
+-- and return an Artist variable (itself containing an [Album]).
+parseJsonToArtist :: Text -> Either Text Artist
 parseJsonToArtist jsonText =
-    let jsonString = BL.fromStrict $ TE.encodeUtf8 jsonText in
-    case eitherDecode jsonString :: (Either String Value) of
-        Left _ -> Nothing
+    case eitherDecode (BL.fromStrict $ TE.encodeUtf8 jsonText) :: (Either String Value) of
+        Left err -> Left $ T.pack err
         Right jsonValue ->
-            Just $ Artist (jsonValue ^. key "artistName" . _String)
-                          (catMaybes $ parseObjectsToAlbums $ jsonValue ^.. key "albums" . values . _Object)
+            Right $ Artist (jsonValue ^. key "artistName" . _String)
+                           (catMaybes $ parseObjectsToAlbums $ jsonValue ^.. key "albums" . values . _Object)
 
 parseObjectsToAlbums :: [Object] -> [Maybe Album]
 parseObjectsToAlbums objects = map (parseMaybe objectToAlbumParser) objects
@@ -112,11 +110,14 @@ parseObjectsToAlbums2 objects = map objectToAlbumParser2 objects
                   (obj ^. key "year" . _String)
                   (obj ^. key "description" . _String)
 
-llmPrintArtist :: IO ()
-llmPrintArtist = do
-    maybeValue <- mistralRequest artistJsonSchema promptTemplate
-    case maybeValue of
-        Nothing -> Tio.putStrLn "Error when requesting data from LLM."
-        Just contents -> case parseJsonToArtist contents of
-            Nothing -> Tio.putStrLn "Error: Could not parse artist/album info from LLM."
-            Just art -> Tio.putStrLn $ showArtist art
+llmPrintArtist :: Text -> IO ()
+llmPrintArtist artistQuery = do
+    case eitherDecode $ BL.fromStrict $ TE.encodeUtf8 (T.replace "$ARTIST" artistQuery promptTemplate) of
+        Left _ -> Tio.putStrLn $ "Error decoding artist query for LLM."
+        Right prompt -> do
+            maybeValue <- mistralRequest artistJsonSchema prompt
+            case maybeValue of
+                Nothing -> Tio.putStrLn "Error when requesting data from LLM."
+                Just contents -> case parseJsonToArtist contents of
+                    Left err -> Tio.putStrLn $ "Error parsing artist/album info from LLM: " <> err
+                    Right art -> Tio.putStrLn $ showArtist art
