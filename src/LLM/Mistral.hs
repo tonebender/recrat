@@ -14,22 +14,21 @@ import Data.Maybe (fromJust)
 import qualified Network.Wreq as W (postWith, defaults, header, responseBody, responseStatus, Response)
 import Control.Lens ((.~), (&), (^?))
 
-mistralJson :: Value
-mistralJson = fromJust $ decode $ BL.concat [
+mistralJsonTemplate :: Value
+mistralJsonTemplate = fromJust $ decode $ BL.concat [
     "{",
     "    \"model\": \"mistral-medium-latest\",",
     "    \"messages\": [",
     "        {",
     "            \"role\": \"user\",",
-    "            \"content\": \"Please list the ten best studio albums by the Rolling Stones.\"",
+    "            \"content\": \"\"",  -- Prompt to be inserted here
     "        }",
     "    ],",
     "    \"response_format\": {",
     "        \"type\": \"json_schema\",",
     "        \"json_schema\": {",
     "            \"name\": \"Albums json data\",",
-    "            \"schema\": {",
-    "            }",
+    "            \"schema\": {}",  -- Response schema to be inserted here
     "        }",
     "    }",
     "}"
@@ -43,14 +42,14 @@ mistralURL = "https://api.mistral.ai/v1/chat/completions"
 
 -- | Make a post request to an LLM, sending a json object to the specified URL.
 -- llmRequest :: IO (W.Response BL.ByteString)  -- <- use then when returning r
-mistralRequest :: Value -> IO (Maybe Text)
-mistralRequest schema = do
+mistralRequest :: Value -> Value -> IO (Maybe Text)
+mistralRequest schema prompt = do
     mistralKey <- BS8.readFile "mistral-key.txt"
-    let outgoingJson = mistralJson & key "response_format" . key "json_schema" . key "schema" .~ schema
+    let requestJson = mistralJsonTemplate & key "response_format" . key "json_schema" . key "schema" .~ schema
+                            & key "messages" . nth 0 . key "content" .~ prompt
     let opts = W.defaults & W.header "User-Agent" .~ [userAgent]
                           & W.header "Content-Type" .~ ["application/json"]
                           & W.header "Accept" .~ ["application/json"]
                           & W.header "Authorization" .~ ["Bearer " <> (BS8.strip mistralKey)]
-    r <- W.postWith opts mistralURL outgoingJson
+    r <- W.postWith opts mistralURL requestJson
     return $ r ^? W.responseBody . key "choices" . nth 0 . key "message" . key "content" . _String
-

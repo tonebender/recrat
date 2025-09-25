@@ -1,5 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- This module is supposed to contain LLM-related code that is not specific to any
+-- one LLM service. Specific stuff go in separate modules, such as LLM.Mistral, that
+-- can be imported and called here.
+
 module LLM.LLM (
     llmMockRequest
     , llmPrintArtist
@@ -67,6 +71,8 @@ artistJsonSchema = fromJust $ decode $ BL.concat [
     "}"
    ]
 
+promptTemplate :: Value
+promptTemplate = "\"Please list the ten best studio albums by the Rolling Stones\""
 
 -- Note: to make an aeson Value from Text, use 
 -- decode $ BL.fromStrict $ TE.encodeUtf8 text
@@ -84,7 +90,8 @@ llmMockRequest = do
     return $ decode contents
 
 -- | Take a json string with the LLM response (validating to the llmData schema above), decode it
--- and return an Artist variable (containing an [Album]) from this json data.
+-- and return an Artist variable (itself containing an [Album]) from this json data.
+-- TODO: Change Maybe to Either and return more informative errors
 parseJsonToArtist :: Text -> Maybe Artist
 parseJsonToArtist jsonText =
     let jsonString = BL.fromStrict $ TE.encodeUtf8 jsonText in
@@ -107,7 +114,7 @@ parseObjectsToAlbums2 objects = map objectToAlbumParser2 objects
 
 llmPrintArtist :: IO ()
 llmPrintArtist = do
-    maybeValue <- mistralRequest artistJsonSchema
+    maybeValue <- mistralRequest artistJsonSchema promptTemplate
     case maybeValue of
         Nothing -> Tio.putStrLn "Error when requesting data from LLM."
         Just contents -> case parseJsonToArtist contents of
