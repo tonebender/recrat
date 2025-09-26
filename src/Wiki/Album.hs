@@ -76,8 +76,11 @@ getAlbumRatings wikip =
                                                 y:_ -> y
                   getAllRatingBlocks = drop 1 . T.splitOn "{{**\n"
                                       . T.replace "{{Music ratings" "{{**\n"
+                                      . T.replace "{{music ratings" "{{**\n"
                                       . T.replace "{{Album ratings" "{{**\n"
+                                      . T.replace "{{album ratings" "{{**\n"
                                       . T.replace "{{Album reviews" "{{**\n"
+                                      . T.replace "{{album reviews" "{{**\n"
 
 -- Create a text with all ratings for an album, plus its artist and title, etc.
 showAlbum :: Album -> Text
