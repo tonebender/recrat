@@ -159,7 +159,7 @@ reviewParser = do
     let critic' = T.takeWhile (/= '\n') $ T.pack criticAndStartOfNextRev 
     P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser <|> christgauParser
-    _ <- P.spaces >> P.optional noteParser
+    _ <- P.spaces >> P.optional noteParser  -- We ignore the note contents for now
     reftag <- (P.try refParser) <|> refSingle <|> (P.string "\n")
     case (scr, maxScr) of
         (Just scr', Just maxScr') -> do
@@ -233,6 +233,6 @@ refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>
 refSingle :: P.Parsec Text () String
 refSingle = (P.string "<ref") *> P.manyTill P.anyChar (P.try (P.string "/>")) <* P.endOfLine
 
--- Parser for note such as {{sfn|Graff|Durchholz|1999|p=88}}
+-- Parser for note such as [{{sfn|Graff|Durchholz|1999|p=88}} link]
 noteParser :: P.Parsec Text () String
-noteParser = P.string "{{" *> P.manyTill P.anyChar (P.string "}}")
+noteParser = P.optional (P.string "[") *> P.string "{{" *> P.manyTill P.anyChar (P.string "}}") <* P.manyTill P.anyChar (P.string "]")
