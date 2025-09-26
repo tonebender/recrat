@@ -23,7 +23,7 @@ import Control.Lens ((^.), (^..))
 
 import LLM.Mistral
     (
-    mistralRequest
+    mistral
     )
 
 data Album = Album
@@ -84,10 +84,38 @@ showArtist artist' = name artist' <> "\n"
     <> T.intercalate "\n" (map showAlbum $ albums artist')
     where showAlbum a = "* " <> title a <> " (" <> year a <> ")\n  " <> description a
 
+-- TODO: Move llmPrintArtist to a new module LLM.Console ?
+-- | Call the desired LLM and parse its json response to an Artist variable, then print it to the
+--   console, human readable.
+llmPrintArtist :: Text -> Text -> IO ()
+llmPrintArtist artistQuery category = do
+    eitherJson <- requestLLM mistral artistQuery category 
+    case eitherJson of
+        Left err -> Tio.putStrLn err
+        Right jsonText -> case parseJsonToArtist jsonText of
+            Left err -> Tio.putStrLn $ "Error parsing artist/album info from LLM: " <> err
+            Right art -> Tio.putStrLn $ showArtist art
+
 llmMockRequest :: IO (Maybe Value)
 llmMockRequest = do
     contents <- BL.readFile "mock_responseBody_content.json"
     return $ decode contents
+
+-- | Call the desired LLM function, passed here as llmMonad (which in itself takes two 
+--   Value arguments - json schema and prompt).
+--   artistQuery (e.g. "Aerosmith") and category (e.g. "studio") complete the prompt to the llm.
+--   Returns the json response (modeled by the aforementioned schema) from the LLM as Text.
+requestLLM :: (Value -> Value -> IO (Maybe Text)) -> Text -> Text -> IO (Either Text Text)
+requestLLM llmMonad artistQuery category = do
+    let promptText = BL.fromStrict $ TE.encodeUtf8
+                 $ T.replace "$ARTIST" artistQuery . T.replace "$CATEGORY" category $ promptTemplate
+    case eitherDecode promptText of
+        Left _ -> return $ Left "Error decoding artist query before calling LLM."
+        Right prompt -> do
+            maybeJson <- llmMonad artistJsonSchema prompt
+            case maybeJson of
+                Nothing -> return $ Left "Error when making request to LLM."
+                Just jsonText -> return $ Right jsonText
 
 -- | Take a json string with the LLM response (validating to artistJsonSchema above), decode it
 --   and return an Artist variable (itself containing an [Album]).
@@ -97,12 +125,12 @@ parseJsonToArtist jsonText =
         Left err -> Left $ T.pack err
         Right jsonValue ->
             Right $ Artist (jsonValue ^. key "artistName" . _String)
-                           (catMaybes $ parseObjectsToAlbums $ jsonValue ^.. key "albums" . values . _Object)
+                           (parseObjectsToAlbums $ jsonValue ^.. key "albums" . values . _Object)
 
--- | Take a list of json (aeson) objects with properties that map to an Album and return
---   a list of Album variables.
-parseObjectsToAlbums :: [Object] -> [Maybe Album]
-parseObjectsToAlbums objects = map (parseMaybe objectToAlbumParser) objects
+-- | Take a list of json (aeson) objects with properties mapping to an Album and return
+--   a list of Album variables. Note: this silently drops any failed parsings via catMaybes.
+parseObjectsToAlbums :: [Object] -> [Album]
+parseObjectsToAlbums objects = catMaybes $ map (parseMaybe objectToAlbumParser) objects
     where objectToAlbumParser obj = Album <$> obj .: "title" <*> obj .: "year" <*> obj .: "description"
 
 -- | Alternative parse function
@@ -112,31 +140,3 @@ parseObjectsToAlbums2 objects = map objectToAlbumParser2 objects
             Album (obj ^. key "title" . _String)
                   (obj ^. key "year" . _String)
                   (obj ^. key "description" . _String)
-
--- | Call the desired LLM function, passed here as llmMonad (which in itself takes two 
---   Value arguments - json schema and prompt).
---   artistQuery (e.g. "Aerosmith") and category (e.g. "studio") complete the prompt to the llm.
---   Returns the json response (modeled by the aforementioned schema) from the LLM as Text.
-requestLLM :: Text -> Text -> (Value -> Value -> IO (Maybe Text)) -> IO (Either Text Text)
-requestLLM artistQuery category llmMonad = do
-    let promptText = BL.fromStrict $ TE.encodeUtf8
-                 $ T.replace "$ARTIST" artistQuery . T.replace "$CATEGORY" category $ promptTemplate
-    case eitherDecode promptText of
-        Left _ -> return $ Left "Error decoding artist query before calling LLM."
-        Right prompt -> do
-            maybeJson <- llmMonad artistJsonSchema prompt  -- Actual call to LLM here
-            case maybeJson of
-                Nothing -> return $ Left "Error when making request to LLM."
-                Just jsonText -> return $ Right jsonText
-
--- TODO: Move llmPrintArtist to a new module LLM.Console ?
--- | Call the desired LLM and parse its json response to an Artist variable, then print it to the
---   console, human readable.
-llmPrintArtist :: Text -> Text -> IO ()
-llmPrintArtist artistQuery category = do
-    eitherJson <- requestLLM artistQuery category mistralRequest
-    case eitherJson of
-        Left err -> Tio.putStrLn err
-        Right jsonText -> case parseJsonToArtist jsonText of
-            Left err -> Tio.putStrLn $ "Error parsing artist/album info from LLM: " <> err
-            Right art -> Tio.putStrLn $ showArtist art

@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- This module contains functions for getting and parsing one album's ratings
+-- on Wikipedia
+
 module Wiki.Album (
       Album
     , albumName
@@ -18,8 +21,8 @@ import Options.Applicative ((<|>))
 import Text.Printf (printf)
 import Text.Read (readMaybe)
 import qualified Data.Text as T
-import qualified Text.Parsec as P
 import qualified Text.HTMLEntity as HTML (decode')
+import qualified Text.Parsec as P
 
 import Wiki.MediaWiki (
       parseAlbumInfobox
@@ -52,7 +55,7 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
--- Get all album ratings that can be found on a wiki page
+-- | Get all album ratings that can be found on a wiki page
 getAlbumRatings :: Text -> Maybe Album
 getAlbumRatings wikip =
     case findInfoboxProperty "name" (parseAlbumInfobox wikip) of
@@ -82,7 +85,7 @@ getAlbumRatings wikip =
                                       . T.replace "{{Album reviews" "{{**\n"
                                       . T.replace "{{album reviews" "{{**\n"
 
--- Create a text with all ratings for an album, plus its artist and title, etc.
+-- | Create a text with all ratings for an album, plus its artist and title, etc.
 showAlbum :: Album -> Text
 showAlbum album =
     (wikiLabel . artistName $ album) <> " - " <> albumName album <> getYear album <> "\n"
@@ -95,7 +98,7 @@ showAlbum album =
                 Nothing -> 0
                 Just x -> x + 2
 
--- Create a text with the ratings from one rating block
+-- | Create a text with the ratings from one rating block
 -- (TODO: Move this to the where above, or leave it independent so it can be called from the ui?)
 showRatingBlock :: Int -> RatingBlock -> Text
 showRatingBlock padding rblock = header rblock <> "\n" <> (showRatingsList padding $ ratings rblock)
@@ -104,18 +107,18 @@ showRatingBlock padding rblock = header rblock <> "\n" <> (showRatingsList paddi
               "  " <> T.justifyLeft pad ' ' (wikiLabel $ criticName x)
               <> T.pack (printf "%3d\n" (ratioToPercent $ ratio x)) <> showRatingsList pad xs
 
--- Take a list of rating blocks and return the overall average score of all of them,
+-- | Take a list of rating blocks and return the overall average score of all of them,
 -- converted to percentage
 getAverageScore :: Album -> Int
 getAverageScore album = getAverageScore' $ getRatingsFlat album  -- All blocks' ratings in one flat list
     where getAverageScore' [] = 0
           getAverageScore' scores = ratioToPercent $ (sum [ratio s | s <- scores]) / (fromIntegral $ length scores)
 
--- Return all ratings from all rating blocks for an album, in a single list
+-- | Return all ratings from all rating blocks for an album, in a single list
 getRatingsFlat :: Album -> [Rating]
 getRatingsFlat album = concat $ map ratings $ ratingBlocks album
 
--- Get an album but include only ratings whose critic names include the provided text
+-- | Get an album but include only ratings whose critic names include the provided text
 filterAlbumByCritic :: Text -> Album -> Album
 filterAlbumByCritic critic album = Album (albumName album) (artistName album) (yearOfRelease album) $ map (filterRatings critic) (ratingBlocks album)
     where
@@ -123,21 +126,22 @@ filterAlbumByCritic critic album = Album (albumName album) (artistName album) (y
         filterRatings subText rblock = RatingBlock (header rblock)
             $ filter (T.isInfixOf (T.toCaseFold subText) . T.toCaseFold . wikiLabel . criticName) $ ratings rblock
 
--- Simple helper to change scores to something mathematically useful,
+-- | Simple helper to change scores to something mathematically useful,
 -- based on zero, e.g. score 1 to 5 becomes 0 to 4, and 1 to 10 becomes 0 to 9.
 normaliseScore :: (Double, Double) -> (Double, Double)
 normaliseScore (scr, maxScr) = (scr - 1, maxScr - 1)
 
--- Convert value from Double with decimals to 100 times that, without decimals
+-- | Convert value from Double with decimals to 100 times that, without decimals
 ratioToPercent :: Double -> Int
 ratioToPercent r = fromInteger $ round $ r * (10^(2::Int))
 
+-- | Convert ratio score to a Text with stars, à la AllMusic
 ratioToStars :: Double -> Int -> Text
 ratioToStars ratio' topScore = T.replicate numStars (T.singleton '★') <> T.replicate (topScore - numStars) (T.singleton '☆')
     where numStars = 1 + round (ratio' * (fromIntegral (topScore - 1))) :: Int  -- The +/-1 is because 1 is the lowest star, not 0
 
 
--- Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
+-- | Parser for the Music/Album ratings block, retrieving each review and ignoring other lines,
 -- returning Maybe Rating for the reviews, and Nothing for ignored lines, putting everything into a
 -- list. Note that for now only reviews (including ref tags when found) and title are saved; stuff like
 -- aggregate reviews are skipped.
@@ -147,13 +151,13 @@ musicRatingsParser = do
     revs <- P.manyTill (P.try reviewParser <|> (P.manyTill P.anyChar P.endOfLine >> return Nothing)) (P.string "}}")
     return $ RatingBlock subtitle (catMaybes revs)
 
--- Parser for subtitle of rating block
+-- | Parser for subtitle of rating block
 subtitleParser :: P.Parsec Text () Text
 subtitleParser = do
     subtitle <- P.char '|' >> P.spaces >> P.string "subtitle" >> P.spaces >> P.string "=" >> P.spaces >> P.manyTill (P.try P.anyChar) P.endOfLine
     return $ HTML.decode' . T.replace "'" "" . T.pack $ subtitle
 
--- Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",
+-- | Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.
 reviewParser :: P.Parsec Text () (Maybe Rating)
 reviewParser = do
@@ -170,7 +174,7 @@ reviewParser = do
             return $ Just $ Rating (nScore / nMaxScore) nScore nMaxScore (parseWikiAnchor critic') (T.pack reftag)
         (_, _) -> return Nothing
 
--- Parser for scores that look like this: {{Rating|3.5|5}}
+-- | Parser for scores that look like this: {{Rating|3.5|5}}
 scoreInRatingTemplParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreInRatingTemplParser = do
     _ <- P.try (P.string "{{Rating|") <|> P.try (P.string "{{rating|")
@@ -180,7 +184,7 @@ scoreInRatingTemplParser = do
     _ <- P.manyTill P.anyChar (P.string "}}")
     return (readMaybe scr, readMaybe mx)
 
--- Parser for scores that look like this: 5.5/10
+-- | Parser for scores that look like this: 5.5/10
 scoreAsFragmentParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreAsFragmentParser = do
     scr <- P.many1 $ P.digit <|> P.char '.'
@@ -188,7 +192,7 @@ scoreAsFragmentParser = do
     mx <- P.many1 $ P.digit <|> P.char '.'
     return (readMaybe scr, readMaybe mx)
 
--- Parser for letter scores, where E- to D+ are translated to 1
+-- | Parser for letter scores, where E- to D+ are translated to 1
 -- and C- to A+ becomes 2 to 10.
 scoreAsLetterParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreAsLetterParser = do
@@ -208,13 +212,14 @@ scoreAsLetterParser = do
          _ -> 0
     return (Just scr, Just 10)
 
--- Parser for ratings following the template {{Rating-Christgau}}
+-- | Parser for ratings following the template {{Rating-Christgau}}
 -- (https://en.wikipedia.org/wiki/Template:Rating-Christgau)
 -- Not very common, although Christgau scores often show up as simple letter scores
 christgauParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 christgauParser = (P.try (P.string "{{rating-Christgau|") <|> P.string "{{Rating-Christgau|")
                   *> (christgauSymbolParser <|> scoreAsLetterParser) <* P.string "}}"
 
+-- | Parser for some of Christgau's special keywords that represent scores
 christgauSymbolParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 christgauSymbolParser = do
     rat <- P.try (P.string "hm1") <|> P.try (P.string "hm2") <|> P.string "hm3"
@@ -228,14 +233,14 @@ christgauSymbolParser = do
          _ -> 0
     return (Just r, Just 10)
 
--- Parser that gets everything inside <ref></ref> that follows most scores
+-- | Parser that gets everything inside <ref></ref> that follows most scores
 refParser :: P.Parsec Text () String
 refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>')) *> P.manyTill P.anyChar (P.string "</ref>") <* P.endOfLine
 
--- Parser for single ref elements, <ref />
+-- | Parser for single ref elements, <ref />
 refSingle :: P.Parsec Text () String
 refSingle = (P.string "<ref") *> P.manyTill P.anyChar (P.try (P.string "/>")) <* P.endOfLine
 
--- Parser for note such as [{{sfn|Graff|Durchholz|1999|p=88}} link]
+-- | Parser for note such as [{{sfn|Graff|Durchholz|1999|p=88}} link]
 noteParser :: P.Parsec Text () String
 noteParser = P.optional (P.string "[") *> P.string "{{" *> P.manyTill P.anyChar (P.string "}}") <* P.manyTill P.anyChar (P.string "]")

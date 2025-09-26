@@ -60,7 +60,7 @@ library wiki
     exposed-modules:  Wiki.Album,
                       Wiki.Artist,
                       Wiki.Console,
-                      Wiki.MediaWiki
+                      Wiki.MediaWiki,
     build-depends:    aeson >= 2.2.3.0,
                       base >=4.20.0.0,
                       bytestring >= 0.12.2.0,

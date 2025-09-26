@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- This module contains functions related to getting ratings for an artist's entire discography
+
 module Wiki.Artist (
     getAlbums
     , name
@@ -13,9 +15,9 @@ import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key, nth, values)
 import Data.List (sort, sortBy)
 import Data.Maybe (catMaybes, listToMaybe)
+import Data.Text.Internal (Text)
 import Text.Printf (printf)
 import qualified Data.Text as T
-import Data.Text.Internal (Text)
 
 import Wiki.MediaWiki (
       requestWikiPages
@@ -42,7 +44,7 @@ data Artist = Artist
 data ArtistError = NoDiscographyFound | AlbumsRequestFailed
 
 
--- Return a Text with album titles + year and their average ratings followed 
+-- | Return a Text with album titles + year and their average ratings followed 
 -- by "(number of ratings)", with titles left-justified and numbers right-justified
 showAlbums :: Artist -> Text
 showAlbums artist = showAlbums' (longestName (albums artist) + 8) $ sortAlbums $ albums artist
@@ -62,11 +64,11 @@ showAlbums artist = showAlbums' (longestName (albums artist) + 8) $ sortAlbums $
             Just x -> x
 
 
--- Get the artist but include only ratings whose critic name includes critic
+-- | Get the artist but include only ratings whose critic name includes critic
 filterAlbumsByCritic :: Text -> Artist -> Artist
 filterAlbumsByCritic critic artist = Artist (name artist) $ map (filterAlbumByCritic critic) (albums artist)
 
--- Sort albums in a list according to their average score, and, when score is equal,
+-- | Sort albums in a list according to their average score, and, when score is equal,
 -- according to their number of ratings (more ratings -> higher rank)
 sortAlbums :: [Album] -> [Album]
 sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
@@ -78,7 +80,7 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
            else if (length $ getRatingsFlat album1) > (length $ getRatingsFlat album2) then GT
            else LT
 
--- Take a discography wiki title, its contents and a category (such as "studio") and request all of
+-- | Take a discography wiki title, its contents and a category (such as "studio") and request all of
 -- the Wikipedia pages (their contents, in a json object, via the Mediawiki Revisions API) for the
 -- albums found under that category in the discography. Then get the album ratings for every
 -- requested album and return as an Artist. When requesting the pages, take 50 at a time because
@@ -96,10 +98,10 @@ getAlbums wikiTitle discography category = do
                     return $ Right $ Artist (T.replace " discography" "" wikiTitle)
                        $ catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
 
--- Run requestWikiPages on a maximum of 50 titles at a time, several times if needed, and return a
+-- | Run requestWikiPages on a maximum of 50 titles at a time, several times if needed, and return a
 -- list with each call's results. (For most artists, there'll be much less than 50 in total, so this
 -- will be run just once and the result will be a list with only one element; but try Frank Zappa's
--- discography ...
+-- discography ...)
 request50by50 :: [WikiAnchor] -> IO [Maybe Value]
 request50by50 [] = return []
 request50by50 titles = do
@@ -107,12 +109,12 @@ request50by50 titles = do
     rest <- request50by50 (drop 50 titles)
     return $ r:rest
 
--- Lens stuff to get the contents of the first wiki page revision
--- in a json object from a request to the MediaWiki Revisions API
+-- | Lens stuff to get the contents of the first wiki page revision
+-- in a json object from a request to the MediaWiki Revisions API.
 getPageFromWikiRevJson :: Value -> Text
 getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
 
--- Take a discography Wikipedia page and get a list of albums (each a WikiAnchor) from the table
+-- | Take a discography Wikipedia page and get a list of albums (each a WikiAnchor) from the table
 -- under the subheading specified by category or any of the fallbacks (such as "=== Studio albums ===").
 -- Return empty list if no subheading or table end were found.
 parseDiscographyAlbums :: Text -> Text -> [WikiAnchor]
@@ -124,11 +126,11 @@ parseDiscographyAlbums disco category =
             [] -> []
             b:_ -> parseWikiAnchor <$> getWikiAnchor <$> (filterAlbumsInDisco $ T.lines b)
 
--- Take the discography wiki as a list of lines, and a list of subtitle words such as "studio",
--- "live", "official", etc. and return the first discography line that contains any of the
--- subtitle words, starting with the first, combined with "==". If nothing found, return the line "albums
--- ==". For example, we can search for ["studio", "official", "live"], in order, which will try to find
--- "== Studio albums ==" but will return "== Official albums ==" if only that subtitle happens to
+-- | Take the discography wiki as a list of lines, and a list of subtitle words such as "studio",
+-- "live", "official", etc. and return the first discography line that contains any of these subheading
+-- words, starting with the first, combined with "==". If nothing found, return the line "albums
+-- ==". For example, we can search for ["studio", "official", "live"], which will try to find 
+-- "== Studio albums ==" but will return "== Official albums ==" if only that subheading happens to 
 -- exist in the page.
 findBestHeading :: [Text] -> [Text] -> Text
 findBestHeading _ [] = "albums =="
@@ -141,13 +143,13 @@ findBestHeading disco' (s:subtitles) =
               if T.isInfixOf (T.toCaseFold query') (T.toCaseFold d) && T.isInfixOf "==" d
               then Just d else findDiscoHeading discolines query'
 
--- Get the rows that fit the (loose) criteria for containing an album inside the discography table,
+-- | Get the rows that fit the (loose) criteria for containing an album inside the discography table,
 -- i.e. contains '' and starts with either | or !
 -- (This can be fairly tolerant; wrong entries will eventually be discarded later)
 filterAlbumsInDisco :: [Text] -> [Text]
 filterAlbumsInDisco = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isInfixOf "scope=\"row\"" r))
 
--- Create a string such as "Bleach (Nirvana album)|Nevermind|In Utero" from an Artist's
--- albums list, for use in a multi-page wiki request
+-- | Create a string such as "Bleach (Nirvana album)|Nevermind|In Utero" from an Artist's
+-- albums list, for use in a multi-page wiki request.
 artistToAlbumsQuery :: [WikiAnchor] -> Text
 artistToAlbumsQuery albumAnchors = T.intercalate "|" $ map wikiURI albumAnchors

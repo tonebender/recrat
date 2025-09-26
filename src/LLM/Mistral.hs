@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module LLM.Mistral (
-      mistralRequest
+      mistral
 ) where
 
 import Data.Text (Text)
@@ -42,10 +42,12 @@ userAgent = "recrat/0.1.0.0 (https://github.com/tonebender/recrat) haskell"
 mistralURL :: String
 mistralURL = "https://api.mistral.ai/v1/chat/completions"
 
--- | Make a post request to an LLM, sending a json object to the above URL.
+-- | Make a request to Mistral AI, posting a json object to the above URL.
+--   First parameter is the json schema that Mistral's response should conform to;
+--   second parameter is the prompt to the LLM.
 -- llmRequest :: IO (W.Response BL.ByteString)  -- <- use then when returning r
-mistralRequest :: Value -> Value -> IO (Maybe Text)
-mistralRequest schema prompt = do
+mistral :: Value -> Value -> IO (Maybe Text)
+mistral schema prompt = do
     mistralKey <- BS8.readFile "mistral-key.txt"
     let requestJson = mistralJsonTemplate & key "response_format" . key "json_schema" . key "schema" .~ schema
                             & key "messages" . nth 0 . key "content" .~ prompt

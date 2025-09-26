@@ -2,9 +2,6 @@
 
 module Wiki.MediaWiki (
     searchAndGetWiki
-    , getWikipage
-    , requestWikiSearch
-    , requestWikiParse
     , requestWikiPages
     , parseAlbumInfobox
     , findInfoboxProperty
@@ -16,15 +13,15 @@ module Wiki.MediaWiki (
     , parseWikiAnchor
 ) where
 
-import Control.Lens
+import Control.Lens ((^.), (^?), (&), (.~))
 import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, _Array, nth, key)
-import Data.Text (Text)
-import qualified Network.Wreq as W (getWith, defaults, params, header, responseBody)
-import qualified Data.Text as T
-import Data.Maybe (catMaybes, listToMaybe)
-import qualified Text.HTMLEntity as HTML (decode')
 import Data.ByteString (ByteString)
+import Data.Maybe (catMaybes, listToMaybe)
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Network.Wreq as W (getWith, defaults, params, header, responseBody)
+import qualified Text.HTMLEntity as HTML (decode')
 
 wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
@@ -42,7 +39,7 @@ data WikiError = WikiError Text
     deriving (Show, Eq)
 
 
--- Search for a query on Wikipedia and return the title and contents
+-- | Search for a query on Wikipedia and return the title and contents
 -- of the first page found as a Text tuple, or WikiError otherwise
 searchAndGetWiki :: Text -> IO (Either WikiError (Text, Text))
 searchAndGetWiki query = do
@@ -54,7 +51,7 @@ searchAndGetWiki query = do
                 then return $ Left $ WikiError ("No results found for search query '" <> query <> "'")
                 else return =<< getWikipage (wikiResultsJson ^. nth 0 . key "title" . _String)
 
--- Request the contents of the Wikipedia page with pageTitle
+-- | Request the contents of the Wikipedia page with pageTitle
 -- Return as Text on success, WikiError otherwise
 getWikipage :: Text -> IO (Either WikiError (Text, Text))
 getWikipage pageTitle = do
@@ -70,7 +67,7 @@ getWikipage pageTitle = do
 
 -- TODO: Handle several results, like different http response codes etc.
 
--- Make a request to the MediaWiki Action API on Wikipedia, asking it to search for the supplied query
+-- | Make a request to the MediaWiki Action API on Wikipedia, asking it to search for the supplied query
 -- See https://www.mediawiki.org/w/api.php?action=help&modules=query%2Bsearch for parameters documentation
 -- See https://haskell-docs.netlify.app/packages/lens/#json for all the ^. stuff
 requestWikiSearch :: Text -> IO (Maybe Value)
@@ -80,7 +77,7 @@ requestWikiSearch searchQuery = do
     r <- W.getWith opts wikipediaApiUrl
     return $ r ^? W.responseBody . key "query" . key "search"
 
--- Make a request to the MediaWiki Action API on Wikipedia, asking it to give us
+-- | Make a request to the MediaWiki Action API on Wikipedia, asking it to give us
 -- the contents of the specified wiki page.
 -- (This is a bit redundant since the addition of requestWikiPages below)
 requestWikiParse :: Text -> IO (Maybe Text)
@@ -90,7 +87,7 @@ requestWikiParse title = do
     r <- W.getWith opts wikipediaApiUrl
     return $ r ^? W.responseBody . key "parse" . key "wikitext" . key "*" . _String
 
--- Make a request to the MediaWiki Action API on Wikipedia, using the Revisions API,
+-- | Make a request to the MediaWiki Action API on Wikipedia, using the Revisions API,
 -- asking it to give us all pages specified in titles, e.g. "Bongo_Fury|Zoot_Allures"
 requestWikiPages :: Text -> IO (Maybe Value)
 requestWikiPages titles = do
@@ -99,7 +96,7 @@ requestWikiPages titles = do
     r <- W.getWith opts wikipediaApiUrl
     return $ r ^? W.responseBody . key "query" . key "pages"
 
--- Take a list of (Text, Text) and find the tuple whose first variable
+-- | Take a list of (Text, Text) and find the tuple whose first variable
 -- equals query (caseless), then return its second variable (the value)
 -- as a WikiAnchor; return Nothing if not found
 findInfoboxProperty :: Text -> [(Text, Text)] -> Maybe WikiAnchor
@@ -107,7 +104,7 @@ findInfoboxProperty query props = case (listToMaybe $ dropWhile (\e -> T.toCaseF
     Nothing -> Nothing
     Just (_, val) -> Just $ parseWikiAnchor val
 
--- Get the first {{Infobox album ...}} in the specified wiki page text and return all its
+-- | Get the first {{Infobox album ...}} in the specified wiki page text and return all its
 -- "|Key = Value" lines as a list of (Text, Text) tuples
 parseAlbumInfobox :: Text -> [(Text, Text)]
 parseAlbumInfobox text =
@@ -121,7 +118,7 @@ parseAlbumInfobox text =
                         _:_ -> Nothing
                         [] -> Nothing
 
--- Take a Wikipedia link/label string such as "[[No Quarter (song)|No Quarter]]"
+-- | Take a Wikipedia link/label string such as "[[No Quarter (song)|No Quarter]]"
 -- and parse it into a WikiAnchor with the URI and label separate.
 -- If [[URI and label are the same]] use it for both URI and label.
 -- If no [[ ]] found, return WikiAnchor with only the label part set.
@@ -138,7 +135,7 @@ parseWikiAnchor markup =
                 urilabel:[] -> WikiAnchor urilabel urilabel
                 uri:label:_ -> WikiAnchor uri label
 
--- Take a line of text and get the first [[x]] found, otherwise return empty text
+-- | Take a line of text and get the first [[x]] found, otherwise return empty text
 getWikiAnchor :: Text -> Text
 getWikiAnchor text = let stripped = T.dropWhile (/= '[') text in
     if T.isPrefixOf "[" stripped
