@@ -166,6 +166,8 @@ subtitleParser = do
 
 -- | Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",
 -- where the ensuing score is parsed by any of the three score parsers below.
+-- NOTE: I have disabled parsing of notes and <ref> tags after reviews because they're so
+-- inconsistent and difficult to parse properly.
 reviewParser :: P.Parsec Text () (Maybe Rating)
 reviewParser = do
     P.char '|' >> P.spaces >> P.string "rev" >> P.many1 P.digit >> P.spaces >> P.char '=' >> P.spaces
@@ -173,8 +175,10 @@ reviewParser = do
     let critic' = T.takeWhile (/= '\n') $ T.pack criticAndStartOfNextRev 
     P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser <|> christgauParser
-    _ <- P.spaces >> P.optional (noteParser <|> noteWithBracketsParser)  -- We ignore the note contents for now
-    reftag <- (P.try refParser) <|> refSingle <|> P.manyTill P.anyChar (P.string "\n")
+    -- _ <- P.option "" (noteParser <|> noteWithBracketsParser)  -- We ignore the note contents for now
+    -- reftag <- (P.try refParser) <|> refSingle <|> P.manyTill P.anyChar (P.string "\n")
+    let reftag = ""
+    _ <- P.manyTill P.anyChar (P.string "\n") -- Skip anything (notes, refs, etc.) that follows the review
     case (scr, maxScr) of
         (Just scr', Just maxScr') -> do
             let (nScore, nMaxScore) = normaliseScore (scr', maxScr')
@@ -205,7 +209,7 @@ scoreAsLetterParser :: P.Parsec Text () (Maybe Double, Maybe Double)
 scoreAsLetterParser = do
     letter <- P.optional (P.string "(") >> P.oneOf "ABCDE"
     sign <- P.optionMaybe (P.oneOf "+-−")
-    _ <- P.many (P.noneOf ("<{\n" :: String))
+    _ <- P.many (P.noneOf ("<{>}\n" :: String))
     let s = case sign of
          Just '+' -> 1
          Just _ -> (-1)
@@ -240,21 +244,20 @@ christgauSymbolParser = do
          _ -> 0
     return (Just r, Just 10)
 
+-- NOTE: This one is broken because it consumes single-element <ref /> as well. And running
+-- refSingle before this one equally consumes both <ref /> and <ref></ref> ...
 -- | Parser that gets everything inside <ref></ref> that follows most scores
-refParser :: P.Parsec Text () String
-refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>')) *> P.manyTill P.anyChar (P.string "</ref>") <* P.endOfLine
+-- refParser :: P.Parsec Text () String
+-- refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>')) *> P.manyTill P.anyChar (P.try (P.string "</ref>")) <* P.spaces <* P.option "" (P.string "\n")
 
 -- | Parser for single ref elements, <ref />
-refSingle :: P.Parsec Text () String
-refSingle = (P.string "<ref") *> P.manyTill P.anyChar (P.try (P.string "/>")) <* P.endOfLine
+-- refSingle :: P.Parsec Text () String
+-- refSingle = P.string "<ref" *> P.manyTill P.anyChar (P.try (P.string "/>")) <* P.spaces <* P.option "" (P.string "\n")
 
 -- | Parser for note such as {{sfn|Graff|Durchholz|1999|p=88}}
-noteParser :: P.Parsec Text () String
-noteParser = P.string "{{" >> P.manyTill P.anyChar (P.string "}}")
+-- noteParser :: P.Parsec Text () String
+-- noteParser = P.string "{{" *> P.manyTill P.anyChar (P.string "}}") <* P.spaces
 
 -- | Parser for note such as [{{sfn|Graff|Durchholz|1999|p=88}} link]
-noteWithBracketsParser :: P.Parsec Text () String
-noteWithBracketsParser = P.string "[{{" *> P.manyTill P.anyChar (P.string "}}") <* P.manyTill P.anyChar (P.string "]")
-
-restOfLineParser :: P.Parsec Text () String
-restOfLineParser = P.manyTill P.anyChar (P.string "\n")
+-- noteWithBracketsParser :: P.Parsec Text () String
+-- noteWithBracketsParser = P.string "[{{" *> P.manyTill P.anyChar (P.string "}}") <* P.manyTill P.anyChar (P.string "]") <* P.spaces
