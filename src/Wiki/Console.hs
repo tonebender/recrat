@@ -34,21 +34,21 @@ import qualified Data.Text.IO as Tio
 -- | Search for an album on Wikipedia and print its ratings, human readable.
 -- query is the album name search query and critic is a critic name whose
 -- ratings to show (if empty, all ratings are shown). If fail, print error msg.
-printAlbumRatings :: Text -> Text -> IO ()
-printAlbumRatings query critic = do
+printAlbumRatings :: Text -> Text -> Bool -> IO ()
+printAlbumRatings query critic starFormat = do
     eitherWikiContent <- searchAndGetWiki query  -- Search for query and take the first result (title, content)
     case eitherWikiContent of
         Left (WikiError t) -> Tio.putStrLn t
         Right (wTitle, wText) -> do
             case getAlbumRatings wText of  -- Get all album ratings from this album's wikipedia page
                 Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> wTitle <> "'"
-                Just albm -> Tio.putStr $ showAlbum $ filterAlbumByCritic critic albm
+                Just albm -> Tio.putStr $ showAlbum (filterAlbumByCritic critic albm) starFormat
 
 -- | Search for an artist on Wikipedia, get all albums (under the specified category)
 -- found in its discography and print a list of these albums, ranked mostly highly
 -- rated to lowest rated, human readable. On failure, print error message.
-printArtistAlbums :: Text -> Text -> Text -> IO ()
-printArtistAlbums query critic category = do
+printArtistAlbums :: Text -> Text -> Text -> Bool -> IO ()
+printArtistAlbums query critic category starFormat = do
     eitherWikiContent <- searchAndGetWiki (query <> " discography") -- Search for query and take the first result (title, content)
     case eitherWikiContent of
         Left (WikiError t) -> Tio.putStrLn t
@@ -60,4 +60,4 @@ printArtistAlbums query critic category = do
                 Right artist -> do
                     Tio.putStrLn $ name artist
                     Tio.putStrLn $ T.replicate (T.length $ name artist) "-"
-                    Tio.putStr $ showAlbums $ filterAlbumsByCritic critic artist
+                    Tio.putStr $ showAlbums (filterAlbumsByCritic critic artist) starFormat

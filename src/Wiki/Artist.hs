@@ -33,7 +33,9 @@ import Wiki.Album (
     , getAlbumRatings
     , getAverageScore
     , getRatingsFlat
-    , filterAlbumByCritic)
+    , filterAlbumByCritic
+    , ratioToPercent
+    , ratioToStars)
 
 
 data Artist = Artist
@@ -46,16 +48,20 @@ data ArtistError = NoDiscographyFound | AlbumsRequestFailed
 
 -- | Return a Text with album titles + year and their average ratings followed 
 -- by "(number of ratings)", with titles left-justified and numbers right-justified
-showAlbums :: Artist -> Text
-showAlbums artist = showAlbums' (longestName (albums artist) + 8) $ sortAlbums $ albums artist
+showAlbums :: Artist -> Bool -> Text
+showAlbums artist starFormat = showAlbums' (longestName (albums artist) + 8) starFormat $ sortAlbums $ albums artist
     where
-        showAlbums' :: Int -> [Album] -> Text
-        showAlbums' _ [] = T.empty
-        showAlbums' padding (x:xs) = T.justifyLeft padding ' ' (albumName x <> showYear x) <> showNumbers x <> showAlbums' padding xs
+        showAlbums' :: Int -> Bool -> [Album] -> Text
+        showAlbums' _ _ [] = T.empty
+        showAlbums' padding star (x:xs) = T.justifyLeft padding ' ' (albumName x <> showYear x)
+            <> (if star then showStars x else showNumbers x) <> showAlbums' padding star xs
             where
                 showNumbers a = case length $ getRatingsFlat a of
                     0 -> "  - (0)\n"
-                    _ -> T.pack $ printf "%3d (%d)\n" (getAverageScore a) (length $ getRatingsFlat a)
+                    _ -> T.pack $ printf "%3d (%d)\n" (ratioToPercent $ getAverageScore a) (length $ getRatingsFlat a)
+                showStars a = case length $ getRatingsFlat a of
+                    0 -> "      (0)\n"
+                    _ -> ratioToStars (getAverageScore a) 5 <> " (" <> T.show (length $ getRatingsFlat a) <> ")\n"
                 showYear a = if yearOfRelease a == "" then "" else " (" <> yearOfRelease a <> ")"
         -- Return the length of the longest name of all albums in list
         longestName :: [Album] -> Int

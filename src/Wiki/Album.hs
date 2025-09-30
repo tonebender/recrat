@@ -6,12 +6,14 @@
 module Wiki.Album (
       Album
     , albumName
-    , yearOfRelease
+    , filterAlbumByCritic
     , getAlbumRatings
     , getAverageScore
     , getRatingsFlat
+    , ratioToPercent 
+    , ratioToStars
     , showAlbum
-    , filterAlbumByCritic
+    , yearOfRelease
 ) where
 
 import Data.List (sort)
@@ -86,11 +88,14 @@ getAlbumRatings wikip =
                                       . T.replace "{{album reviews" "{{**\n"
 
 -- | Create a text with all ratings for an album, plus its artist and title, etc.
-showAlbum :: Album -> Text
-showAlbum album =
-    (wikiLabel . artistName $ album) <> " - " <> albumName album <> getYear album <> "\n"
-    <> (T.concat $ map (showRatingBlock (longestCriticName album)) $ ratingBlocks album)
-    <> (T.justifyLeft (longestCriticName album) ' ' "Average score") <> (T.pack $ printf "  %3d\n" $ getAverageScore album)
+-- starz is whether to show score as stars rather than percentage
+showAlbum :: Album -> Bool -> Text
+showAlbum album starz =
+    (wikiLabel . artistName $ album) <> " - " <> albumName album <> getYear album <> "\n"  -- First row is artistname - albumname
+    <> (T.concat $ map (showRatingBlock (longestCriticName album) starz) $ ratingBlocks album)
+    <> (T.justifyLeft (longestCriticName album) ' ' "Average score")
+    <> if starz then "  " <> ratioToStars (getAverageScore album) 5 <> "\n"
+       else (T.pack $ printf "  %3d\n" $ ratioToPercent $ getAverageScore album)
     where
         getYear album' = if yearOfRelease album' == "" then "" else " (" <> yearOfRelease album' <> ")"
         longestCriticName album' =
@@ -99,20 +104,22 @@ showAlbum album =
                 Just x -> x + 2
 
 -- | Create a text with the ratings from one rating block
+-- padding is the number of columns to insert before the score column
+-- starFormat is whether to show score as stars rather than percentage
 -- (TODO: Move this to the where above, or leave it independent so it can be called from the ui?)
-showRatingBlock :: Int -> RatingBlock -> Text
-showRatingBlock padding rblock = header rblock <> "\n" <> (showRatingsList padding $ ratings rblock)
-    where showRatingsList _ [] = ""
-          showRatingsList pad (x:xs) =
+showRatingBlock :: Int -> Bool -> RatingBlock -> Text
+showRatingBlock padding starFormat rblock = header rblock <> "\n" <> (showRatingsList padding starFormat $ ratings rblock)
+    where showRatingsList _ _ [] = ""
+          showRatingsList pad stars (x:xs) =
               "  " <> T.justifyLeft pad ' ' (wikiLabel $ criticName x)
-              <> T.pack (printf "%3d\n" (ratioToPercent $ ratio x)) <> showRatingsList pad xs
+              <> if stars then ratioToStars (ratio x) 5 <> "\n" <> showRatingsList pad stars xs
+                 else T.pack (printf "%3d\n" (ratioToPercent $ ratio x)) <> showRatingsList pad stars xs
 
--- | Take a list of rating blocks and return the overall average score of all of them,
--- converted to percentage
-getAverageScore :: Album -> Int
+-- | Take a list of rating blocks and return the overall average score (ratio) of all of them
+getAverageScore :: Album -> Double
 getAverageScore album = getAverageScore' $ getRatingsFlat album  -- All blocks' ratings in one flat list
     where getAverageScore' [] = 0
-          getAverageScore' scores = ratioToPercent $ (sum [ratio s | s <- scores]) / (fromIntegral $ length scores)
+          getAverageScore' scores = (sum [ratio s | s <- scores]) / (fromIntegral $ length scores)
 
 -- | Return all ratings from all rating blocks for an album, in a single list
 getRatingsFlat :: Album -> [Rating]

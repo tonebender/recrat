@@ -27,6 +27,7 @@ data Inputargs = Inputargs
     , optCategory :: Text
     , optCritic :: Text
     , optLLM :: Bool
+    , optStarFormat :: Bool
     }
 
 -- Parser for command line arguments
@@ -56,6 +57,9 @@ commandLineParser = Inputargs
         (long "llm"
         <> long "ai"
         <> help "Use an LLM (ai) to get a list of the best albums by the specified artist")
+    <*> switch
+        (long "stars"
+        <> help "Show ratings graded by stars (1 to 5) instead of percentage")
 
 -- Help text and info for command line
 appDescription :: ParserInfo Inputargs
@@ -71,11 +75,12 @@ main = do
     let artistName = optArtist inputargs
     let category = optCategory inputargs
     let critic = optCritic inputargs
+    let starFormat = optStarFormat inputargs
     let llm = optLLM inputargs
     if llm
         then llmPrintArtist artistName category
         else if (albumTitle /= T.empty)
-            then printAlbumRatings albumTitle critic
+            then printAlbumRatings albumTitle critic starFormat
             else if (artistName /= T.empty)
-                then printArtistAlbums artistName critic category
+                then printArtistAlbums artistName critic category starFormat
                 else Tio.putStrLn "No album title or artist specified."
