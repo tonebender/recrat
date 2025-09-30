@@ -60,8 +60,8 @@ showAlbums artist starFormat = showAlbums' (longestName (albums artist) + 8) sta
                     0 -> "  - (0)\n"
                     _ -> T.pack $ printf "%3d (%d)\n" (ratioToPercent $ getAverageScore a) (length $ getRatingsFlat a)
                 showStars a = case length $ getRatingsFlat a of
-                    0 -> "      (0)\n"
-                    _ -> ratioToStars (getAverageScore a) 5 <> " (" <> T.show (length $ getRatingsFlat a) <> ")\n"
+                    0 -> "       0\n"
+                    _ -> ratioToStars (getAverageScore a) 5 <> "  " <> T.pack (printf "%2d\n" (length $ getRatingsFlat a))
                 showYear a = if yearOfRelease a == "" then "" else " (" <> yearOfRelease a <> ")"
         -- Return the length of the longest name of all albums in list
         longestName :: [Album] -> Int
