@@ -161,7 +161,7 @@ musicRatingsParser = do
 -- | Parser for subtitle of rating block
 subtitleParser :: P.Parsec Text () Text
 subtitleParser = do
-    subtitle <- P.char '|' >> P.spaces >> P.string "subtitle" >> P.spaces >> P.string "=" >> P.spaces >> P.manyTill (P.try P.anyChar) P.endOfLine
+    subtitle <- P.char '|' >> P.spaces >> (P.string "subtitle") <|> (P.string "title") >> P.spaces >> P.string "=" >> P.spaces >> P.manyTill (P.try P.anyChar) P.endOfLine
     return $ HTML.decode' . T.replace "'" "" . T.pack $ subtitle
 
 -- | Parser for a review in the Music/Album ratings block, consisting of "| rev3 = [[Allmusic]]\n| rev3Score = ...",
@@ -173,8 +173,8 @@ reviewParser = do
     let critic' = T.takeWhile (/= '\n') $ T.pack criticAndStartOfNextRev 
     P.many1 P.digit >> (P.string "Score" <|> P.string "score") >> P.spaces >> P.char '=' >> P.spaces
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser <|> christgauParser
-    _ <- P.spaces >> P.optional noteParser  -- We ignore the note contents for now
-    reftag <- (P.try refParser) <|> refSingle <|> (P.string "\n")
+    _ <- P.spaces >> P.optional (noteParser <|> noteWithBracketsParser)  -- We ignore the note contents for now
+    reftag <- (P.try refParser) <|> refSingle <|> P.manyTill P.anyChar (P.string "\n")
     case (scr, maxScr) of
         (Just scr', Just maxScr') -> do
             let (nScore, nMaxScore) = normaliseScore (scr', maxScr')
@@ -248,6 +248,13 @@ refParser = P.string "<ref" *> (P.string ">" <|> P.manyTill P.anyChar (P.char '>
 refSingle :: P.Parsec Text () String
 refSingle = (P.string "<ref") *> P.manyTill P.anyChar (P.try (P.string "/>")) <* P.endOfLine
 
--- | Parser for note such as [{{sfn|Graff|Durchholz|1999|p=88}} link]
+-- | Parser for note such as {{sfn|Graff|Durchholz|1999|p=88}}
 noteParser :: P.Parsec Text () String
-noteParser = P.optional (P.string "[") *> P.string "{{" *> P.manyTill P.anyChar (P.string "}}") <* P.manyTill P.anyChar (P.string "]")
+noteParser = P.string "{{" >> P.manyTill P.anyChar (P.string "}}")
+
+-- | Parser for note such as [{{sfn|Graff|Durchholz|1999|p=88}} link]
+noteWithBracketsParser :: P.Parsec Text () String
+noteWithBracketsParser = P.string "[{{" *> P.manyTill P.anyChar (P.string "}}") <* P.manyTill P.anyChar (P.string "]")
+
+restOfLineParser :: P.Parsec Text () String
+restOfLineParser = P.manyTill P.anyChar (P.string "\n")
