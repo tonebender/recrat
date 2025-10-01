@@ -46,8 +46,9 @@ data Artist = Artist
 data ArtistError = NoDiscographyFound | AlbumsRequestFailed
 
 
--- | Return a Text with album titles + year and their average ratings followed 
--- by "(number of ratings)", with titles left-justified and numbers right-justified
+-- | Return a Text with album titles + (year), average ratings, by number of ratings, with titles
+-- left-justified and stats right-justified. If starFormat is true, stars instead of numbers will
+-- show scores.
 showAlbums :: Artist -> Bool -> Text
 showAlbums artist starFormat = showAlbums' (longestName (albums artist) + 8) starFormat $ sortAlbums $ albums artist
     where
