@@ -8,7 +8,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as Tio
 import Options.Applicative
 
--- This app's own modules
+-- This app's own libraries
 import Wiki.Console
     (
       printAlbumRatings

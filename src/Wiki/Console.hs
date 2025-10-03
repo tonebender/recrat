@@ -23,7 +23,7 @@ import Wiki.Artist
     (
       name
     , showAlbums
-    , getAlbums
+    , getArtist
     , filterAlbumsByCritic
     , ArtistError (AlbumsRequestFailed, NoDiscographyFound)
     )
@@ -53,7 +53,7 @@ printArtistAlbums query critic category starFormat = do
     case eitherWikiContent of
         Left (WikiError t) -> Tio.putStrLn t
         Right (wTitle, wText) -> do
-            eitherArtist <- getAlbums wTitle wText category  -- Get all albums and their ratings for this artist
+            eitherArtist <- getArtist wTitle wText category  -- Get all albums and their ratings for this artist
             case eitherArtist of
                 Left AlbumsRequestFailed -> Tio.putStrLn $ "Failed to fetch albums from '" <> wTitle <> "'"
                 Left NoDiscographyFound -> Tio.putStrLn $ "'" <> wTitle <> "' does not appear to contain an artist discography. Try refining your search query by appending the word 'discography' or 'albums' or similar to it."

@@ -3,7 +3,7 @@
 -- This module contains functions related to getting ratings for an artist's entire discography
 
 module Wiki.Artist (
-    getAlbums
+    getArtist
     , name
     , showAlbums
     , ArtistError (NoDiscographyFound, AlbumsRequestFailed)
@@ -93,8 +93,8 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
 -- requested album and return as an Artist. When requesting the pages, take 50 at a time because
 -- that's the Mediawiki API's limit, and concat the list of json Values of max 50 pages each into a
 -- flattened list, to which getPageFromWikiRevJson and getAlbumRatings are applied ...
-getAlbums :: Text -> Text -> Text -> IO (Either ArtistError Artist)
-getAlbums wikiTitle discography category = do
+getArtist :: Text -> Text -> Text -> IO (Either ArtistError Artist)
+getArtist wikiTitle discography category = do
     case parseDiscographyAlbums discography category of
         [] -> return $ Left NoDiscographyFound
         albumTitles -> do
