@@ -5,9 +5,11 @@
 
 module Wiki.Album (
       Album
+    , AlbumError (AlbumError)
+    , fetchAlbum
+    , parseAlbum
     , albumName
     , filterAlbumByCritic
-    , getAlbumRatings
     , getAverageScore
     , getRatingsFlat
     , ratioToPercent 
@@ -27,11 +29,14 @@ import qualified Text.HTMLEntity as HTML (decode')
 import qualified Text.Parsec as P
 
 import Wiki.MediaWiki (
-      parseAlbumInfobox
+      searchAndGetWiki
+    , WikiError (WikiError)
+    , parseAlbumInfobox
     , findInfoboxProperty
     , WikiAnchor (WikiAnchor)
     , wikiLabel
-    , parseWikiAnchor)
+    , parseWikiAnchor
+    )
 
 -- Type for an album including a list of ratings blocks,
 -- each containing a number of ratings (reviews)
@@ -41,6 +46,9 @@ data Album = Album
     , yearOfRelease :: Text
     , ratingBlocks :: [RatingBlock]
     } deriving (Show)
+
+data AlbumError = AlbumError Text
+    deriving (Show, Eq)
 
 -- Type for a block of ratings (one box on a wiki page) for an album
 data RatingBlock = RatingBlock
@@ -57,15 +65,33 @@ data Rating = Rating
     , ref :: Text
     } deriving (Show)
 
--- | Get all album ratings that can be found on a wiki page
-getAlbumRatings :: Text -> Maybe Album
-getAlbumRatings wikip =
+-- | Find and fetch an album page from Wikipedia,
+-- parse its ratings and return an Album object or an error
+fetchAlbum :: Text -> IO (Either AlbumError Album)
+fetchAlbum query = do
+    eitherWikiContent <- searchAndGetWiki query  -- Search for query and take the first result (title, content)
+    case eitherWikiContent of
+        Left (WikiError t) -> return $ Left $ AlbumError t
+        Right (wTitle, wText) -> do
+            case parseAlbum wText of  -- Get all album ratings from this album's wikipedia page
+                Nothing -> return $ Left $ AlbumError $ "This doesn't appear to be a music album: '" <> wTitle <> "'"
+                Just albm -> return $ Right albm
+
+-- | Get an Album with ratings out of a wiki page text.
+-- If there's no album info box with a name property, return Nothing to indicate it's probably not a music album page.
+-- If it's an album but there are no rating blocks on the page, return an Album but with an empty rating block list.
+parseAlbum :: Text -> Maybe Album
+parseAlbum wikip =
     case findInfoboxProperty "name" (parseAlbumInfobox wikip) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
         Just albName -> case getAllRatingBlocks wikip of
             [] -> Just $ Album (wikiLabel albName) (getArtistName wikip) (getAlbumYear wikip) []  -- We keep albums without ratings
             ratBlocks -> Just $ Album (wikiLabel albName) (getArtistName wikip) (getAlbumYear wikip) (map applyParser ratBlocks)
             where
+                  getAllRatingBlocks = drop 1 . T.splitOn "{{**\n"
+                                      . T.replace "{{Music ratings" "{{**\n" . T.replace "{{music ratings" "{{**\n"
+                                      . T.replace "{{Album ratings" "{{**\n" . T.replace "{{album ratings" "{{**\n"
+                                      . T.replace "{{Album reviews" "{{**\n" . T.replace "{{album reviews" "{{**\n"
                   applyParser r = case P.parse musicRatingsParser (show $ wikiLabel albName) r of
                       Right rats -> rats
                       Left err -> RatingBlock ("Could not parse ratings block: " <> T.pack (show err)) []
@@ -79,13 +105,6 @@ getAlbumRatings wikip =
                                             case filter (\s -> T.length s == 4) $ map (T.takeWhile (`T.elem` "0123456789")) subStrings of
                                                 [] -> ""  -- This also gives empty if the year couldn't be parsed
                                                 y:_ -> y
-                  getAllRatingBlocks = drop 1 . T.splitOn "{{**\n"
-                                      . T.replace "{{Music ratings" "{{**\n"
-                                      . T.replace "{{music ratings" "{{**\n"
-                                      . T.replace "{{Album ratings" "{{**\n"
-                                      . T.replace "{{album ratings" "{{**\n"
-                                      . T.replace "{{Album reviews" "{{**\n"
-                                      . T.replace "{{album reviews" "{{**\n"
 
 -- | Create a text with all ratings for an album, plus its artist and title, etc.
 -- starz is whether to show score as stars rather than percentage
@@ -115,7 +134,7 @@ showRatingBlock padding starFormat rblock = header rblock <> "\n" <> (showRating
               <> if stars then ratioToStars (ratio x) 5 <> "\n" <> showRatingsList pad stars xs
                  else T.pack (printf "%3d\n" (ratioToPercent $ ratio x)) <> showRatingsList pad stars xs
 
--- | Take a list of rating blocks and return the overall average score (ratio) of all of them
+-- | Take an Album and return the overall average score (ratio) of all of its ratings
 getAverageScore :: Album -> Double
 getAverageScore album = getAverageScore' $ getRatingsFlat album  -- All blocks' ratings in one flat list
     where getAverageScore' [] = 0

@@ -16,8 +16,9 @@ import Wiki.MediaWiki
 import Wiki.Album
     (
       showAlbum
-    , getAlbumRatings
+    , fetchAlbum
     , filterAlbumByCritic
+    , AlbumError (AlbumError)
     )
 import Wiki.Artist
     (
@@ -31,18 +32,15 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as Tio
 
--- | Search for an album on Wikipedia and print its ratings, human readable.
+-- | Fetch an album on Wikipedia and print its ratings, human readable.
 -- query is the album name search query and critic is a critic name whose
 -- ratings to show (if empty, all ratings are shown). If fail, print error msg.
 printAlbumRatings :: Text -> Text -> Bool -> IO ()
 printAlbumRatings query critic starFormat = do
-    eitherWikiContent <- searchAndGetWiki query  -- Search for query and take the first result (title, content)
-    case eitherWikiContent of
-        Left (WikiError t) -> Tio.putStrLn t
-        Right (wTitle, wText) -> do
-            case getAlbumRatings wText of  -- Get all album ratings from this album's wikipedia page
-                Nothing -> Tio.putStrLn $ "This doesn't appear to be a music album: '" <> wTitle <> "'"
-                Just albm -> Tio.putStr $ showAlbum (filterAlbumByCritic critic albm) starFormat
+    eitherAlbum <- fetchAlbum query
+    case eitherAlbum of  -- Get all album ratings from this album's wikipedia page
+        Left (AlbumError t) -> Tio.putStrLn t
+        Right albumObj -> Tio.putStr $ showAlbum (filterAlbumByCritic critic albumObj) starFormat
 
 -- | Search for an artist on Wikipedia, get all albums (under the specified category)
 -- found in its discography and print a list of these albums, ranked mostly highly

@@ -30,7 +30,7 @@ import Wiki.Album (
       Album
     , albumName
     , yearOfRelease
-    , getAlbumRatings
+    , parseAlbum
     , getAverageScore
     , getRatingsFlat
     , filterAlbumByCritic
@@ -103,7 +103,7 @@ getArtist wikiTitle discography category = do
                 [] -> return $ Left AlbumsRequestFailed  -- If none of the requests worked, give error (theoretically a fraction can fail, but won't)
                 listOfJsons ->
                     return $ Right $ Artist (T.replace " discography" "" wikiTitle)
-                       $ catMaybes $ map (getAlbumRatings . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
+                       $ catMaybes $ map (parseAlbum . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
 
 -- | Run requestWikiPages on a maximum of 50 titles at a time, several times if needed, and return a
 -- list with each call's results. (For most artists, there'll be much less than 50 in total, so this
