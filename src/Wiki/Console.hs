@@ -4,11 +4,11 @@
 -- using the Artist and Album modules to retrieve the ratings from Wikipedia.
 
 module Wiki.Console (
-    printAlbumRatings
+      printAlbumRatings
     , printArtistAlbums
 ) where
 
-import Wiki.MediaWiki 
+import Wiki.MediaWiki
     (
       searchAndGetWiki
     , WikiError (WikiError)
