@@ -37,7 +37,7 @@ data Rating = Rating
     , score :: Double
     , maxScore :: Double
     , criticName :: WikiAnchor
-    , ref :: Text
+    -- , ref :: Text
     } deriving (Show)
 
 -- | Take an album wiki page (and its title) and find all rating blocks in it and parse them,
@@ -83,12 +83,11 @@ reviewParser = do
     (scr, maxScr) <- scoreInRatingTemplParser <|> scoreAsFragmentParser <|> scoreAsLetterParser <|> christgauParser
     -- _ <- P.option "" (noteParser <|> noteWithBracketsParser)  -- We ignore the note contents for now
     -- reftag <- (P.try refParser) <|> refSingle <|> P.manyTill P.anyChar (P.string "\n")
-    let reftag = ""
     _ <- P.manyTill P.anyChar (P.string "\n") -- Skip anything (notes, refs, etc.) that follows the review
     case (scr, maxScr) of
         (Just scr', Just maxScr') -> do
             let (nScore, nMaxScore) = normaliseScore (scr', maxScr')
-            return $ Just $ Rating (nScore / nMaxScore) nScore nMaxScore (parseWikiAnchor critic') (T.pack reftag)
+            return $ Just $ Rating (nScore / nMaxScore) nScore nMaxScore (parseWikiAnchor critic')
         (_, _) -> return Nothing
     where
         -- | Simple helper to change scores to something mathematically practical,
