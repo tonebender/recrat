@@ -28,8 +28,7 @@ import Wiki.MediaWiki (
     , WikiError (WikiError)
     , parseAlbumInfobox
     , findInfoboxProperty
-    , WikiAnchor (WikiAnchor)
-    , wikiLabel
+    , WikiAnchor (WikiAnchor, wikiLabel)
     )
 
 import Wiki.Rating
