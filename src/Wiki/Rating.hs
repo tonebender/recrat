@@ -1,14 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
 -- This module contains functions related to parsing ratings for an album from Wikipedia
 
 module Wiki.Rating (
-      Rating
-    , ratio
-    , criticName
-    , RatingBlock (RatingBlock)
-    , header
-    , ratings
+      Rating(..)
+    , RatingBlock(..)
     , parseRatings
     ) where
 
@@ -47,10 +44,12 @@ data Rating = Rating
 parseRatings :: Text -> Text -> [RatingBlock]
 parseRatings wTitle wText = map applyParser $ getAllRatingBlocks wText 
     where
+        getAllRatingBlocks :: Text -> [Text]  -- Returns [] if none found
         getAllRatingBlocks = drop 1 . T.splitOn "{{**\n"
                             . T.replace "{{Music ratings" "{{**\n" . T.replace "{{music ratings" "{{**\n"
                             . T.replace "{{Album ratings" "{{**\n" . T.replace "{{album ratings" "{{**\n"
                             . T.replace "{{Album reviews" "{{**\n" . T.replace "{{album reviews" "{{**\n"
+        applyParser :: Text -> RatingBlock
         applyParser ratingBlockText = case P.parse musicRatingsParser (show wTitle) ratingBlockText of
             Right rats -> rats
             Left err -> RatingBlock ("Could not parse ratings block: " <> T.pack (show err)) []  -- Questionable error handling!
