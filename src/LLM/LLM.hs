@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
 -- This module is supposed to contain LLM-related code that is not specific to any
 -- one LLM service. Specific stuff go in separate modules, such as LLM.Mistral, that
@@ -79,10 +80,11 @@ promptTemplate = "\"Please list the ten best $CATEGORY albums by $ARTIST. Try to
 
 -- | Get a Text representation of an Artist variable, for output on the console
 showArtist :: Artist -> Text
-showArtist artist' = name artist' <> "\n"
-    <> T.replicate (T.length $ name artist') "-" <> "\n"
-    <> T.intercalate "\n" (map showAlbum $ albums artist')
-    where showAlbum a = "* " <> title a <> " (" <> year a <> ")\n  " <> description a
+showArtist artist' = artist'.name <> "\n"
+    <> T.replicate (T.length artist'.name) "-" <> "\n"
+    <> T.intercalate "\n" (map showAlbum artist'.albums)
+    where showAlbum :: Album -> Text
+          showAlbum a = "* " <> a.title <> " (" <> a.year <> ")\n  " <> a.description
 
 -- TODO: Move llmPrintArtist to a new module LLM.Console ?
 -- | Call the desired LLM and parse its json response to an Artist variable, then print it to the
@@ -128,7 +130,7 @@ parseJsonToArtist jsonText =
                            (parseObjectsToAlbums $ jsonValue ^.. key "albums" . values . _Object)
 
 -- | Take a list of json (aeson) objects with properties mapping to an Album and return
---   a list of Album variables. Note: this silently drops any failed parsings via catMaybes.
+--   a list of Album. Note: this silently drops any failed parsings via catMaybes.
 parseObjectsToAlbums :: [Object] -> [Album]
 parseObjectsToAlbums objects = catMaybes $ map (parseMaybe objectToAlbumParser) objects
     where objectToAlbumParser obj = Album <$> obj .: "title" <*> obj .: "year" <*> obj .: "description"

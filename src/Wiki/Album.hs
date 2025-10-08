@@ -5,18 +5,16 @@
 -- on Wikipedia
 
 module Wiki.Album (
-      Album
+      Album (..)
     , AlbumError (AlbumError)
     , fetchAlbum
     , parseAlbum
-    , albumName
     , filterAlbumByCritic
     , getAverageScore
     , getRatingsFlat
     , ratioToPercent 
     , ratioToStars
     , showAlbum
-    , yearOfRelease
 ) where
 
 import Data.List (sort)

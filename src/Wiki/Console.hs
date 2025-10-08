@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
 -- This module contains functions for printing album ratings to the console,
 -- using the Artist and Album modules to retrieve the ratings from Wikipedia.
@@ -22,7 +23,7 @@ import Wiki.Album
     )
 import Wiki.Artist
     (
-      name
+      Artist (..)
     , showAlbums
     , getArtist
     , filterAlbumsByCritic
@@ -56,6 +57,6 @@ printArtistAlbums query critic category starFormat = do
                 Left AlbumsRequestFailed -> Tio.putStrLn $ "Failed to fetch albums from '" <> wTitle <> "'"
                 Left NoDiscographyFound -> Tio.putStrLn $ "'" <> wTitle <> "' does not appear to contain an artist discography. Try refining your search query by appending the word 'discography' or 'albums' or similar to it."
                 Right artist -> do
-                    Tio.putStrLn $ name artist
-                    Tio.putStrLn $ T.replicate (T.length $ name artist) "-"
+                    Tio.putStrLn artist.name
+                    Tio.putStrLn $ T.replicate (T.length artist.name) "-"
                     Tio.putStr $ showAlbums (filterAlbumsByCritic critic artist) starFormat

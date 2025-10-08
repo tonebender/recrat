@@ -1,10 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
 -- This module contains functions related to getting ratings for an artist's entire discography
 
 module Wiki.Artist (
-    getArtist
-    , name
+      Artist (..)
+    , getArtist
     , showAlbums
     , ArtistError (NoDiscographyFound, AlbumsRequestFailed)
     , filterAlbumsByCritic
@@ -27,9 +28,7 @@ import Wiki.MediaWiki (
     , wikiURI)
 
 import Wiki.Album (
-      Album
-    , albumName
-    , yearOfRelease
+      Album (..)
     , parseAlbum
     , getAverageScore
     , getRatingsFlat
@@ -50,11 +49,11 @@ data ArtistError = NoDiscographyFound | AlbumsRequestFailed
 -- left-justified and stats right-justified. If starFormat is true, stars instead of numbers will
 -- show scores.
 showAlbums :: Artist -> Bool -> Text
-showAlbums artist starFormat = showAlbums' (longestName (albums artist) + 8) starFormat $ sortAlbums $ albums artist
+showAlbums artist starFormat = showAlbums' (longestName artist.albums + 8) starFormat $ sortAlbums artist.albums
     where
         showAlbums' :: Int -> Bool -> [Album] -> Text
         showAlbums' _ _ [] = T.empty
-        showAlbums' padding star (x:xs) = T.justifyLeft padding ' ' (albumName x <> showYear x)
+        showAlbums' padding star (x:xs) = T.justifyLeft padding ' ' (x.albumName <> showYear x)
             <> (if star then showStars x else showNumbers x) <> showAlbums' padding star xs
             where
                 showNumbers a = case length $ getRatingsFlat a of
@@ -63,17 +62,18 @@ showAlbums artist starFormat = showAlbums' (longestName (albums artist) + 8) sta
                 showStars a = case length $ getRatingsFlat a of
                     0 -> "       0\n"
                     _ -> ratioToStars (getAverageScore a) 5 <> "  " <> T.pack (printf "%2d\n" (length $ getRatingsFlat a))
-                showYear a = if yearOfRelease a == "" then "" else " (" <> yearOfRelease a <> ")"
+                showYear :: Album -> Text
+                showYear a = if a.yearOfRelease == "" then "" else " (" <> a.yearOfRelease <> ")"
         -- Return the length of the longest name of all albums in list
         longestName :: [Album] -> Int
-        longestName albums' = case listToMaybe $ reverse $ sort $ map (T.length . albumName) albums' of
+        longestName albums' = case listToMaybe $ reverse $ sort $ [T.length a.albumName | a <- albums'] of
             Nothing -> 0
             Just x -> x
 
 
 -- | Get the artist but include only ratings whose critic name includes critic
 filterAlbumsByCritic :: Text -> Artist -> Artist
-filterAlbumsByCritic critic artist = Artist (name artist) $ map (filterAlbumByCritic critic) (albums artist)
+filterAlbumsByCritic critic artist = Artist artist.name (map (filterAlbumByCritic critic) artist.albums)
 
 -- | Sort albums in a list according to their average score, and, when score is equal,
 -- according to their number of ratings (more ratings -> higher rank)
@@ -116,7 +116,7 @@ request50by50 titles = do
     rest <- request50by50 (drop 50 titles)
     return $ r:rest
 
--- | Lens stuff to get the contents of the first wiki page revision
+-- | Aeson Lens stuff to get the contents of the first wiki page revision
 -- in a json object from a request to the MediaWiki Revisions API.
 getPageFromWikiRevJson :: Value -> Text
 getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
@@ -159,4 +159,4 @@ filterAlbumsInDisco = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r ||
 -- | Create a string such as "Bleach (Nirvana album)|Nevermind|In Utero" from an Artist's
 -- albums list, for use in a multi-page wiki request.
 artistToAlbumsQuery :: [WikiAnchor] -> Text
-artistToAlbumsQuery albumAnchors = T.intercalate "|" $ map wikiURI albumAnchors
+artistToAlbumsQuery albumAnchors = T.intercalate "|" [a.wikiURI | a <- albumAnchors]
