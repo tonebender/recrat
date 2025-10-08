@@ -5,9 +5,10 @@
 
 module Wiki.Artist (
       Artist (..)
-    , getArtist
-    , showAlbums
+    , fetchArtist
+    , showArtist
     , ArtistError (NoDiscographyFound, AlbumsRequestFailed)
+    , ArtistError2 (ArtistError2)
     , filterAlbumsByCritic
 ) where
 
@@ -22,10 +23,11 @@ import qualified Data.Text as T
 
 import Wiki.MediaWiki (
       requestWikiPages
-    , WikiAnchor
+    , searchAndGetWiki
+    , WikiError (WikiError)
+    , WikiAnchor (wikiURI)
     , getWikiAnchor
-    , parseWikiAnchor
-    , wikiURI)
+    , parseWikiAnchor)
 
 import Wiki.Album (
       Album (..)
@@ -44,12 +46,33 @@ data Artist = Artist
 
 data ArtistError = NoDiscographyFound | AlbumsRequestFailed
 
+data ArtistError2 = ArtistError2 Text
 
--- | Return a Text with album titles + (year), average ratings, by number of ratings, with titles
+-- | Find and fetch an artist discography page on Wikipedia,
+-- call getAlbums to parse it and fetch all found albums (including ratings),
+-- returning an Artist or ArtistError2
+fetchArtist :: Text -> Text -> IO (Either ArtistError2 Artist)
+fetchArtist query category = do
+    eitherWikiContent <- searchAndGetWiki (query <> " discography") -- Search for query and take the first result (title, content)
+    case eitherWikiContent of
+        Left (WikiError t) -> return $ Left $ ArtistError2 t
+        Right (wTitle, wText) -> do
+            let artistName' = T.replace " discography" "" wTitle
+            eitherAlbums <- getAlbums wText category  -- Get all albums and their ratings for this artist
+            case eitherAlbums of
+                Left AlbumsRequestFailed -> return $ Left $ ArtistError2 $ "Failed to fetch albums from '" <> artistName' <> "'"
+                Left NoDiscographyFound -> return $ Left $ ArtistError2 $ "'" <> artistName' <> "' does not appear to contain an artist discography. Try refining your search query by appending the word 'discography' or 'albums' or similar to it."
+                Right albums' -> return $ Right $ Artist artistName' albums'
+
+-- | Return a Text with album titles + (year), average ratings, number of ratings, with titles
 -- left-justified and stats right-justified. If starFormat is true, stars instead of numbers will
--- show scores.
-showAlbums :: Artist -> Bool -> Text
-showAlbums artist starFormat = showAlbums' (longestName artist.albums + 8) starFormat $ sortAlbums artist.albums
+-- show scores. critic can be used to filter ratings by critic name.
+showArtist :: Artist -> Text -> Bool -> Text
+showArtist artist critic starFormat =
+    let artist' = filterAlbumsByCritic critic artist in
+    artist.name <> "\n"
+    <> T.replicate (T.length artist.name) "-" <> "\n"
+    <> (showAlbums' (longestName artist'.albums + 8) starFormat $ sortAlbums artist'.albums)
     where
         showAlbums' :: Int -> Bool -> [Album] -> Text
         showAlbums' _ _ [] = T.empty
@@ -87,14 +110,14 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
            else if (length $ getRatingsFlat album1) > (length $ getRatingsFlat album2) then GT
            else LT
 
--- | Take a discography wiki title, its contents and a category (such as "studio") and request all of
+-- | Take a discography page's contents and a category (such as "studio") and request all of
 -- the Wikipedia pages (their contents, in a json object, via the Mediawiki Revisions API) for the
 -- albums found under that category in the discography. Then get the album ratings for every
 -- requested album and return as an Artist. When requesting the pages, take 50 at a time because
 -- that's the Mediawiki API's limit, and concat the list of json Values of max 50 pages each into a
 -- flattened list, to which getPageFromWikiRevJson and getAlbumRatings are applied ...
-getArtist :: Text -> Text -> Text -> IO (Either ArtistError Artist)
-getArtist wikiTitle discography category = do
+getAlbums :: Text -> Text -> IO (Either ArtistError [Album])
+getAlbums discography category = do
     case parseDiscographyAlbums discography category of
         [] -> return $ Left NoDiscographyFound
         albumTitles -> do
@@ -102,8 +125,7 @@ getArtist wikiTitle discography category = do
             case catMaybes pages of
                 [] -> return $ Left AlbumsRequestFailed  -- If none of the requests worked, give error (theoretically a fraction can fail, but won't)
                 listOfJsons ->
-                    return $ Right $ Artist (T.replace " discography" "" wikiTitle)
-                       $ catMaybes $ map (parseAlbum . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
+                    return $ Right $ catMaybes $ map (parseAlbum . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
 
 -- | Run requestWikiPages on a maximum of 50 titles at a time, several times if needed, and return a
 -- list with each call's results. (For most artists, there'll be much less than 50 in total, so this

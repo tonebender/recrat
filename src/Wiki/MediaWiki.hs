@@ -6,10 +6,8 @@ module Wiki.MediaWiki (
     , requestWikiPages
     , parseAlbumInfobox
     , findInfoboxProperty
-    , WikiAnchor (WikiAnchor)
+    , WikiAnchor (..)
     , WikiError (WikiError)
-    , wikiURI
-    , wikiLabel
     , getWikiAnchor
     , parseWikiAnchor
 ) where

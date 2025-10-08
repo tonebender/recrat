@@ -9,11 +9,6 @@ module Wiki.Console (
     , printArtistAlbums
 ) where
 
-import Wiki.MediaWiki
-    (
-      searchAndGetWiki
-    , WikiError (WikiError)
-    )
 import Wiki.Album
     (
       showAlbum
@@ -23,14 +18,11 @@ import Wiki.Album
     )
 import Wiki.Artist
     (
-      Artist (..)
-    , showAlbums
-    , getArtist
-    , filterAlbumsByCritic
-    , ArtistError (AlbumsRequestFailed, NoDiscographyFound)
+      fetchArtist
+    , showArtist
+    , ArtistError2 (ArtistError2)
     )
 import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Data.Text.IO as Tio
 
 -- | Fetch an album on Wikipedia and print its ratings, human readable.
@@ -39,7 +31,7 @@ import qualified Data.Text.IO as Tio
 printAlbumRatings :: Text -> Text -> Bool -> IO ()
 printAlbumRatings query critic starFormat = do
     eitherAlbum <- fetchAlbum query
-    case eitherAlbum of  -- Get all album ratings from this album's wikipedia page
+    case eitherAlbum of
         Left (AlbumError t) -> Tio.putStrLn t
         Right albumObj -> Tio.putStr $ showAlbum (filterAlbumByCritic critic albumObj) starFormat
 
@@ -48,15 +40,7 @@ printAlbumRatings query critic starFormat = do
 -- rated to lowest rated, human readable. On failure, print error message.
 printArtistAlbums :: Text -> Text -> Text -> Bool -> IO ()
 printArtistAlbums query critic category starFormat = do
-    eitherWikiContent <- searchAndGetWiki (query <> " discography") -- Search for query and take the first result (title, content)
-    case eitherWikiContent of
-        Left (WikiError t) -> Tio.putStrLn t
-        Right (wTitle, wText) -> do
-            eitherArtist <- getArtist wTitle wText category  -- Get all albums and their ratings for this artist
-            case eitherArtist of
-                Left AlbumsRequestFailed -> Tio.putStrLn $ "Failed to fetch albums from '" <> wTitle <> "'"
-                Left NoDiscographyFound -> Tio.putStrLn $ "'" <> wTitle <> "' does not appear to contain an artist discography. Try refining your search query by appending the word 'discography' or 'albums' or similar to it."
-                Right artist -> do
-                    Tio.putStrLn artist.name
-                    Tio.putStrLn $ T.replicate (T.length artist.name) "-"
-                    Tio.putStr $ showAlbums (filterAlbumsByCritic critic artist) starFormat
+    eitherArtist <- fetchArtist query category
+    case eitherArtist of
+        Left (ArtistError2 t) -> Tio.putStrLn t
+        Right artistObj -> Tio.putStr $ showArtist artistObj critic starFormat
