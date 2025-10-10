@@ -59,7 +59,6 @@ library wiki
     import:           warnings
     exposed-modules:  Wiki.Album,
                       Wiki.Artist,
-                      Wiki.Console,
                       Wiki.MediaWiki,
                       Wiki.Rating
     build-depends:    aeson >= 2.2.3.0,
