@@ -89,16 +89,16 @@ main = do
     if llm
         then llmPrintArtist artistName category
         else if (albumTitle /= T.empty)
-            then printAlbumRatings albumTitle critic starFormat
+            then wikiPrintAlbum albumTitle critic starFormat
             else if (artistName /= T.empty)
-                then printArtistAlbums artistName critic category starFormat
+                then wikiPrintArtist artistName critic category starFormat
                 else Tio.putStrLn "No album title or artist specified."
 
 -- | Fetch an album on Wikipedia and print its ratings, human readable.
 -- query is the album name search query and critic is a critic name whose
 -- ratings to show (if empty, all ratings are shown). If fail, print error msg.
-printAlbumRatings :: Text -> Text -> Bool -> IO ()
-printAlbumRatings query critic starFormat = do
+wikiPrintAlbum :: Text -> Text -> Bool -> IO ()
+wikiPrintAlbum query critic starFormat = do
     eitherAlbum <- fetchAlbum query
     case eitherAlbum of
         Left (AlbumError t) -> Tio.putStrLn t
@@ -107,8 +107,8 @@ printAlbumRatings query critic starFormat = do
 -- | Search for an artist on Wikipedia, get all albums (under the specified category)
 -- found in its discography and print a list of these albums, ranked mostly highly
 -- rated to lowest rated, human readable. On failure, print error message.
-printArtistAlbums :: Text -> Text -> Text -> Bool -> IO ()
-printArtistAlbums query critic category starFormat = do
+wikiPrintArtist :: Text -> Text -> Text -> Bool -> IO ()
+wikiPrintArtist query critic category starFormat = do
     eitherArtist <- fetchArtist query category
     case eitherArtist of
         Left (ArtistError2 t) -> Tio.putStrLn t
