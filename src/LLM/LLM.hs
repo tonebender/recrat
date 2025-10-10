@@ -6,14 +6,14 @@
 -- can be imported and called here.
 
 module LLM.LLM (
-    llmMockRequest
-    , llmPrintArtist
+      llmFetchArtist
+    , llmShowArtist
+    , llmMockRequest
     , Album (Album)
 ) where
 
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.IO as Tio (putStrLn)
 import qualified Data.Text.Encoding as TE (encodeUtf8)
 import qualified Data.ByteString.Lazy as BL (fromStrict, readFile, concat)
 import Data.Aeson (decode, eitherDecode, Value, Object, (.:))
@@ -79,29 +79,28 @@ promptTemplate :: Text
 promptTemplate = "\"Please list the ten best $CATEGORY albums by $ARTIST. Try to list them starting with the most popular and/or critically acclaimed.\""
 
 -- | Get a Text representation of an Artist variable, for output on the console
-showArtist :: Artist -> Text
-showArtist artist' = artist'.name <> "\n"
+llmShowArtist :: Artist -> Text
+llmShowArtist artist' = artist'.name <> "\n"
     <> T.replicate (T.length artist'.name) "-" <> "\n"
     <> T.intercalate "\n" (map showAlbum artist'.albums)
     where showAlbum :: Album -> Text
           showAlbum a = "* " <> a.title <> " (" <> a.year <> ")\n  " <> a.description
 
--- TODO: Move llmPrintArtist to a new module LLM.Console ?
--- | Call the desired LLM and parse its json response to an Artist variable, then print it to the
---   console, human readable.
-llmPrintArtist :: Text -> Text -> IO ()
-llmPrintArtist artistQuery category = do
-    eitherJson <- requestLLM mistral artistQuery category 
-    case eitherJson of
-        Left err -> Tio.putStrLn err
-        Right jsonText -> case parseJsonToArtist jsonText of
-            Left err -> Tio.putStrLn $ "Error parsing artist/album info from LLM: " <> err
-            Right art -> Tio.putStrLn $ showArtist art
-
 llmMockRequest :: IO (Maybe Value)
 llmMockRequest = do
     contents <- BL.readFile "mock_responseBody_content.json"
     return $ decode contents
+
+-- | Call the desired LLM and return its json response parsed to a Artist.
+-- On error, return a text with the error message.
+llmFetchArtist :: Text -> Text -> IO (Either Text Artist)
+llmFetchArtist artistQuery category = do
+    eitherJson <- requestLLM mistral artistQuery category 
+    case eitherJson of
+        Left err -> return $ Left err
+        Right jsonText -> case parseJsonToArtist jsonText of
+            Left err -> return $ Left $ "Error parsing artist/album info from LLM: " <> err
+            Right art -> return $ Right art
 
 -- | Call the desired LLM function, passed here as llmMonad (which in itself takes two 
 --   Value arguments - json schema and prompt).

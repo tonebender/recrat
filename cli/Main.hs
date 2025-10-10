@@ -11,13 +11,14 @@ import Options.Applicative
 import LLM.LLM
     (
       llmMockRequest
-    , llmPrintArtist
+    , llmFetchArtist
+    , llmShowArtist
     )
 
 import Wiki.Album
     (
-      showAlbum
-    , fetchAlbum
+      fetchAlbum
+    , showAlbum
     , filterAlbumByCritic
     , AlbumError (AlbumError)
     )
@@ -113,3 +114,13 @@ wikiPrintArtist query critic category starFormat = do
     case eitherArtist of
         Left (ArtistError2 t) -> Tio.putStrLn t
         Right artistObj -> Tio.putStr $ showArtist artistObj critic starFormat
+
+-- | Call an LLM with artist search query and album category in order to get a list
+-- of that artist's best albums, printed to console human readable.
+-- On fail, print error message.
+llmPrintArtist :: Text -> Text -> IO ()
+llmPrintArtist artistQuery category = do
+    eitherArtist <- llmFetchArtist artistQuery category
+    case eitherArtist of
+        Left err -> Tio.putStrLn err
+        Right art -> Tio.putStrLn $ llmShowArtist art
