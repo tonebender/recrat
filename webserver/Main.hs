@@ -4,11 +4,11 @@
 module Main where
 
 import qualified Web.Scotty as S
-import Data.Text.Lazy (Text)
+import Data.Text.Lazy (Text, toStrict, fromStrict)
 import Lucid
 
-import Wiki.Artist (fetchArtist)
-import LLM.LLM (llmFetchArtist)
+import Wiki.Artist (fetchArtist, showArtist, ArtistError2 (ArtistError2))
+import LLM.LLM (llmFetchArtist, llmShowArtist)
 
 main :: IO ()
 main = S.scotty 3000 $ do
@@ -16,7 +16,7 @@ main = S.scotty 3000 $ do
         maybeArtist <- S.queryParamMaybe "artist"
         maybeLLM <- S.queryParamMaybe "llm"
         maybeWiki <- S.queryParamMaybe "wikipedia"
-        case (maybeArtist, maybeLLM, maybeWiki) of
+        case (maybeArtist, maybeWiki, maybeLLM) of
             (Nothing, _, _) -> S.html $ indexPage "No artist specified"
             (_, Nothing, Nothing) -> S.html "Neither Wikipedia nor AI chosen!"
             (Just artist, maybeW, maybeL) -> do
@@ -27,13 +27,24 @@ main = S.scotty 3000 $ do
 -- This is where we're supposed to do our business logic with Wiki/LLM
 runQuery :: Text -> (Maybe Text, Maybe Text) -> IO (Text)
 runQuery artist (maybeWiki, maybeLLM) = do
-    let wikiResult = case maybeWiki of
-            Nothing -> ""
-            Just w -> w
-    let llmResult = case maybeLLM of
-            Nothing -> ""
-            Just l -> l
-    return $ "Okay, " <> artist <> " with " <> wikiResult <> " " <> llmResult
+    wikiResult <- case maybeWiki of
+            Nothing -> return ""
+            Just _ -> do
+                eitherArtist <- fetchArtist (toStrict artist) "studio"
+                case eitherArtist of
+                    Left (ArtistError2 t) -> return t
+                    Right artistObj -> return $ showArtist artistObj "" True
+    llmResult <- case maybeLLM of
+            Nothing -> return ""
+            Just _ -> do
+                eitherLlmArtist <- llmFetchArtist (toStrict artist) "studio"
+                case eitherLlmArtist of
+                    Left t -> return t
+                    Right llmArtistObj -> return $ llmShowArtist llmArtistObj
+    return $ artist <> "<br>" <> (fromStrict wikiResult) <> "<br>" <> (fromStrict llmResult)
+
+-- showArtist artist critic starFormat =
+-- llmShowArtist artist' = artist'.name <> "\n"
 
 indexPage :: Text -> Text
-indexPage message = "Please specify an artist"
+indexPage message = "This is the index page. " <> message
