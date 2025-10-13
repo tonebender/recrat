@@ -8,11 +8,11 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as Tio
 import Options.Applicative
 
-import LLM.LLM
+import qualified LLM.LLM as L
     (
       llmMockRequest
-    , llmFetchArtist
-    , llmShowArtist
+    , fetchArtist
+    , showArtist
     )
 
 import Wiki.Album
@@ -23,7 +23,7 @@ import Wiki.Album
     , AlbumError (AlbumError)
     )
 
-import Wiki.Artist
+import qualified Wiki.Artist as W
     (
       fetchArtist
     , showArtist
@@ -110,17 +110,17 @@ wikiPrintAlbum query critic starFormat = do
 -- rated to lowest rated, human readable. On failure, print error message.
 wikiPrintArtist :: Text -> Text -> Text -> Bool -> IO ()
 wikiPrintArtist query critic category starFormat = do
-    eitherArtist <- fetchArtist query category
+    eitherArtist <- W.fetchArtist query category
     case eitherArtist of
-        Left (ArtistError2 t) -> Tio.putStrLn t
-        Right artistObj -> Tio.putStr $ showArtist artistObj critic starFormat
+        Left (W.ArtistError2 t) -> Tio.putStrLn t
+        Right artistObj -> Tio.putStr $ W.showArtist artistObj critic starFormat
 
 -- | Call an LLM with artist search query and album category in order to get a list
 -- of that artist's best albums, printed to console human readable.
 -- On fail, print error message.
 llmPrintArtist :: Text -> Text -> IO ()
 llmPrintArtist artistQuery category = do
-    eitherArtist <- llmFetchArtist artistQuery category
+    eitherArtist <- L.fetchArtist artistQuery category
     case eitherArtist of
         Left err -> Tio.putStrLn err
-        Right art -> Tio.putStrLn $ llmShowArtist art
+        Right art -> Tio.putStrLn $ L.showArtist art

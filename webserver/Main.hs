@@ -7,8 +7,8 @@ import qualified Web.Scotty as S
 import Data.Text.Lazy (Text, toStrict, fromStrict)
 import Lucid
 
-import Wiki.Artist (fetchArtist, showArtist, ArtistError2 (ArtistError2))
-import LLM.LLM (llmFetchArtist, llmShowArtist)
+import qualified Wiki.Artist as W (fetchArtist, showArtist, ArtistError2 (ArtistError2))
+import qualified LLM.LLM as L (fetchArtist, showArtist)
 
 main :: IO ()
 main = S.scotty 3000 $ do
@@ -30,17 +30,17 @@ runQuery artist (maybeWiki, maybeLLM) = do
     wikiResult <- case maybeWiki of
             Nothing -> return ""
             Just _ -> do
-                eitherArtist <- fetchArtist (toStrict artist) "studio"
+                eitherArtist <- W.fetchArtist (toStrict artist) "studio"
                 case eitherArtist of
-                    Left (ArtistError2 t) -> return t
-                    Right artistObj -> return $ showArtist artistObj "" True
+                    Left (W.ArtistError2 t) -> return t
+                    Right artistObj -> return $ W.showArtist artistObj "" True
     llmResult <- case maybeLLM of
             Nothing -> return ""
             Just _ -> do
-                eitherLlmArtist <- llmFetchArtist (toStrict artist) "studio"
+                eitherLlmArtist <- L.fetchArtist (toStrict artist) "studio"
                 case eitherLlmArtist of
                     Left t -> return t
-                    Right llmArtistObj -> return $ llmShowArtist llmArtistObj
+                    Right llmArtistObj -> return $ L.showArtist llmArtistObj
     return $ artist <> "<br>" <> (fromStrict wikiResult) <> "<br>" <> (fromStrict llmResult)
 
 -- showArtist artist critic starFormat =

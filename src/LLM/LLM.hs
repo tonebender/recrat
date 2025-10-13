@@ -6,10 +6,11 @@
 -- can be imported and called here.
 
 module LLM.LLM (
-      llmFetchArtist
-    , llmShowArtist
+      fetchArtist
+    , showArtist
     , llmMockRequest
     , Album (Album)
+    , Artist
 ) where
 
 import Data.Text (Text)
@@ -79,8 +80,8 @@ promptTemplate :: Text
 promptTemplate = "\"Please list the ten best $CATEGORY albums by $ARTIST. Try to list them starting with the most popular and/or critically acclaimed.\""
 
 -- | Get a Text representation of an Artist variable, for output on the console
-llmShowArtist :: Artist -> Text
-llmShowArtist artist' = artist'.name <> "\n"
+showArtist :: Artist -> Text
+showArtist artist' = artist'.name <> "\n"
     <> T.replicate (T.length artist'.name) "-" <> "\n"
     <> T.intercalate "\n" (map showAlbum artist'.albums)
     where showAlbum :: Album -> Text
@@ -93,8 +94,8 @@ llmMockRequest = do
 
 -- | Call the desired LLM and return its json response parsed to a Artist.
 -- On error, return a text with the error message.
-llmFetchArtist :: Text -> Text -> IO (Either Text Artist)
-llmFetchArtist artistQuery category = do
+fetchArtist :: Text -> Text -> IO (Either Text Artist)
+fetchArtist artistQuery category = do
     eitherJson <- requestLLM mistral artistQuery category 
     case eitherJson of
         Left err -> return $ Left err
