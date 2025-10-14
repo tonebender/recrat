@@ -57,4 +57,9 @@ indexPage message = renderText $ doctypehtml_ $ do
         p_ (if T.length message == 0 then [style_ "display: none;"] else [class_ "msg"]) (toHtml message)
         form_ $ do
             label_ [for_ "artistInput"] "Artist"
-            input_ [name_ "artistInput", id_ "artistInput"]
+            input_ [id_ "artistInput", name_ "artist"]
+            input_ [type_ "checkbox", id_ "wikiCheck", name_ "wikipedia", value_ "wiki"]
+            label_ [for_ "wikiCheck"] "Wikipedia"
+            input_ [type_ "checkbox", id_ "llmCheck", name_ "llm", value_ "llm"]
+            label_ [for_ "llmCheck"] "Mistral AI"
+            button_ [type_ "submit"] "Search"
