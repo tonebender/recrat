@@ -15,28 +15,38 @@ main :: IO ()
 main = S.scotty 3000 $ do
     S.get "/" $ do
         maybeArtist <- S.queryParamMaybe "artist"
-        maybeLLM <- S.queryParamMaybe "llm"
-        maybeWiki <- S.queryParamMaybe "wikipedia"
-        case (maybeArtist, maybeWiki, maybeLLM) of
-            (Nothing, Nothing, Nothing) -> S.html $ indexPage "" ""
-            (Nothing, _, _) -> S.html $ indexPage "No artist specified" ""
-            (Just artist, Nothing, Nothing) -> S.html $ indexPage "Neither Wikipedia nor AI chosen!" artist
-            (Just artist, maybeW, maybeL) -> do
-                S.html =<< S.liftIO (runQuery artist (maybeW, maybeL))
+        queryList <- S.queryParams
+        let wiki = queryList `hasQueryParam` "wikipedia"
+            llm = queryList `hasQueryParam` "llm"
+            artist = case maybeArtist of
+                Nothing -> ""
+                Just a -> a
+        case (artist, wiki, llm) of
+            ("", False, False) -> S.html $ indexPage "" "" False False  -- Nothing provided, just show index page
+            ("", w, l) -> S.html $ indexPage "No artist specified" "" w l
+            (artist', False, False) -> S.html $ indexPage "Please choose Wikipedia and/or Mistral AI sources" artist' False False
+            (artist', wiki', llm') -> do
+                S.html =<< S.liftIO (runQuery artist' wiki' llm')
 
--- This is where we're supposed to do our business logic with Wiki/LLM
-runQuery :: Text -> (Maybe Text, Maybe Text) -> IO (Text)
-runQuery artist (maybeWiki, maybeLLM) = do
-    wikiResult <- case maybeWiki of
-            Nothing -> return ""
-            Just _ -> do
+-- | Check if a list of query parameters has a certain parameter.
+-- Returns True if it does, False otherwise. Ignores the value of the param.
+hasQueryParam :: [S.Param] -> Text -> Bool
+hasQueryParam paramList paramName = filter (\(p, _) -> p == T.toStrict paramName) paramList /= []
+
+-- | Take an artist name and a boolean each for wiki and LLM and call the right backend
+-- functions for retrieving artists
+runQuery :: Text -> Bool -> Bool -> IO (Text)
+runQuery artist wiki llm = do
+    wikiResult <- case wiki of
+            False -> return ""
+            True -> do
                 eitherArtist <- W.fetchArtist (T.toStrict artist) "studio"
                 case eitherArtist of
                     Left (W.ArtistError2 t) -> return t
                     Right artistObj -> return $ W.showArtist artistObj "" True
-    llmResult <- case maybeLLM of
-            Nothing -> return ""
-            Just _ -> do
+    llmResult <- case llm of
+            False -> return ""
+            True -> do
                 eitherLlmArtist <- L.fetchArtist (T.toStrict artist) "studio"
                 case eitherLlmArtist of
                     Left t -> return t
@@ -49,18 +59,18 @@ wikiArtistToHtml artist = ""
 llmArtistToHtml :: L.Artist -> Text
 llmArtistToHtml artist = ""
 
-indexPage :: Text -> Text -> Text
-indexPage message artist = renderText $ doctypehtml_ $ do
+indexPage :: Text -> Text -> Bool -> Bool -> Text
+indexPage message artist wiki llm = renderText $ doctypehtml_ $ do
     head_ $ title_ "Rec Rat"
     body_ $ do
         h1_ "Rec Rat"
         p_ (if T.length message == 0 then [style_ "display: none;"] else [class_ "msg"]) (toHtml message)
-        form_ $ do
+        form_ [autocomplete_ "off"] $ do
             div_ $ do
                 label_ [for_ "artistInput"] "Artist"
                 input_ [id_ "artistInput", name_ "artist", value_ (T.toStrict artist)]
             div_ $ do
-                label_ (do input_ [type_ "checkbox", id_ "wikiCheck", name_ "wikipedia", value_ "wiki"]; "Wikipedia")
-                label_ (do input_ [type_ "checkbox", id_ "llmCheck", name_ "llm", value_ "llm"]; "Mistral AI")
+                label_ (do input_ ([type_ "checkbox", id_ "wikiCheck", name_ "wikipedia"] ++ [checked_ | wiki]); "Wikipedia")
+                label_ (do input_ ([type_ "checkbox", id_ "llmCheck", name_ "llm"] ++ [checked_ | llm]); "Mistral AI")
             div_ $
                 button_ [type_ "submit"] "Search"
