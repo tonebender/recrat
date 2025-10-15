@@ -18,9 +18,9 @@ main = S.scotty 3000 $ do
         maybeLLM <- S.queryParamMaybe "llm"
         maybeWiki <- S.queryParamMaybe "wikipedia"
         case (maybeArtist, maybeWiki, maybeLLM) of
-            (Nothing, Nothing, Nothing) -> S.html $ indexPage ""
-            (Nothing, _, _) -> S.html $ indexPage "No artist specified"
-            (_, Nothing, Nothing) -> S.html $ indexPage "Neither Wikipedia nor AI chosen!"
+            (Nothing, Nothing, Nothing) -> S.html $ indexPage "" ""
+            (Nothing, _, _) -> S.html $ indexPage "No artist specified" ""
+            (Just artist, Nothing, Nothing) -> S.html $ indexPage "Neither Wikipedia nor AI chosen!" artist
             (Just artist, maybeW, maybeL) -> do
                 S.html =<< S.liftIO (runQuery artist (maybeW, maybeL))
 
@@ -49,17 +49,18 @@ wikiArtistToHtml artist = ""
 llmArtistToHtml :: L.Artist -> Text
 llmArtistToHtml artist = ""
 
-indexPage :: Text -> Text
-indexPage message = renderText $ doctypehtml_ $ do
+indexPage :: Text -> Text -> Text
+indexPage message artist = renderText $ doctypehtml_ $ do
     head_ $ title_ "Rec Rat"
     body_ $ do
         h1_ "Rec Rat"
         p_ (if T.length message == 0 then [style_ "display: none;"] else [class_ "msg"]) (toHtml message)
         form_ $ do
-            label_ [for_ "artistInput"] "Artist"
-            input_ [id_ "artistInput", name_ "artist"]
-            input_ [type_ "checkbox", id_ "wikiCheck", name_ "wikipedia", value_ "wiki"]
-            label_ [for_ "wikiCheck"] "Wikipedia"
-            input_ [type_ "checkbox", id_ "llmCheck", name_ "llm", value_ "llm"]
-            label_ [for_ "llmCheck"] "Mistral AI"
-            button_ [type_ "submit"] "Search"
+            div_ $ do
+                label_ [for_ "artistInput"] "Artist"
+                input_ [id_ "artistInput", name_ "artist", value_ (T.toStrict artist)]
+            div_ $ do
+                label_ (do input_ [type_ "checkbox", id_ "wikiCheck", name_ "wikipedia", value_ "wiki"]; "Wikipedia")
+                label_ (do input_ [type_ "checkbox", id_ "llmCheck", name_ "llm", value_ "llm"]; "Mistral AI")
+            div_ $
+                button_ [type_ "submit"] "Search"
