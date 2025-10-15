@@ -9,8 +9,8 @@ module LLM.LLM (
       fetchArtist
     , showArtist
     , llmMockRequest
-    , Album (Album)
-    , Artist
+    , Album (..)
+    , Artist (..)
 ) where
 
 import Data.Text (Text)

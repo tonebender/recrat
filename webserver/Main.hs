@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
 module Main where
 
@@ -8,8 +9,8 @@ import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as T (toStrict, fromStrict, length)
 import Lucid
 
-import qualified Wiki.Artist as W (fetchArtist, showArtist, Artist, ArtistError2 (ArtistError2))
-import qualified LLM.LLM as L (fetchArtist, showArtist, Artist)
+import qualified Wiki.Artist as W (fetchArtist, showArtist, Artist(..), ArtistError2 (ArtistError2))
+import qualified LLM.LLM as L (fetchArtist, showArtist, Artist(..))
 
 main :: IO ()
 main = S.scotty 3000 $ do
@@ -54,10 +55,12 @@ runQuery artist wiki llm = do
     return $ artist <> "<br>" <> (T.fromStrict wikiResult) <> "<br>" <> (T.fromStrict llmResult)
 
 wikiArtistToHtml :: W.Artist -> Text
-wikiArtistToHtml artist = ""
+wikiArtistToHtml artist = renderText $ doctypehtml_ $ do
+    div_ $ toHtml artist.name
 
 llmArtistToHtml :: L.Artist -> Text
-llmArtistToHtml artist = ""
+llmArtistToHtml artist = renderText $ doctypehtml_ $ do
+    div_ $ toHtml artist.name
 
 indexPage :: Text -> Text -> Bool -> Bool -> Text
 indexPage message artist wiki llm = renderText $ doctypehtml_ $ do
