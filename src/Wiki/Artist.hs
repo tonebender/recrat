@@ -34,7 +34,7 @@ import Wiki.Album (
       Album (..)
     , parseAlbum
     , getAverageScore
-    , getRatingsFlat
+    , numberOfRatings
     , filterAlbumByCritic
     , ratioToPercent
     , ratioToStars)
@@ -65,7 +65,7 @@ fetchArtist query category = do
                 Left NoDiscographyFound -> return $ Left $ ArtistError2 $ "'" <> artistName' <> "' does not appear to contain an artist discography. Try refining your search query by appending the word 'discography' or 'albums' or similar to it."
                 Right albums' -> return $ Right $ Artist artistName' albums'
 
--- | Return a Text with album titles + (year), average ratings, number of ratings, with titles
+-- | Return a Text with album titles, year, average ratings, number of ratings, with titles
 -- left-justified and stats right-justified. If starFormat is true, stars instead of numbers will
 -- show scores. critic can be used to filter ratings by critic name.
 showArtist :: Artist -> Text -> Bool -> Text
@@ -80,17 +80,17 @@ showArtist artist critic starFormat =
         showAlbums' padding star (x:xs) = T.justifyLeft padding ' ' (x.albumName <> showYear x)
             <> (if star then showStars x else showNumbers x) <> showAlbums' padding star xs
             where
-                showNumbers a = case length $ getRatingsFlat a of
+                showNumbers a = case numberOfRatings a of
                     0 -> "  - (0)\n"
-                    _ -> T.pack $ printf "%3d (%d)\n" (ratioToPercent $ getAverageScore a) (length $ getRatingsFlat a)
-                showStars a = case length $ getRatingsFlat a of
+                    _ -> T.pack $ printf "%3d (%d)\n" (ratioToPercent $ getAverageScore a) (numberOfRatings a)
+                showStars a = case numberOfRatings a of
                     0 -> "       0\n"
-                    _ -> ratioToStars (getAverageScore a) 5 <> "  " <> T.pack (printf "%2d\n" (length $ getRatingsFlat a))
+                    _ -> ratioToStars (getAverageScore a) 5 <> "  " <> T.pack (printf "%2d\n" (numberOfRatings a))
                 showYear :: Album -> Text
                 showYear a = if a.yearOfRelease == "" then "" else " (" <> a.yearOfRelease <> ")"
         -- Return the length of the longest name of all albums in list
         longestName :: [Album] -> Int
-        longestName albums' = case listToMaybe $ reverse $ sort $ [T.length a.albumName | a <- albums'] of
+        longestName albums' = case listToMaybe . reverse . sort $ [T.length a.albumName | a <- albums'] of
             Nothing -> 0
             Just x -> x
 
@@ -108,7 +108,7 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
                avr2 = getAverageScore album2 in
            if avr1 > avr2 then GT
            else if avr1 < avr2 then LT
-           else if (length $ getRatingsFlat album1) > (length $ getRatingsFlat album2) then GT
+           else if (numberOfRatings album1) > (numberOfRatings album2) then GT
            else LT
 
 -- | Take a discography page's contents and a category (such as "studio") and request all of

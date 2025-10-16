@@ -11,6 +11,7 @@ module Wiki.Album (
     , parseAlbum
     , filterAlbumByCritic
     , getAverageScore
+    , numberOfRatings
     , getRatingsFlat
     , ratioToPercent 
     , ratioToStars
@@ -120,6 +121,10 @@ getAverageScore album = getAverageScore' $ getRatingsFlat album  -- All blocks' 
     where getAverageScore' :: [Rating] -> Double
           getAverageScore' [] = 0
           getAverageScore' scores = (sum [s.ratio | s <- scores]) / (fromIntegral $ length scores)
+
+-- | Return the total number of ratings for an Album
+numberOfRatings :: Album -> Int
+numberOfRatings = length . getRatingsFlat
 
 -- | Return all ratings from all rating blocks for an album, in a single list
 getRatingsFlat :: Album -> [Rating]
