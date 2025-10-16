@@ -5,6 +5,7 @@
 
 module Wiki.Artist (
       Artist (..)
+    , Album (..)
     , fetchArtist
     , showArtist
     , ArtistError (NoDiscographyFound, AlbumsRequestFailed)
