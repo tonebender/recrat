@@ -5,7 +5,6 @@
 
 module Wiki.Artist (
       Artist (..)
-    , Album (..)
     , fetchArtist
     , showArtist
     , ArtistError (NoDiscographyFound, AlbumsRequestFailed)
@@ -73,7 +72,7 @@ showArtist artist critic starFormat =
     let artist' = filterAlbumsByCritic critic artist in
     artist.name <> "\n"
     <> T.replicate (T.length artist.name) "-" <> "\n"
-    <> (showAlbums' (longestName artist'.albums + 8) starFormat $ sortAlbums artist'.albums)
+    <> (showAlbums' (longestName artist'.albums + 8) starFormat artist'.albums)
     where
         showAlbums' :: Int -> Bool -> [Album] -> Text
         showAlbums' _ _ [] = T.empty
@@ -126,7 +125,8 @@ getAlbums discography category = do
             case catMaybes pages of
                 [] -> return $ Left AlbumsRequestFailed  -- If none of the requests worked, give error (theoretically a fraction can fail, but won't)
                 listOfJsons ->
-                    return $ Right $ catMaybes $ map (parseAlbum . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
+                    return $ Right $ sortAlbums $ catMaybes
+                           $ map (parseAlbum . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
 
 -- | Run requestWikiPages on a maximum of 50 titles at a time, several times if needed, and return a
 -- list with each call's results. (For most artists, there'll be much less than 50 in total, so this
