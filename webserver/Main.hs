@@ -10,7 +10,8 @@ import Data.Text.Lazy (LazyText, toStrict, fromStrict)
 import qualified Data.Text as T (length)
 import Lucid
 
-import qualified Wiki.Artist as W (fetchArtist, Artist(..), Album(..), ArtistError2 (ArtistError2))
+import qualified Wiki.Artist as W (fetchArtist, Artist(..), ArtistError2 (ArtistError2))
+import Wiki.Album (Album(..))
 import qualified LLM.LLM as L (fetchArtist, showArtist, Artist(..))
 
 main :: IO ()
@@ -60,7 +61,10 @@ wikiArtistToHtml artist = toStrict . renderText . doctypehtml_ $ do
     div_ $ do
         h2_ $ toHtml artist.name
         div_ [class_ "albums"] $ do
-            mapM_ (\album -> div_ $ toHtml (album.albumName)) artist.albums
+            mapM_ (\album -> div_ $ do
+                    div_ $ toHtml album.albumName
+                    div_ $ toHtml album.ratingBlocks
+                ) artist.albums
 
 llmArtistToHtml :: L.Artist -> Text
 llmArtistToHtml artist = toStrict . renderText . doctypehtml_ $ do
