@@ -11,7 +11,6 @@ module Wiki.Album (
     , parseAlbum
     , filterAlbumByCritic
     , averageScore
-    , averagePercentage
     , numberOfRatings
     , getRatingsFlat
     , ratioToPercent 
@@ -122,10 +121,6 @@ averageScore album = averageScore' $ getRatingsFlat album  -- All blocks' rating
     where averageScore' :: [Rating] -> Double
           averageScore' [] = 0
           averageScore' scores = (sum [s.ratio | s <- scores]) / (fromIntegral $ length scores)
-
--- | Take an Album and return its average score, in percent as an integer
-averagePercentage :: Album -> Int
-averagePercentage = ratioToPercent . averageScore
 
 -- | Convert value from Double with decimals to 100 times that, without decimals
 ratioToPercent :: Double -> Int
