@@ -10,7 +10,7 @@ module Wiki.Album (
     , fetchAlbum
     , parseAlbum
     , filterAlbumByCritic
-    , getAverageScore
+    , averageScore
     , numberOfRatings
     , getRatingsFlat
     , ratioToPercent 
@@ -90,8 +90,8 @@ showAlbum album starz =
     (wikiLabel album.artistName) <> " - " <> album.albumName <> getYear album <> "\n"  -- First row is artistname - albumname
     <> (T.concat $ map (showRatingBlock (longestCriticName album) starz) $ album.ratingBlocks)
     <> (T.justifyLeft (longestCriticName album) ' ' "Average score")
-    <> if starz then "  " <> ratioToStars (getAverageScore album) 5 <> "\n"
-       else (T.pack $ printf "  %3d\n" $ ratioToPercent $ getAverageScore album)
+    <> if starz then "  " <> ratioToStars (averageScore album) 5 <> "\n"
+       else (T.pack $ printf "  %3d\n" $ ratioToPercent $ averageScore album)
     where
         getYear :: Album -> Text
         getYear albm = if albm.yearOfRelease == "" then "" else " (" <> albm.yearOfRelease <> ")"
@@ -116,11 +116,19 @@ showRatingBlock padding starFormat rblock = rblock.header <> "\n" <> (showRating
                  else T.pack (printf "%3d\n" (ratioToPercent $ x.ratio)) <> showRatingsList pad stars xs
 
 -- | Take an Album and return the overall average score (ratio) of all of its ratings
-getAverageScore :: Album -> Double
-getAverageScore album = getAverageScore' $ getRatingsFlat album  -- All blocks' ratings in one flat list
-    where getAverageScore' :: [Rating] -> Double
-          getAverageScore' [] = 0
-          getAverageScore' scores = (sum [s.ratio | s <- scores]) / (fromIntegral $ length scores)
+averageScore :: Album -> Double
+averageScore album = averageScore' $ getRatingsFlat album  -- All blocks' ratings in one flat list
+    where averageScore' :: [Rating] -> Double
+          averageScore' [] = 0
+          averageScore' scores = (sum [s.ratio | s <- scores]) / (fromIntegral $ length scores)
+
+-- | Take an Album and return its average score, in percent as an integer
+averagePercentage :: Album -> Int
+averagePercentage = ratioToPercent . averageScore
+
+-- | Convert value from Double with decimals to 100 times that, without decimals
+ratioToPercent :: Double -> Int
+ratioToPercent r = fromInteger $ round $ r * (10^(2::Int))
 
 -- | Return the total number of ratings for an Album
 numberOfRatings :: Album -> Int
@@ -140,13 +148,7 @@ filterAlbumByCritic critic album = Album (album.albumName) (album.artistName) (a
         filterRatings subText rblock = RatingBlock rblock.header
             $ filter (\r -> T.isInfixOf (T.toCaseFold subText) (T.toCaseFold r.criticName.wikiLabel)) $ rblock.ratings
 
--- | Convert value from Double with decimals to 100 times that, without decimals
-ratioToPercent :: Double -> Int
-ratioToPercent r = fromInteger $ round $ r * (10^(2::Int))
-
 -- | Convert ratio score to a Text with stars, à la AllMusic
 ratioToStars :: Double -> Int -> Text
 ratioToStars ratio' topScore = T.replicate numStars (T.singleton '★') <> T.replicate (topScore - numStars) (T.singleton '☆')
     where numStars = 1 + round (ratio' * (fromIntegral (topScore - 1))) :: Int  -- The +/-1 is because 1 is the lowest star, not 0
-
-

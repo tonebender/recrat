@@ -32,7 +32,7 @@ import Wiki.MediaWiki (
 import Wiki.Album (
       Album (..)
     , parseAlbum
-    , getAverageScore
+    , averageScore
     , numberOfRatings
     , filterAlbumByCritic
     , ratioToPercent
@@ -81,10 +81,10 @@ showArtist artist critic starFormat =
             where
                 showNumbers a = case numberOfRatings a of
                     0 -> "  - (0)\n"
-                    _ -> T.pack $ printf "%3d (%d)\n" (ratioToPercent $ getAverageScore a) (numberOfRatings a)
+                    _ -> T.pack $ printf "%3d (%d)\n" (ratioToPercent $ averageScore a) (numberOfRatings a)
                 showStars a = case numberOfRatings a of
                     0 -> "       0\n"
-                    _ -> ratioToStars (getAverageScore a) 5 <> "  " <> T.pack (printf "%2d\n" (numberOfRatings a))
+                    _ -> ratioToStars (averageScore a) 5 <> "  " <> T.pack (printf "%2d\n" (numberOfRatings a))
                 showYear :: Album -> Text
                 showYear a = if a.yearOfRelease == "" then "" else " (" <> a.yearOfRelease <> ")"
         -- Return the length of the longest name of all albums in list
@@ -103,8 +103,8 @@ filterAlbumsByCritic critic artist = Artist artist.name (map (filterAlbumByCriti
 sortAlbums :: [Album] -> [Album]
 sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
     where weightedCriteria album1 album2 =
-           let avr1 = getAverageScore album1
-               avr2 = getAverageScore album2 in
+           let avr1 = averageScore album1
+               avr2 = averageScore album2 in
            if avr1 > avr2 then GT
            else if avr1 < avr2 then LT
            else if (numberOfRatings album1) > (numberOfRatings album2) then GT
