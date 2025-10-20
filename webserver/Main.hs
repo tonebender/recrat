@@ -8,11 +8,28 @@ import qualified Web.Scotty as S
 import Data.Text (Text)
 import Data.Text.Lazy (LazyText, toStrict, fromStrict)
 import qualified Data.Text as T (length)
+import Formatting
 import Lucid
 
-import qualified Wiki.Artist as W (fetchArtist, Artist(..), ArtistError2 (ArtistError2))
-import Wiki.Album (Album(..))
-import qualified LLM.LLM as L (fetchArtist, showArtist, Artist(..))
+import qualified Wiki.Artist as W
+    (
+      fetchArtist
+    , Artist(..)
+    , ArtistError2 (ArtistError2)
+    )
+import Wiki.Album
+    (
+      Album(..)
+    , averageScore
+    , ratioToPercent
+    , numberOfRatings
+    )
+import qualified LLM.LLM as L
+    (
+      fetchArtist
+    , showArtist
+    , Artist(..)
+    )
 
 main :: IO ()
 main = S.scotty 3000 $ do
@@ -54,17 +71,19 @@ handleRequest artist wiki llm = do
                 case eitherLlmArtist of
                     Left t -> return t
                     Right llmArtistObj -> return $ L.showArtist llmArtistObj
-    return $ fromStrict $ artist <> "<br>" <> wikiResult <> "<br>" <> llmResult
+    return $ fromStrict $ wikiResult <> llmResult
 
 wikiArtistToHtml :: W.Artist -> Text
 wikiArtistToHtml artist = toStrict . renderText . doctypehtml_ $ do
     div_ $ do
         h2_ $ toHtml artist.name
         div_ [class_ "albums"] $ do
-            mapM_ (\album -> div_ $ do
-                    div_ $ toHtml album.albumName
-                    div_ $ toHtml album.ratingBlocks
-                ) artist.albums
+            mapM_ (\album -> div_ [class_ "album"] $ do
+                    div_ [class_ "title"] $ toHtml album.albumName
+                    div_ [class_ "year"] $ toHtml album.yearOfRelease
+                    div_ [class_ "score percent"] $ toHtml $ format int (ratioToPercent $ averageScore album)
+                    div_ [class_ "score number"] $ toHtml $ format int (numberOfRatings album)
+                  ) artist.albums
 
 llmArtistToHtml :: L.Artist -> Text
 llmArtistToHtml artist = toStrict . renderText . doctypehtml_ $ do
