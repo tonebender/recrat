@@ -11,6 +11,7 @@ module Wiki.Album (
     , parseAlbum
     , filterAlbumByCritic
     , averageScore
+    , averagePercentage
     , numberOfRatings
     , getRatingsFlat
     , ratioToPercent 
