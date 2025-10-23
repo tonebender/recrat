@@ -7,8 +7,6 @@ module Wiki.Artist (
       Artist (..)
     , fetchArtist
     , showArtist
-    , ArtistError (NoDiscographyFound, AlbumsRequestFailed)
-    , ArtistError2 (ArtistError2)
     , filterAlbumsByCritic
 ) where
 
@@ -24,7 +22,6 @@ import qualified Data.Text as T
 import Wiki.MediaWiki (
       requestWikiPages
     , searchAndGetWiki
-    , WikiError (WikiError)
     , WikiAnchor (wikiURI)
     , getWikiAnchor
     , parseWikiAnchor)
@@ -38,30 +35,31 @@ import Wiki.Album (
     , ratioToPercent
     , ratioToStars)
 
+import Wiki.Error
 
 data Artist = Artist
     { name :: Text
     , albums :: [Album]
     } deriving (Show)
 
-data ArtistError = NoDiscographyFound | AlbumsRequestFailed
-
-data ArtistError2 = ArtistError2 Text
+-- data ArtistError = NoDiscographyFound | AlbumsRequestFailed
+-- data ArtistError2 = ArtistError2 Text
 
 -- | Find and fetch an artist discography page on Wikipedia,
 -- call getAlbums to parse it and fetch all found albums (including ratings),
 -- returning an Artist or ArtistError2
-fetchArtist :: Text -> Text -> IO (Either ArtistError2 Artist)
+fetchArtist :: Text -> Text -> IO (Either WikiError Artist)
 fetchArtist query category = do
     eitherWikiContent <- searchAndGetWiki (query <> " discography") -- Search for query and take the first result (title, content)
     case eitherWikiContent of
-        Left (WikiError t) -> return $ Left $ ArtistError2 t
+        Left err -> return $ Left err
         Right (wTitle, wText) -> do
             let artistName' = T.replace " discography" "" wTitle
             eitherAlbums <- getAlbums wText category  -- Get all albums and their ratings for this artist
             case eitherAlbums of
-                Left AlbumsRequestFailed -> return $ Left $ ArtistError2 $ "Failed to fetch albums from '" <> artistName' <> "'"
-                Left NoDiscographyFound -> return $ Left $ ArtistError2 $ "'" <> artistName' <> "' does not appear to contain an artist discography. Try refining your search query by appending the word 'discography' or 'albums' or similar to it."
+                Left (ErrorAlbumsRequestFailed _) -> return $ Left (ErrorAlbumsRequestFailed $ "Failed to fetch albums from '" <> artistName' <> "'")
+                Left (ErrorNoDiscography _) -> return $ Left (ErrorNoDiscography $ "'" <> artistName' <> "' does not appear to contain an artist discography. Try refining your search query by appending the word 'discography' to it.")
+                Left err -> return $ Left err
                 Right albums' -> return $ Right $ Artist artistName' albums'
 
 -- | Return a Text with album titles, year, average ratings, number of ratings, with titles
@@ -112,18 +110,19 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
 
 -- | Take a discography page's contents and a category (such as "studio") and request all of
 -- the Wikipedia pages (their contents, in a json object, via the Mediawiki Revisions API) for the
--- albums found under that category in the discography. Then get the album ratings for every
--- requested album and return as an Artist. When requesting the pages, take 50 at a time because
+-- albums found under that category in the discography. Then get the ratings for all those
+-- albums and return it as an Artist. When requesting the pages, take 50 at a time because
 -- that's the Mediawiki API's limit, and concat the list of json Values of max 50 pages each into a
 -- flattened list, to which getPageFromWikiRevJson and getAlbumRatings are applied ...
-getAlbums :: Text -> Text -> IO (Either ArtistError [Album])
+getAlbums :: Text -> Text -> IO (Either WikiError [Album])
 getAlbums discography category = do
     case parseDiscographyAlbums discography category of
-        [] -> return $ Left NoDiscographyFound
+        [] -> return $ Left $ ErrorNoDiscography ""  -- We'll add description later
         albumTitles -> do
             pages <- request50by50 albumTitles
             case catMaybes pages of
-                [] -> return $ Left AlbumsRequestFailed  -- If none of the requests worked, give error (theoretically a fraction can fail, but won't)
+                -- If none of the requests worked, give error (theoretically a fraction can fail, but won't)
+                [] -> return $ Left $ ErrorAlbumsRequestFailed ""  -- We'll add description later
                 listOfJsons ->
                     return $ Right $ sortAlbums $ catMaybes
                            $ map (parseAlbum . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)

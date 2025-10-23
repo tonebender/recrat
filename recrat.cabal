@@ -60,7 +60,8 @@ library wiki
     exposed-modules:  Wiki.Album,
                       Wiki.Artist,
                       Wiki.MediaWiki,
-                      Wiki.Rating
+                      Wiki.Rating,
+                      Wiki.Error
     build-depends:    aeson >= 2.2.3.0,
                       base >=4.20.0.0,
                       bytestring >= 0.12.2.0,

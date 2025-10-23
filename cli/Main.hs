@@ -20,15 +20,15 @@ import Wiki.Album
       fetchAlbum
     , showAlbum
     , filterAlbumByCritic
-    , AlbumError (AlbumError)
     )
 
 import qualified Wiki.Artist as W
     (
       fetchArtist
     , showArtist
-    , ArtistError2 (ArtistError2)
     )
+
+import Wiki.Error
 
 -- Type for command line args
 data Inputargs = Inputargs
@@ -102,7 +102,7 @@ wikiPrintAlbum :: Text -> Text -> Bool -> IO ()
 wikiPrintAlbum query critic starFormat = do
     eitherAlbum <- fetchAlbum query
     case eitherAlbum of
-        Left (AlbumError t) -> Tio.putStrLn t
+        Left err -> Tio.putStrLn $ showError err
         Right albumObj -> Tio.putStr $ showAlbum (filterAlbumByCritic critic albumObj) starFormat
 
 -- | Search for an artist on Wikipedia, get all albums (under the specified category)
@@ -112,7 +112,7 @@ wikiPrintArtist :: Text -> Text -> Text -> Bool -> IO ()
 wikiPrintArtist query critic category starFormat = do
     eitherArtist <- W.fetchArtist query category
     case eitherArtist of
-        Left (W.ArtistError2 t) -> Tio.putStrLn t
+        Left err -> Tio.putStrLn $ showError err
         Right artistObj -> Tio.putStr $ W.showArtist artistObj critic starFormat
 
 -- | Call an LLM with artist search query and album category in order to get a list

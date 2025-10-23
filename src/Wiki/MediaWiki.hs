@@ -7,10 +7,11 @@ module Wiki.MediaWiki (
     , parseAlbumInfobox
     , findInfoboxProperty
     , WikiAnchor (..)
-    , WikiError (WikiError)
     , getWikiAnchor
     , parseWikiAnchor
 ) where
+
+import Wiki.Error
 
 import Control.Lens ((^.), (^?), (&), (.~))
 import Data.Aeson (Value)
@@ -34,8 +35,8 @@ data WikiAnchor = WikiAnchor
     , wikiLabel :: Text
     } deriving (Show)
 
-data WikiError = WikiError Text
-    deriving (Show, Eq)
+-- data WikiError = WikiError Text
+--    deriving (Show, Eq)
 
 
 -- | Search for a query on Wikipedia and return the title and contents
@@ -44,10 +45,10 @@ searchAndGetWiki :: Text -> IO (Either WikiError (Text, Text))
 searchAndGetWiki query = do
     maybeWikiresults <- requestWikiSearch query
     case maybeWikiresults of
-        Nothing -> return $ Left $ WikiError ("Search request to Wikipedia failed for '" <> query <> "'")
+        Nothing -> return $ Left $ ErrorWikipediaRequestFailed ("Search request to Wikipedia failed for '" <> query <> "'")
         Just wikiResultsJson -> do
             if length (wikiResultsJson ^. _Array) == 0
-                then return $ Left $ WikiError ("No results found for search query '" <> query <> "'")
+                then return $ Left $ ErrorNoWikipediaResults ("No results found for search query '" <> query <> "'")
                 else return =<< getWikipage (wikiResultsJson ^. nth 0 . key "title" . _String)
 
 -- | Request the contents of the Wikipedia page with pageTitle
@@ -56,12 +57,12 @@ getWikipage :: Text -> IO (Either WikiError (Text, Text))
 getWikipage pageTitle = do
     maybeWikiContents <- requestWikiParse pageTitle
     case maybeWikiContents of
-        Nothing -> return $ Left $ WikiError $ "Failed to fetch wikipedia page content for '" <> pageTitle <> "'"
+        Nothing -> return $ Left $ ErrorWikipediaFetchFailed $ "Failed to fetch wikipedia page content for '" <> pageTitle <> "'"
         Just wikiContents -> return $ Right (pageTitle, wikiContents)
 
 -- TODO: The getWikipage function feels a bit redundant. If the wiki request functions below
 -- are modified to return different errors/codes (probably with Either), getWikipage can perhaps
--- be removed, and the Wiki.hs functions called more directly.
+-- be removed, and the below functions called more directly.
 
 
 -- TODO: Handle several results, like different http response codes etc.

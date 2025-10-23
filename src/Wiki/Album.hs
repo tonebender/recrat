@@ -6,7 +6,6 @@
 
 module Wiki.Album (
       Album (..)
-    , AlbumError (AlbumError)
     , fetchAlbum
     , parseAlbum
     , filterAlbumByCritic
@@ -26,7 +25,6 @@ import qualified Data.Text as T
 
 import Wiki.MediaWiki (
       searchAndGetWiki
-    , WikiError (WikiError)
     , parseAlbumInfobox
     , findInfoboxProperty
     , WikiAnchor (WikiAnchor, wikiLabel)
@@ -38,6 +36,8 @@ import Wiki.Rating
     , parseRatings
     )
 
+import Wiki.Error
+
 -- Type for an album including a list of ratings blocks,
 -- each containing a number of ratings (reviews)
 data Album = Album
@@ -47,19 +47,19 @@ data Album = Album
     , ratingBlocks :: [RatingBlock]
     } deriving (Show)
 
-data AlbumError = AlbumError Text
-    deriving (Show, Eq)
+-- data AlbumError = AlbumError Text
+--    deriving (Show, Eq)
 
 -- | Find and fetch an album page from Wikipedia,
 -- parse its ratings and return an Album object or an error
-fetchAlbum :: Text -> IO (Either AlbumError Album)
+fetchAlbum :: Text -> IO (Either WikiError Album)
 fetchAlbum query = do
     eitherWikiContent <- searchAndGetWiki query  -- Search for query and take the first result (title, content)
     case eitherWikiContent of
-        Left (WikiError t) -> return $ Left $ AlbumError t
+        Left err -> return $ Left err
         Right (wTitle, wText) -> do
             case parseAlbum wText of  -- Get all album ratings from this album's wikipedia page
-                Nothing -> return $ Left $ AlbumError $ "This doesn't appear to be a music album: '" <> wTitle <> "'"
+                Nothing -> return $ Left $ ErrorPageNotAlbum $ "This doesn't appear to be a music album: '" <> wTitle <> "'"
                 Just albm -> return $ Right albm
 
 -- | Get an Album with ratings out of a wiki page text.
