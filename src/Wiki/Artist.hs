@@ -42,9 +42,6 @@ data Artist = Artist
     , albums :: [Album]
     } deriving (Show)
 
--- data ArtistError = NoDiscographyFound | AlbumsRequestFailed
--- data ArtistError2 = ArtistError2 Text
-
 -- | Find and fetch an artist discography page on Wikipedia,
 -- call getAlbums to parse it and fetch all found albums (including ratings),
 -- returning an Artist or ArtistError2
