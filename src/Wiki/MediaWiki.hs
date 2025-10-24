@@ -35,20 +35,16 @@ data WikiAnchor = WikiAnchor
     , wikiLabel :: Text
     } deriving (Show)
 
--- data WikiError = WikiError Text
---    deriving (Show, Eq)
-
-
 -- | Search for a query on Wikipedia and return the title and contents
 -- of the first page found as a Text tuple, or WikiError otherwise
 searchAndGetWiki :: Text -> IO (Either WikiError (Text, Text))
 searchAndGetWiki query = do
     maybeWikiresults <- requestWikiSearch query
     case maybeWikiresults of
-        Nothing -> return $ Left $ ErrorWikipediaRequestFailed ("Search request to Wikipedia failed for '" <> query <> "'")
+        Nothing -> return $ Left $ ErrorWikipediaRequestFailed query
         Just wikiResultsJson -> do
             if length (wikiResultsJson ^. _Array) == 0
-                then return $ Left $ ErrorNoWikipediaResults ("No results found for search query '" <> query <> "'")
+                then return $ Left $ ErrorWikipediaNoResults query
                 else return =<< getWikipage (wikiResultsJson ^. nth 0 . key "title" . _String)
 
 -- | Request the contents of the Wikipedia page with pageTitle
@@ -57,7 +53,7 @@ getWikipage :: Text -> IO (Either WikiError (Text, Text))
 getWikipage pageTitle = do
     maybeWikiContents <- requestWikiParse pageTitle
     case maybeWikiContents of
-        Nothing -> return $ Left $ ErrorWikipediaFetchFailed $ "Failed to fetch wikipedia page content for '" <> pageTitle <> "'"
+        Nothing -> return $ Left $ ErrorWikipediaFetchFailed pageTitle
         Just wikiContents -> return $ Right (pageTitle, wikiContents)
 
 -- TODO: The getWikipage function feels a bit redundant. If the wiki request functions below

@@ -57,8 +57,8 @@ fetchArtist query category = do
             let artistName' = T.replace " discography" "" wTitle
             eitherAlbums <- getAlbums wText category  -- Get all albums and their ratings for this artist
             case eitherAlbums of
-                Left (ErrorAlbumsRequestFailed _) -> return $ Left (ErrorAlbumsRequestFailed $ "Failed to fetch albums from '" <> artistName' <> "'")
-                Left (ErrorNoDiscography _) -> return $ Left (ErrorNoDiscography $ "'" <> artistName' <> "' does not appear to contain an artist discography. Try refining your search query by appending the word 'discography' to it.")
+                Left (ErrorAlbumsRequestFailed _) -> return $ Left (ErrorAlbumsRequestFailed artistName')
+                Left (ErrorNoDiscography _) -> return $ Left (ErrorNoDiscography artistName')
                 Left err -> return $ Left err
                 Right albums' -> return $ Right $ Artist artistName' albums'
 

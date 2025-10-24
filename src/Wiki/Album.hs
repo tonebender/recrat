@@ -47,9 +47,6 @@ data Album = Album
     , ratingBlocks :: [RatingBlock]
     } deriving (Show)
 
--- data AlbumError = AlbumError Text
---    deriving (Show, Eq)
-
 -- | Find and fetch an album page from Wikipedia,
 -- parse its ratings and return an Album object or an error
 fetchAlbum :: Text -> IO (Either WikiError Album)
@@ -59,7 +56,7 @@ fetchAlbum query = do
         Left err -> return $ Left err
         Right (wTitle, wText) -> do
             case parseAlbum wText of  -- Get all album ratings from this album's wikipedia page
-                Nothing -> return $ Left $ ErrorPageNotAlbum $ "This doesn't appear to be a music album: '" <> wTitle <> "'"
+                Nothing -> return $ Left $ ErrorPageNotAlbum wTitle
                 Just albm -> return $ Right albm
 
 -- | Get an Album with ratings out of a wiki page text.
