@@ -44,6 +44,7 @@ data Album = Album
     { albumName :: Text
     , artistName :: WikiAnchor
     , yearOfRelease :: Text
+    , imageFilename :: Text
     , ratingBlocks :: [RatingBlock]
     } deriving (Show)
 
@@ -66,8 +67,12 @@ parseAlbum :: Text -> Maybe Album
 parseAlbum wikip =
     case findInfoboxProperty "name" (parseAlbumInfobox wikip) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
-        Just albName ->
-            Just $ Album (albName.wikiLabel) (getArtistName wikip) (getAlbumYear wikip) (parseRatings albName.wikiLabel wikip)
+        Just albName -> Just $ Album
+                        (albName.wikiLabel)
+                        (getArtistName wikip)
+                        (getAlbumYear wikip)
+                        (getImageFilename wikip)
+                        (parseRatings albName.wikiLabel wikip)
     where
           getArtistName w = case findInfoboxProperty "artist" (parseAlbumInfobox w) of
               Nothing -> WikiAnchor "" "(no artist name)"
@@ -79,6 +84,9 @@ parseAlbum wikip =
                                     case filter (\s -> T.length s == 4) $ map (T.takeWhile (`T.elem` "0123456789")) subStrings of
                                         [] -> ""  -- This also gives empty if the year couldn't be parsed
                                         y:_ -> y
+          getImageFilename w = case findInfoboxProperty "cover" (parseAlbumInfobox w) of
+            Nothing -> ""
+            Just fileAnchor -> fileAnchor.wikiLabel
 
 -- | Create a text with all ratings for an album, plus its artist and title, etc.
 -- starz is whether to show score as stars rather than percentage
@@ -135,7 +143,12 @@ getRatingsFlat album = concat [rb.ratings | rb <- album.ratingBlocks]
 -- modifies ratings anyway
 -- | Get an album but include only ratings whose critic names include the provided text
 filterAlbumByCritic :: Text -> Album -> Album
-filterAlbumByCritic critic album = Album (album.albumName) (album.artistName) (album.yearOfRelease) $ map (filterRatings critic) (album.ratingBlocks)
+filterAlbumByCritic critic album = Album
+    (album.albumName)
+    (album.artistName)
+    (album.yearOfRelease)
+    (album.imageFilename)
+    $ map (filterRatings critic) (album.ratingBlocks)
     where
         filterRatings "" rblock = rblock
         filterRatings subText rblock = RatingBlock rblock.header
