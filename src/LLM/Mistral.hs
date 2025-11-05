@@ -19,7 +19,7 @@ import Control.Lens ((.~), (&), (^?))
 mistralJsonTemplate :: Value
 mistralJsonTemplate = fromJust $ decode $ BL.concat [
     "{",
-    "    \"model\": \"mistral-medium-latest\",",
+    "    \"model\": \"mistral-small-latest\",",
     "    \"messages\": [",
     "        {",
     "            \"role\": \"user\",",
