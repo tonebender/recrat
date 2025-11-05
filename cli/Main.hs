@@ -82,11 +82,11 @@ main :: IO ()
 main = do
     inputargs <- execParser appDescription
     let albumTitle = optAlbum inputargs
-    let artistName = optArtist inputargs
-    let category = optCategory inputargs
-    let critic = optCritic inputargs
-    let starFormat = optStarFormat inputargs
-    let llm = optLLM inputargs
+        artistName = optArtist inputargs
+        category = optCategory inputargs
+        critic = optCritic inputargs
+        starFormat = optStarFormat inputargs
+        llm = optLLM inputargs
     if llm
         then llmPrintArtist artistName category
         else if (albumTitle /= T.empty)
