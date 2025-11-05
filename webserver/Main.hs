@@ -15,7 +15,6 @@ import qualified Wiki.Artist as W
     (
       fetchArtist
     , Artist(..)
-    , ArtistError2 (ArtistError2)
     )
 import Wiki.Album
     (
@@ -24,11 +23,12 @@ import Wiki.Album
     , ratioToPercent
     , numberOfRatings
     )
+import Wiki.Error
 import qualified LLM.LLM as L
     (
       fetchArtist
-    , showArtist
     , Artist(..)
+    , Album(..)
     )
 
 main :: IO ()
@@ -62,7 +62,7 @@ handleRequest artist wiki llm = do
             True -> do
                 eitherArtist <- W.fetchArtist artist "studio"
                 case eitherArtist of
-                    Left (W.ArtistError2 t) -> return t
+                    Left err -> return $ showError err
                     Right artistObj -> return $ wikiArtistToHtml artistObj
     llmResult <- case llm of
             False -> return ""
@@ -70,7 +70,7 @@ handleRequest artist wiki llm = do
                 eitherLlmArtist <- L.fetchArtist artist "studio"
                 case eitherLlmArtist of
                     Left t -> return t
-                    Right llmArtistObj -> return $ L.showArtist llmArtistObj
+                    Right llmArtistObj -> return $ llmArtistToHtml llmArtistObj
     return $ fromStrict $ wikiResult <> llmResult
 
 wikiArtistToHtml :: W.Artist -> Text
@@ -87,15 +87,22 @@ wikiArtistToHtml artist = toStrict . renderText . doctypehtml_ $ do
 
 llmArtistToHtml :: L.Artist -> Text
 llmArtistToHtml artist = toStrict . renderText . doctypehtml_ $ do
-    div_ $ toHtml artist.name
+    div_ $ do
+        h2_ $ toHtml artist.name
+        div_ [class_ "albums"] $ do
+            mapM_ (\album -> div_ [class_ "album"] $ do
+                    div_ [class_ "title"] $ toHtml album.title
+                    div_ [class_ "year"] $ toHtml album.year
+                    div_ [class_ "description"] $ toHtml album.description
+                  ) artist.albums
 
 indexPage :: Text -> Text -> Bool -> Bool -> LazyText
-indexPage message artist wiki llm = renderText . doctypehtml_ $ do
+indexPage flashMsg artist wiki llm = renderText . doctypehtml_ $ do
     head_ $ title_ "Rec Rat"
     body_ $ do
         h1_ "Rec Rat"
-        p_ (if T.length message == 0 then [style_ "display: none;"] else [class_ "msg"]) (toHtml message)
-        form_ [autocomplete_ "off"] $ do
+        p_ ([id_ "msg"] ++ (if T.length flashMsg == 0 then [style_ "display: none;"] else [])) (toHtml flashMsg)
+        form_ [autocomplete_ "off", onsubmit_ "showLoading()"] $ do
             div_ $ do
                 label_ [for_ "artistInput"] "Artist"
                 input_ [id_ "artistInput", name_ "artist", value_ artist]
@@ -104,3 +111,5 @@ indexPage message artist wiki llm = renderText . doctypehtml_ $ do
                 label_ (do input_ ([type_ "checkbox", id_ "llmCheck", name_ "llm"] ++ [checked_ | llm]); "Mistral AI")
             div_ $
                 button_ [type_ "submit"] "Search"
+        p_ [id_ "loading", style_ "display: none;"] "Searching ..."
+        script_ "const showLoading = () => { document.getElementById('loading').style.display = 'block'; }"
