@@ -79,6 +79,7 @@ wikiArtistToHtml artist = toStrict . renderText . doctypehtml_ $ do
         h2_ $ toHtml artist.name
         div_ [class_ "albums"] $ do
             mapM_ (\album -> div_ [class_ "album"] $ do
+                    img_ [class_ "cover", src_ album.imageFilename, style_ "width: 150px; height: 150px; border: 1px solid #999;"]
                     div_ [class_ "title"] $ toHtml album.albumName
                     div_ [class_ "year"] $ toHtml album.yearOfRelease
                     div_ [class_ "score percent"] $ toHtml $ format int (ratioToPercent $ averageScore album)
