@@ -75,7 +75,7 @@ requestWikiSearch searchQuery = do
 
 -- | Make a request to the MediaWiki Action API on Wikipedia, asking it to give us
 -- the contents of the specified wiki page.
--- (This is a bit redundant since the addition of requestWikiPages below)
+-- (The same could be done with requestWikiPages below, but this is more direct for a single page)
 requestWikiParse :: Text -> IO (Maybe Text)
 requestWikiParse title = do
     let urlParams = [ ("action", "parse"), ("format", "json"), ("prop", "wikitext"), ("redirects", "1"), ("page", title) ]

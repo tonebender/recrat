@@ -48,10 +48,6 @@ data Album = Album
     , ratingBlocks :: [RatingBlock]
     } deriving (Show)
 
--- For prefixing wikipedia image URLs
-wikiImagePath :: Text
-wikiImagePath = "https://en.wikipedia.org/wiki/Special:FilePath/"
-
 -- | Find and fetch an album page from Wikipedia,
 -- parse its ratings and return an Album object or an error
 fetchAlbum :: Text -> IO (Either WikiError Album)
@@ -90,7 +86,7 @@ parseAlbum wikip =
                                         y:_ -> y
           getImageFilename w = case findInfoboxProperty "cover" (parseAlbumInfobox w) of
               Nothing -> ""
-              Just fileAnchor -> wikiImagePath <> fileAnchor.wikiLabel
+              Just fileAnchor -> fileAnchor.wikiLabel
 
 -- | Create a text with all ratings for an album, plus its artist and title, etc.
 -- starz is whether to show score as stars rather than percentage

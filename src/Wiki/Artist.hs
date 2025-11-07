@@ -42,23 +42,6 @@ data Artist = Artist
     , albums :: [Album]
     } deriving (Show)
 
--- | Find and fetch an artist discography page on Wikipedia,
--- call getAlbums to parse it and fetch all found albums (including ratings),
--- returning an Artist or ArtistError2
-fetchArtist :: Text -> Text -> IO (Either WikiError Artist)
-fetchArtist query category = do
-    eitherWikiContent <- searchAndGetWiki (query <> " discography") -- Search for query and take the first result (title, content)
-    case eitherWikiContent of
-        Left err -> return $ Left err
-        Right (wTitle, wText) -> do
-            let artistName' = T.replace " discography" "" wTitle
-            eitherAlbums <- getAlbums wText category  -- Get all albums and their ratings for this artist
-            case eitherAlbums of
-                Left (ErrorAlbumsRequestFailed _) -> return $ Left (ErrorAlbumsRequestFailed artistName')
-                Left (ErrorNoDiscography _) -> return $ Left (ErrorNoDiscography artistName')
-                Left err -> return $ Left err
-                Right albums' -> return $ Right $ Artist artistName' albums'
-
 -- | Return a Text with album titles, year, average ratings, number of ratings, with titles
 -- left-justified and stats right-justified. If starFormat is true, stars instead of numbers will
 -- show scores. critic can be used to filter ratings by critic name.
@@ -105,33 +88,47 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
            else if (numberOfRatings album1) > (numberOfRatings album2) then GT
            else LT
 
--- | Take a discography page's contents and a category (such as "studio") and request all of
--- the Wikipedia pages (their contents, in a json object, via the Mediawiki Revisions API) for the
--- albums found under that category in the discography. Then get the ratings for all those
--- albums and return it as an Artist. When requesting the pages, take 50 at a time because
--- that's the Mediawiki API's limit, and concat the list of json Values of max 50 pages each into a
--- flattened list, to which getPageFromWikiRevJson and getAlbumRatings are applied ...
-getAlbums :: Text -> Text -> IO (Either WikiError [Album])
-getAlbums discography category = do
-    case parseDiscographyAlbums discography category of
-        [] -> return $ Left $ ErrorNoDiscography ""  -- We'll add description later
-        albumTitles -> do
-            pages <- request50by50 albumTitles
-            case catMaybes pages of
-                -- If none of the requests worked, give error (theoretically a fraction can fail, but won't)
-                [] -> return $ Left $ ErrorAlbumsRequestFailed ""  -- We'll add description later
-                listOfJsons ->
-                    return $ Right $ sortAlbums $ catMaybes
-                           $ map (parseAlbum . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
+-- | Find and fetch an artist discography page on Wikipedia,
+-- call getAlbums to parse it and fetch all found albums (including ratings),
+-- returning an Artist or WikiError
+fetchArtist :: Text -> Text -> IO (Either WikiError Artist)
+fetchArtist query category = do
+    eitherDiscoContent <- searchAndGetWiki (query <> " discography") -- Search for query and take the first result (title, content)
+    case eitherDiscoContent of
+        Left err -> return $ Left err
+        Right (wikiPageTitle, wikiPageText) -> do  -- Got discography contents and title
+            let artistName' = T.replace " discography" "" wikiPageTitle
+            case parseDiscographyAlbums wikiPageText category of  -- Parse the discography (find album links)
+                [] -> return $ Left $ ErrorNoDiscography artistName'
+                albumTitles -> do
+                    eitherAlbums <- getAlbums artistName' [a.wikiURI | a <- albumTitles]  -- Fetch all albums and their ratings
+                    case eitherAlbums of
+                        Left err -> return $ Left err
+                        Right albums' -> return $ Right $ Artist artistName' albums'
+
+-- | Take a list of links to album pages on Wikipedia and request all of those pages' contents 
+-- (through the Mediawiki Revisions API, to json). Then get their ratings and return as a list
+-- of Albums. When requesting the pages, take 50 at a time because that's the Mediawiki API's limit,
+-- and concat the list of json Values of max 50 pages each into a flattened list, to which
+-- getPageFromWikiRevJson and getAlbumRatings are applied ...
+getAlbums :: Text -> [Text] -> IO (Either WikiError [Album])
+getAlbums artistName' albumTitles = do
+    pages <- request50by50 albumTitles
+    case catMaybes pages of
+        -- If none of the requests worked, give error (theoretically a fraction can fail, but won't)
+        [] -> return $ Left $ ErrorAlbumsRequestFailed artistName'
+        listOfJsons ->
+            return $ Right $ sortAlbums $ catMaybes
+                   $ map (parseAlbum . getPageFromWikiRevJson) (concat $ map (^.. values) listOfJsons)
 
 -- | Run requestWikiPages on a maximum of 50 titles at a time, several times if needed, and return a
 -- list with each call's results. (For most artists, there'll be much less than 50 in total, so this
 -- will be run just once and the result will be a list with only one element; but try Frank Zappa's
 -- discography ...)
-request50by50 :: [WikiAnchor] -> IO [Maybe Value]
+request50by50 :: [Text] -> IO [Maybe Value]
 request50by50 [] = return []
 request50by50 titles = do
-    r <- requestWikiPages $ artistToAlbumsQuery $ take 50 titles
+    r <- requestWikiPages $ T.intercalate "|" $ take 50 titles
     rest <- request50by50 (drop 50 titles)
     return $ r:rest
 
@@ -174,8 +171,3 @@ findBestHeading disco' (s:subtitles) =
 -- (This can be fairly tolerant; wrong entries will eventually be discarded later)
 filterAlbumsInDisco :: [Text] -> [Text]
 filterAlbumsInDisco = filter (\r -> T.isInfixOf "''" r && (T.isPrefixOf "|" r || T.isInfixOf "scope=\"row\"" r))
-
--- | Create a string such as "Bleach (Nirvana album)|Nevermind|In Utero" from an Artist's
--- albums list, for use in a multi-page wiki request.
-artistToAlbumsQuery :: [WikiAnchor] -> Text
-artistToAlbumsQuery albumAnchors = T.intercalate "|" [a.wikiURI | a <- albumAnchors]
