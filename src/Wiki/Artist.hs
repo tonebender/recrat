@@ -89,8 +89,9 @@ sortAlbums albumList = reverse $ sortBy weightedCriteria albumList
            else LT
 
 -- | Find and fetch an artist discography page on Wikipedia,
--- call getAlbums to parse it and fetch all found albums (including ratings),
+-- call getAlbums to parse it and fetch all found albums, getting their ratings,
 -- returning an Artist or WikiError
+-- TODO: Use a monad transformer like ExceptT to get rid of the staircase ...
 fetchArtist :: Text -> Text -> IO (Either WikiError Artist)
 fetchArtist query category = do
     eitherDiscoContent <- searchAndGetWiki (query <> " discography") -- Search for query and take the first result (title, content)
@@ -106,11 +107,11 @@ fetchArtist query category = do
                         Left err -> return $ Left err
                         Right albums' -> return $ Right $ Artist artistName' albums'
 
--- | Take a list of links to album pages on Wikipedia and request all of those pages' contents 
+-- | Take a list of album page titles on Wikipedia and request all of those pages' contents 
 -- (through the Mediawiki Revisions API, to json). Then get their ratings and return as a list
 -- of Albums. When requesting the pages, take 50 at a time because that's the Mediawiki API's limit,
 -- and concat the list of json Values of max 50 pages each into a flattened list, to which
--- getPageFromWikiRevJson and getAlbumRatings are applied ...
+-- getPageFromWikiRevJson and parseAlbum are applied ...
 getAlbums :: Text -> [Text] -> IO (Either WikiError [Album])
 getAlbums artistName' albumTitles = do
     pages <- request50by50 albumTitles
@@ -132,10 +133,14 @@ request50by50 titles = do
     rest <- request50by50 (drop 50 titles)
     return $ r:rest
 
--- | Aeson Lens stuff to get the contents of the first wiki page revision
--- in a json object from a request to the MediaWiki Revisions API.
-getPageFromWikiRevJson :: Value -> Text
-getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
+-- | Take a json object from a MediaWiki Revisions API request result and return a tuple where the
+-- first element is the Wikipedia page title and the second element is the page contents (found
+-- deep down in "revisions[0].slots.main.content")
+getPageFromWikiRevJson :: Value -> (Text, Text)
+getPageFromWikiRevJson wikiJson = (
+      wikiJson ^. key "title" . _String
+    , wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
+    )
 
 -- | Take a discography Wikipedia page and get a list of albums (each a WikiAnchor) from the table
 -- under the subheading specified by category or any of the fallbacks (such as "=== Studio albums ===").

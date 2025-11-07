@@ -45,6 +45,7 @@ data Album = Album
     , artistName :: WikiAnchor
     , yearOfRelease :: Text
     , imageFilename :: Text
+    , wikiTitle :: Text  -- e.g. "Aftermath (Rolling Stones album)"
     , ratingBlocks :: [RatingBlock]
     } deriving (Show)
 
@@ -56,23 +57,24 @@ fetchAlbum query = do
     case eitherWikiContent of
         Left err -> return $ Left err
         Right (wTitle, wText) -> do
-            case parseAlbum wText of  -- Get all album ratings from this album's wikipedia page
+            case parseAlbum (wTitle, wText) of  -- Get all album ratings from this album's wikipedia page
                 Nothing -> return $ Left $ ErrorPageNotAlbum wTitle
                 Just albm -> return $ Right albm
 
 -- | Get an Album with ratings out of a wiki page text.
 -- If there's no album info box with a name property, return Nothing to indicate it's probably not a music album page.
 -- If it's an album but there are no rating blocks on the page, return an Album but with an empty rating block list.
-parseAlbum :: Text -> Maybe Album
-parseAlbum wikip =
-    case findInfoboxProperty "name" (parseAlbumInfobox wikip) of
+parseAlbum :: (Text, Text) -> Maybe Album
+parseAlbum (wikiTitle', wikiContent) =
+    case findInfoboxProperty "name" (parseAlbumInfobox wikiContent) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
         Just albName -> Just $ Album
-                        (albName.wikiLabel)
-                        (getArtistName wikip)
-                        (getAlbumYear wikip)
-                        (getImageFilename wikip)
-                        (parseRatings albName.wikiLabel wikip)
+                        albName.wikiLabel
+                        (getArtistName wikiContent)
+                        (getAlbumYear wikiContent)
+                        (getImageFilename wikiContent)
+                        wikiTitle'
+                        (parseRatings albName.wikiLabel wikiContent)
     where
           getArtistName w = case findInfoboxProperty "artist" (parseAlbumInfobox w) of
               Nothing -> WikiAnchor "" "(no artist name)"
@@ -144,10 +146,7 @@ getRatingsFlat album = concat [rb.ratings | rb <- album.ratingBlocks]
 -- | Get an album but include only ratings whose critic names include the provided text
 filterAlbumByCritic :: Text -> Album -> Album
 filterAlbumByCritic critic album = Album
-    (album.albumName)
-    (album.artistName)
-    (album.yearOfRelease)
-    (album.imageFilename)
+    (album.albumName) (album.artistName) (album.yearOfRelease) (album.imageFilename) (album.wikiTitle)
     $ map (filterRatings critic) (album.ratingBlocks)
     where
         filterRatings "" rblock = rblock
