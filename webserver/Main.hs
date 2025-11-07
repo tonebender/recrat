@@ -31,6 +31,10 @@ import qualified LLM.LLM as L
     , Album(..)
     )
 
+-- For prefixing wikipedia image URLs
+wikiImagePath :: Text
+wikiImagePath = "https://en.wikipedia.org/wiki/Special:FilePath/"
+
 main :: IO ()
 main = S.scotty 3000 $ do
     S.get "/" $ do
@@ -58,19 +62,19 @@ hasQueryParam paramList paramName = filter (\(p, _) -> p == paramName) paramList
 handleRequest :: Text -> Bool -> Bool -> IO (LazyText)
 handleRequest artist wiki llm = do
     wikiResult <- case wiki of
-            False -> return ""
-            True -> do
-                eitherArtist <- W.fetchArtist artist "studio"
-                case eitherArtist of
-                    Left err -> return $ showError err
-                    Right artistObj -> return $ wikiArtistToHtml artistObj
+        False -> return ""
+        True -> do
+            eitherArtist <- W.fetchArtist artist "studio"
+            case eitherArtist of
+                Left err -> return $ showError err
+                Right artistObj -> return $ wikiArtistToHtml artistObj
     llmResult <- case llm of
-            False -> return ""
-            True -> do
-                eitherLlmArtist <- L.fetchArtist artist "studio"
-                case eitherLlmArtist of
-                    Left t -> return t
-                    Right llmArtistObj -> return $ llmArtistToHtml llmArtistObj
+        False -> return ""
+        True -> do
+            eitherLlmArtist <- L.fetchArtist artist "studio"
+            case eitherLlmArtist of
+                Left t -> return t
+                Right llmArtistObj -> return $ llmArtistToHtml llmArtistObj
     return $ fromStrict $ wikiResult <> llmResult
 
 wikiArtistToHtml :: W.Artist -> Text
@@ -92,6 +96,7 @@ llmArtistToHtml artist = toStrict . renderText . doctypehtml_ $ do
         h2_ $ toHtml artist.name
         div_ [class_ "albums"] $ do
             mapM_ (\album -> div_ [class_ "album"] $ do
+                    img_ [class_ "cover", src_ album.imageFilename, style_ "width: 150px; height: 150px; border: 1px solid #999;"]
                     div_ [class_ "title"] $ toHtml album.title
                     div_ [class_ "year"] $ toHtml album.year
                     div_ [class_ "description"] $ toHtml album.description
