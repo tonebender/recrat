@@ -61,11 +61,13 @@ main = S.scotty 3000 $ do
                 Nothing -> ""
                 Just a -> a
         case (artist, wiki, llm) of
-            ("", False, False) -> S.html $ indexPage "" "" False False  -- Nothing provided, just show index page
-            ("", w, l) -> S.html $ indexPage "No artist specified" "" w l
-            (artist', False, False) -> S.html $ indexPage "Please choose Wikipedia and/or Mistral AI sources" artist' False False
+            ("", False, False) -> S.html $ htmlPage [indexPage "" "" False False]  -- Nothing provided, just show index page
+            ("", w, l) -> S.html $ htmlPage [indexPage "No artist specified" "" w l]
+            (artist', False, False) -> S.html
+                $ htmlPage [indexPage "Please choose Wikipedia and/or Mistral AI sources" artist' False False]
             (artist', wiki', llm') -> do
-                S.html =<< S.liftIO (handleRequest artist' wiki' llm')
+                elementList <- S.liftIO $ handleRequest artist' wiki' llm'
+                S.html $ htmlPage elementList
 
 -- | Check if a list of query parameters has a certain parameter.
 -- Returns True if it does, False otherwise. Ignores the value of the param.
@@ -78,87 +80,80 @@ hasQueryParam paramList paramName = filter (\(p, _) -> p == paramName) paramList
 -- cover URLs, in case llm was the chosen source, we get the llm results plus the
 -- whole discography via the wiki library, then use the llm album records but with
 -- image file names from the corresponding wiki albums.
-handleRequest :: Text -> Bool -> Bool -> IO (LazyText)
+handleRequest :: Text -> Bool -> Bool -> IO [Html ()]
 handleRequest artist wiki llm = do
-    eitherArtist <- W.fetchArtist artist "studio"  -- Used by both wiki and llm
-    wikiResult <- case wiki of  -- wiki was chosen
-        False -> return ""
-        True -> case eitherArtist of
-            Left err -> return $ showError err
-            Right artistObj -> return $ wikiArtistToHtml artistObj
-    llmResult <- case llm of  -- llm was chosen
-        False -> return ""
-        True -> do
+    eitherWikiArtist <- W.fetchArtist artist "studio"  -- (used by both wiki and llm)
+    let wikiResult = if wiki  -- If wiki was checked, use the wiki results
+        then case eitherWikiArtist of
+                Left err -> [div_ [class_ "artist wiki"] $ toHtml $ showError err]
+                Right artistObj -> [wikiArtistToHtml artistObj]
+        else []
+    llmResult <- do  -- If llm was checked, call the llm and also use the wiki Artist to create a response
+        if llm then do
             eitherLlmArtist <- L.fetchArtist artist "studio"
-            case (eitherLlmArtist, eitherArtist) of  -- use both llm and wiki artist objects
-                (Left errorText, _) -> return errorText
-                (_, Left err) -> return $ showError err
-                (Right llmArtist, Right wikiArtist) -> do
-                    return $ llmArtistToHtml $ LArtist llmArtist.name $ map (applyImage wikiArtist.albums) llmArtist.albums
-    return $ fromStrict $ wikiResult <> llmResult
+            case (eitherLlmArtist, eitherWikiArtist) of
+                (Left errorText, _) -> return $ [div_ [class_ "artist llm"] $ toHtml errorText]
+                (Right llmArtist, Left _) -> return [llmArtistToHtml $ LArtist llmArtist.name $ map (applyImage []) llmArtist.albums]
+                (Right llmArtist, Right wikiArtist) ->
+                    return [llmArtistToHtml $ LArtist llmArtist.name $ map (applyImage wikiArtist.albums) llmArtist.albums]
+        else return []
+    return $ wikiResult ++ llmResult
 
-wikiArtistToHtml :: W.Artist -> Text
-wikiArtistToHtml artist = toStrict . renderText . doctypehtml_ $ do
-    div_ $ do
+wikiArtistToHtml :: W.Artist -> Html ()
+wikiArtistToHtml artist = div_ [class_ "artist wiki"] $ do
         h2_ $ toHtml artist.name
         div_ [class_ "albums"] $ do
             mapM_ (\album -> div_ [class_ "album"] $ do
-                    img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename), style_ "width: 150px; height: 150px; border: 1px solid #999;"]
+                    img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)
+                         , style_ "width: 150px; height: 150px; border: 1px solid #999;"]
                     div_ [class_ "title"] $ toHtml album.albumName
                     div_ [class_ "year"] $ toHtml album.yearOfRelease
                     div_ [class_ "score percent"] $ toHtml $ format int (ratioToPercent $ averageScore album)
                     div_ [class_ "score number"] $ toHtml $ format int (numberOfRatings album)
                   ) artist.albums
 
-llmArtistToHtml :: LArtist -> Text
-llmArtistToHtml artist = toStrict . renderText . doctypehtml_ $ do
-    div_ $ do
+llmArtistToHtml :: LArtist -> Html ()
+llmArtistToHtml artist = div_ [class_ "artist llm"] $ do
         h2_ $ toHtml artist.name
         div_ [class_ "albums"] $ do
             mapM_ (\album -> div_ [class_ "album"] $ do
-                    img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename), style_ "width: 150px; height: 150px; border: 1px solid #999;"]
+                    img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)
+                         , style_ "width: 150px; height: 150px; border: 1px solid #999;"]
                     div_ [class_ "title"] $ toHtml album.title
                     div_ [class_ "year"] $ toHtml album.year
                     div_ [class_ "description"] $ toHtml album.description
                   ) artist.albums
 
-indexPage :: Text -> Text -> Bool -> Bool -> LazyText
-indexPage flashMsg artist wiki llm = renderText . doctypehtml_ $ do
+indexPage :: Text -> Text -> Bool -> Bool -> Html ()
+indexPage flashMsg artist wiki llm = do
+    p_ ([id_ "msg"] ++ (if T.length flashMsg == 0 then [style_ "display: none;"] else [])) (toHtml flashMsg)
+    form_ [autocomplete_ "off", onsubmit_ "showLoading()"] $ do
+        div_ $ do
+            label_ [for_ "artistInput"] "Artist"
+            input_ [id_ "artistInput", name_ "artist", value_ artist]
+        div_ $ do
+            label_ (do input_ ([type_ "checkbox", id_ "wikiCheck", name_ "wikipedia"] ++ [checked_ | wiki]); "Wikipedia")
+            label_ (do input_ ([type_ "checkbox", id_ "llmCheck", name_ "llm"] ++ [checked_ | llm]); "Mistral AI")
+        div_ $
+            button_ [type_ "submit"] "Search"
+    p_ [id_ "loading", style_ "display: none;"] "Searching ..."
+    script_ "const showLoading = () => { document.getElementById('loading').style.display = 'block'; }"
+
+-- | Take a list of Html elements and return a text with the web page, with head, title and other
+-- basic stuff, plus these elements added to it
+htmlPage :: [Html ()] -> LazyText
+htmlPage elements = renderText . doctypehtml_ $ do
     head_ $ title_ "Rec Rat"
     body_ $ do
         h1_ "Rec Rat"
-        p_ ([id_ "msg"] ++ (if T.length flashMsg == 0 then [style_ "display: none;"] else [])) (toHtml flashMsg)
-        form_ [autocomplete_ "off", onsubmit_ "showLoading()"] $ do
-            div_ $ do
-                label_ [for_ "artistInput"] "Artist"
-                input_ [id_ "artistInput", name_ "artist", value_ artist]
-            div_ $ do
-                label_ (do input_ ([type_ "checkbox", id_ "wikiCheck", name_ "wikipedia"] ++ [checked_ | wiki]); "Wikipedia")
-                label_ (do input_ ([type_ "checkbox", id_ "llmCheck", name_ "llm"] ++ [checked_ | llm]); "Mistral AI")
-            div_ $
-                button_ [type_ "submit"] "Search"
-        p_ [id_ "loading", style_ "display: none;"] "Searching ..."
-        script_ "const showLoading = () => { document.getElementById('loading').style.display = 'block'; }"
+        sequence_ elements
 
--- | Take a list of albums from the Wiki library and a list of albums from the LLM library,
--- and return a new list of albums, each having all properties from the LLM Album plus
--- imageFilename from the Wiki counterpart.
+-- | Take a list of albums from the Wiki library and a list of albums from the LLM library, and
+-- return a new list of albums, each having all properties from the LLM Album plus imageFilename
+-- from the Wiki counterpart. If an image wasn't found (or rather, an llm album wasn't matching
+-- a wiki album), just convert the L.Album to an LAlbumWithImage without image file name.
 applyImage :: [Album] -> L.Album -> LAlbumWithImage
 applyImage wAlbums la = case find (\wa -> T.toCaseFold wa.albumName == T.toCaseFold la.title) wAlbums of
     Nothing -> LAlbumWithImage la.title la.description la.year "(no image found)"
     Just wikiAlbum -> LAlbumWithImage la.title la.description la.year wikiAlbum.imageFilename
 
--- -- NOTE: Because the LLMs seem to be unable to even get the right wikipedia titles for later
--- requesting the album covers, the fetchImages function has been abandoned for now.
---
--- | Take an Artist created by the LLM library, get its albums list and borrow the getAlbums
--- function from the Wiki library to single-request the same albums but of type Album from Wiki,
--- which include Wikipedia image file names. Then iterate through the LLM Albums and add the
--- wikipedia image file names producing a list of LAlbumWithImage that we can use on the web page.
--- fetchImages :: L.Artist -> IO LArtist
--- fetchImages llmArtist = do
---     eitherWikiAlbums <- W.getAlbums llmArtist.name [a.wikipediaTitle | a <- llmArtist.albums]
---     case eitherWikiAlbums of
---         Left _ -> return $ LArtist
---             llmArtist.name $ map (\a -> LAlbumWithImage a.title a.description a.year "(no image found)" a.wikipediaTitle) llmArtist.albums
---         Right wikiAlbums -> return $ LArtist llmArtist.name $ map (applyImage wikiAlbums) llmArtist.albums
