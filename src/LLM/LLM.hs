@@ -32,7 +32,6 @@ data Album = Album
     { title :: Text
     , year :: Text
     , description :: Text
-    , imageFilename :: Text
     } deriving (Show)
 
 data Artist = Artist
@@ -63,12 +62,9 @@ artistJsonSchema = fromJust $ decode $ BL.concat [
     "                    },",
     "                    \"description\": {",
     "                        \"type\": \"string\"",
-    "                    },",
-    "                    \"wikipediaURL\": {",
-    "                        \"type\": \"string\"",
     "                    }",
     "                },",
-    "                \"required\": [\"title\", \"year\", \"description\", \"wikipediaURL\"],",
+    "                \"required\": [\"title\", \"year\", \"description\"],",
     "                \"additionalProperties\": false",
     "            }",
     "        }",
@@ -81,7 +77,7 @@ artistJsonSchema = fromJust $ decode $ BL.concat [
 -- | Prompt to give the LLM. $ARTIST should be replaced with the actual artist/band name, and
 -- $CATEGORY should be "studio", "live" or something similar.
 promptTemplate :: Text
-promptTemplate = "\"Please list the ten best $CATEGORY albums by $ARTIST. Try to list them starting with the most popular and/or critically acclaimed. For each of those albums, find the URL to the English Wikipedia page of it. Put this in the wikipediaURL field in the provided json schema. If you can't find a wikipedia URL for an album, leave this field empty, and please don't guess it.\""
+promptTemplate = "\"Please list the 10 best $CATEGORY albums by $ARTIST. Try to list them starting with the most popular and/or critically acclaimed. If the given artist has released fewer than 10 albums, list the ones that exists, or the ones that you think are relevant. Don't make any titles up!\""
 
 -- | Get a Text representation of an Artist variable, for output on the console
 showArtist :: Artist -> Text
@@ -141,7 +137,6 @@ parseObjectsToAlbums objects = catMaybes $ map (parseMaybe objectToAlbumParser) 
             <$> obj .: "title"
             <*> obj .: "year"
             <*> obj .: "description"
-            <*> obj .: "wikipediaURL"
 
 -- | Alternative parse function
 parseObjectsToAlbums2 :: [Value] -> [Album]
@@ -150,9 +145,3 @@ parseObjectsToAlbums2 objects = map objectToAlbumParser2 objects
             Album (obj ^. key "title" . _String)
                   (obj ^. key "year" . _String)
                   (obj ^. key "description" . _String)
-                  (obj ^. key "wikipediaURL" . _String)
-
-extractImageFilename :: Text -> Text
-extractImageFilename url = case T.splitOn "px-" url of
-    [] -> ""
-    x -> last x

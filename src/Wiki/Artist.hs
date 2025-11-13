@@ -8,6 +8,7 @@ module Wiki.Artist (
     , fetchArtist
     , showArtist
     , filterAlbumsByCritic
+    , getAlbums
 ) where
 
 import Control.Lens ((^.), (^..))
@@ -136,11 +137,8 @@ request50by50 titles = do
 -- | Take a json object from a MediaWiki Revisions API request result and return a tuple where the
 -- first element is the Wikipedia page title and the second element is the page contents (found
 -- deep down in "revisions[0].slots.main.content")
-getPageFromWikiRevJson :: Value -> (Text, Text)
-getPageFromWikiRevJson wikiJson = (
-      wikiJson ^. key "title" . _String
-    , wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
-    )
+getPageFromWikiRevJson :: Value -> Text
+getPageFromWikiRevJson wikiJson = wikiJson ^. key "revisions" . nth 0 . key "slots" . key "main" . key "content" . _String
 
 -- | Take a discography Wikipedia page and get a list of albums (each a WikiAnchor) from the table
 -- under the subheading specified by category or any of the fallbacks (such as "=== Studio albums ===").
