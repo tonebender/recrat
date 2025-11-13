@@ -55,7 +55,7 @@ showArtist artist critic starFormat =
     where
         showAlbums' :: Int -> Bool -> [Album] -> Text
         showAlbums' _ _ [] = T.empty
-        showAlbums' padding star (x:xs) = T.justifyLeft padding ' ' (x.albumName <> showYear x)
+        showAlbums' padding star (x:xs) = T.justifyLeft padding ' ' (x.title <> showYear x)
             <> (if star then showStars x else showNumbers x) <> showAlbums' padding star xs
             where
                 showNumbers a = case numberOfRatings a of
@@ -65,10 +65,10 @@ showArtist artist critic starFormat =
                     0 -> "       0\n"
                     _ -> ratioToStars (averageScore a) 5 <> "  " <> T.pack (printf "%2d\n" (numberOfRatings a))
                 showYear :: Album -> Text
-                showYear a = if a.yearOfRelease == "" then "" else " (" <> a.yearOfRelease <> ")"
+                showYear a = if a.year == "" then "" else " (" <> a.year <> ")"
         -- Return the length of the longest name of all albums in list
         longestName :: [Album] -> Int
-        longestName albums' = case listToMaybe . reverse . sort $ [T.length a.albumName | a <- albums'] of
+        longestName albums' = case listToMaybe . reverse . sort $ [T.length a.title | a <- albums'] of
             Nothing -> 0
             Just x -> x
 

@@ -28,15 +28,15 @@ import LLM.Mistral
     mistral
     )
 
+data Artist = Artist
+    { name :: Text
+    , albums :: [Album]
+    } deriving (Show)
+
 data Album = Album
     { title :: Text
     , year :: Text
     , description :: Text
-    } deriving (Show)
-
-data Artist = Artist
-    { name :: Text
-    , albums :: [Album]
     } deriving (Show)
 
 -- | This is the json schema that the response from the LLM is supposed to conform to.

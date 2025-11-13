@@ -6,7 +6,7 @@ module Main where
 
 import qualified Web.Scotty as S
 import Data.Text (Text)
-import Data.Text.Lazy (LazyText, toStrict, fromStrict)
+import Data.Text.Lazy (LazyText)
 import qualified Data.Text as T (length, toCaseFold)
 import Formatting
 import Lucid
@@ -106,8 +106,8 @@ wikiArtistToHtml artist = div_ [class_ "artist wiki"] $ do
             mapM_ (\album -> div_ [class_ "album"] $ do
                     img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)
                          , style_ "width: 150px; height: 150px; border: 1px solid #999;"]
-                    div_ [class_ "title"] $ toHtml album.albumName
-                    div_ [class_ "year"] $ toHtml album.yearOfRelease
+                    div_ [class_ "title"] $ toHtml album.title
+                    div_ [class_ "year"] $ toHtml album.year
                     div_ [class_ "score percent"] $ toHtml $ format int (ratioToPercent $ averageScore album)
                     div_ [class_ "score number"] $ toHtml $ format int (numberOfRatings album)
                   ) artist.albums
@@ -153,7 +153,7 @@ htmlPage elements = renderText . doctypehtml_ $ do
 -- from the Wiki counterpart. If an image wasn't found (or rather, an llm album wasn't matching
 -- a wiki album), just convert the L.Album to an LAlbumWithImage without image file name.
 applyImage :: [Album] -> L.Album -> LAlbumWithImage
-applyImage wAlbums la = case find (\wa -> T.toCaseFold wa.albumName == T.toCaseFold la.title) wAlbums of
+applyImage wAlbums la = case find (\wa -> T.toCaseFold wa.title == T.toCaseFold la.title) wAlbums of
     Nothing -> LAlbumWithImage la.title la.description la.year "(no image found)"
     Just wikiAlbum -> LAlbumWithImage la.title la.description la.year wikiAlbum.imageFilename
 

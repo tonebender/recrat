@@ -38,12 +38,10 @@ import Wiki.Rating
 
 import Wiki.Error
 
--- Type for an album including a list of ratings blocks,
--- each containing a number of ratings (reviews)
 data Album = Album
-    { albumName :: Text
+    { title :: Text
     , artistName :: WikiAnchor
-    , yearOfRelease :: Text
+    , year :: Text
     , imageFilename :: Text
     , ratingBlocks :: [RatingBlock]
     } deriving (Show)
@@ -79,7 +77,7 @@ parseAlbum wikiContent =
               Just artName -> artName
           getAlbumYear w = case findInfoboxProperty "released" (parseAlbumInfobox w) of
               Nothing -> ""  -- Silently return empty if no release year was found
-              Just year -> parseYearEntry $ year.wikiLabel
+              Just year' -> parseYearEntry $ year'.wikiLabel
           parseYearEntry str = let subStrings = if T.isPrefixOf "{{" str then T.splitOn "|" str else T.splitOn " " str in
                                     case filter (\s -> T.length s == 4) $ map (T.takeWhile (`T.elem` "0123456789")) subStrings of
                                         [] -> ""  -- This also gives empty if the year couldn't be parsed
@@ -92,14 +90,14 @@ parseAlbum wikiContent =
 -- starz is whether to show score as stars rather than percentage
 showAlbum :: Album -> Bool -> Text
 showAlbum album starz =
-    (wikiLabel album.artistName) <> " - " <> album.albumName <> getYear album <> "\n"  -- First row is artistname - albumname
+    (wikiLabel album.artistName) <> " - " <> album.title <> getYear album <> "\n"  -- First row is artistname - albumname
     <> (T.concat $ map (showRatingBlock (longestCriticName album) starz) $ album.ratingBlocks)
     <> (T.justifyLeft (longestCriticName album) ' ' "Average score")
     <> if starz then "  " <> ratioToStars (averageScore album) 5 <> "\n"
        else (T.pack $ printf "  %3d\n" $ ratioToPercent $ averageScore album)
     where
         getYear :: Album -> Text
-        getYear albm = if albm.yearOfRelease == "" then "" else " (" <> albm.yearOfRelease <> ")"
+        getYear albm = if albm.year == "" then "" else " (" <> albm.year <> ")"
 
         longestCriticName :: Album -> Int
         longestCriticName album' =
@@ -144,7 +142,7 @@ getRatingsFlat album = concat [rb.ratings | rb <- album.ratingBlocks]
 -- | Get an album but include only ratings whose critic names include the provided text
 filterAlbumByCritic :: Text -> Album -> Album
 filterAlbumByCritic critic album = Album
-    (album.albumName) (album.artistName) (album.yearOfRelease) (album.imageFilename)
+    (album.title) (album.artistName) (album.year) (album.imageFilename)
     $ map (filterRatings critic) (album.ratingBlocks)
     where
         filterRatings "" rblock = rblock
