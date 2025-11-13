@@ -10,6 +10,7 @@ import Data.Text.Lazy (LazyText)
 import qualified Data.Text as T (length, toCaseFold)
 import Formatting
 import Lucid
+import Network.Wai.Middleware.Static
 import Data.List (find)
 
 import qualified Wiki.Artist as W
@@ -52,6 +53,7 @@ wikiImagePath = "https://en.wikipedia.org/wiki/Special:FilePath/"
 
 main :: IO ()
 main = S.scotty 3000 $ do
+    S.middleware $ staticPolicy (noDots >-> addBase "static")
     S.get "/" $ do
         maybeArtist <- S.queryParamMaybe "artist"
         queryList <- S.queryParams
@@ -104,8 +106,7 @@ wikiArtistToHtml artist = div_ [class_ "artist wiki"] $ do
         h2_ $ toHtml artist.name
         div_ [class_ "albums"] $ do
             mapM_ (\album -> div_ [class_ "album"] $ do
-                    img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)
-                         , style_ "width: 150px; height: 150px; border: 1px solid #999;"]
+                    img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)]
                     div_ [class_ "title"] $ toHtml album.title
                     div_ [class_ "year"] $ toHtml album.year
                     div_ [class_ "score percent"] $ toHtml $ format int (ratioToPercent $ averageScore album)
@@ -117,8 +118,7 @@ llmArtistToHtml artist = div_ [class_ "artist llm"] $ do
         h2_ $ toHtml artist.name
         div_ [class_ "albums"] $ do
             mapM_ (\album -> div_ [class_ "album"] $ do
-                    img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)
-                         , style_ "width: 150px; height: 150px; border: 1px solid #999;"]
+                    img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)]
                     div_ [class_ "title"] $ toHtml album.title
                     div_ [class_ "year"] $ toHtml album.year
                     div_ [class_ "description"] $ toHtml album.description
@@ -143,7 +143,9 @@ indexPage flashMsg artist wiki llm = do
 -- basic stuff, plus these elements added to it
 htmlPage :: [Html ()] -> LazyText
 htmlPage elements = renderText . doctypehtml_ $ do
-    head_ $ title_ "Rec Rat"
+    head_ $ do
+        title_ "Rec Rat"
+        link_ [rel_ "stylesheet", href_ "/style.css"]
     body_ $ do
         h1_ "Rec Rat"
         sequence_ elements
