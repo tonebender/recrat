@@ -107,10 +107,12 @@ wikiArtistToHtml artist = div_ [class_ "artist wiki"] $ do
         div_ [class_ "albums"] $ do
             mapM_ (\album -> div_ [class_ "album"] $ do
                     img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)]
-                    div_ [class_ "title"] $ toHtml album.title
-                    div_ [class_ "year"] $ toHtml album.year
-                    div_ [class_ "score percent"] $ toHtml $ format int (ratioToPercent $ averageScore album)
-                    div_ [class_ "score number"] $ toHtml $ format int (numberOfRatings album)
+                    div_ [class_ "albumdata"] $ do
+                        div_ $ do
+                            div_ [class_ "title"] $ toHtml album.title
+                            div_ [class_ "year"] $ toHtml album.year
+                            div_ [class_ "score percent"] $ toHtml $ format int (ratioToPercent $ averageScore album)
+                            div_ [class_ "score number"] $ toHtml $ format int (numberOfRatings album)
                   ) artist.albums
 
 llmArtistToHtml :: LArtist -> Html ()
@@ -119,9 +121,11 @@ llmArtistToHtml artist = div_ [class_ "artist llm"] $ do
         div_ [class_ "albums"] $ do
             mapM_ (\album -> div_ [class_ "album"] $ do
                     img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)]
-                    div_ [class_ "title"] $ toHtml album.title
-                    div_ [class_ "year"] $ toHtml album.year
-                    div_ [class_ "description"] $ toHtml album.description
+                    div_ [class_ "albumdata"] $ do
+                        div_ $ do
+                            div_ [class_ "title"] $ toHtml album.title
+                            div_ [class_ "year"] $ toHtml album.year
+                            div_ [class_ "description"] $ toHtml album.description
                   ) artist.albums
 
 indexPage :: Text -> Text -> Bool -> Bool -> Html ()
@@ -147,8 +151,9 @@ htmlPage elements = renderText . doctypehtml_ $ do
         title_ "Rec Rat"
         link_ [rel_ "stylesheet", href_ "/style.css"]
     body_ $ do
-        h1_ "Rec Rat"
-        sequence_ elements
+        main_ $ do
+            h1_ "Rec Rat"
+            sequence_ elements
 
 -- | Take a list of albums from the Wiki library and a list of albums from the LLM library, and
 -- return a new list of albums, each having all properties from the LLM Album plus imageFilename
