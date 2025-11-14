@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
--- This module contains functions related to parsing ratings for an album from Wikipedia
+-- This module contains functions related to parsing ratings for an album on Wikipedia
 
 module Wiki.Rating (
       Rating(..)
@@ -22,27 +22,27 @@ import Wiki.MediaWiki (
     , parseWikiAnchor
     )
 
--- Type for a block of ratings (one box on a wiki page) for an album
+-- Type for a block of ratings (one infobox) on a Wikipedia album page
 data RatingBlock = RatingBlock
     { header :: Text
     , ratings :: [Rating]
-    } deriving (Show)
+    }
 
--- Type for one review
+-- Type for one review listing on Wikipedia
 data Rating = Rating
     { ratio :: Double
     , score :: Double
     , maxScore :: Double
     , criticName :: WikiAnchor
     -- , ref :: Text
-    } deriving (Show)
+    }
 
 -- | Take an album wiki page (and its title) and find all rating blocks in it and parse them,
 -- returning a list of RatingBlock. If no ratings were found, return an empty list.
 -- If parsing of a rating block fails, that rating block will contain an error message as 
 -- title and an empty Rating list. TODO: Improve that.
 parseRatings :: Text -> Text -> [RatingBlock]
-parseRatings wTitle wText = map applyParser $ getAllRatingBlocks wText 
+parseRatings wTitle wText = map applyParser $ getAllRatingBlocks wText
     where
         getAllRatingBlocks :: Text -> [Text]  -- Returns [] if none found
         getAllRatingBlocks = drop 1 . T.splitOn "{{**\n"
