@@ -41,7 +41,7 @@ import Wiki.Error
 data Artist = Artist
     { name :: Text
     , albums :: [Album]
-    } deriving (Show)
+    }
 
 -- | Return a Text with album titles, year, average ratings, number of ratings, with titles
 -- left-justified and stats right-justified. If starFormat is true, stars instead of numbers will

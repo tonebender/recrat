@@ -44,7 +44,7 @@ data Album = Album
     , year :: Text
     , imageFilename :: Text
     , ratingBlocks :: [RatingBlock]
-    } deriving (Show)
+    }
 
 -- | Find and fetch an album page from Wikipedia,
 -- parse its ratings and return an Album object or an error

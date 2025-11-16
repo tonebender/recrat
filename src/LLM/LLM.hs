@@ -23,21 +23,20 @@ import Data.Aeson.Lens (key, _String, _Object, values)
 import Data.Maybe (catMaybes, fromJust)
 import Control.Lens ((^.), (^..))
 
-import LLM.Mistral
-    (
-    mistral
-    )
+import LLM.Mistral (mistral)
+
+import Artist.Types (Artist(..), Album(..))
 
 data Artist = Artist
     { name :: Text
     , albums :: [Album]
-    } deriving (Show)
+    }
 
 data Album = Album
     { title :: Text
     , year :: Text
     , description :: Text
-    } deriving (Show)
+    }
 
 -- | This is the json schema that the response from the LLM is supposed to conform to.
 artistJsonSchema :: Value
