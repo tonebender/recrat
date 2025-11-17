@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Wiki.MediaWiki (
+module RatLib.Wiki.MediaWiki (
     searchAndGetWiki
     , requestWikiPages
     , parseAlbumInfobox
@@ -11,7 +11,7 @@ module Wiki.MediaWiki (
     , parseWikiAnchor
 ) where
 
-import Wiki.Error
+import RatLib.Error
 
 import Control.Lens ((^.), (^?), (&), (.~))
 import Data.Aeson (Value)

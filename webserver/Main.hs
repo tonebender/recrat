@@ -13,21 +13,21 @@ import Lucid
 import Network.Wai.Middleware.Static
 import Data.List (find)
 
-import qualified Wiki.Artist as W
+import qualified RatLib.Wiki.Artist as W
     (
       fetchArtist
     , Artist(..)
     )
-import Wiki.Album
+import RatLib.Wiki.Album
     (
       Album(..)
     , averageScore
     , ratioToPercent
     , numberOfRatings
     )
-import Wiki.Error
+import RatLib.Error
 
-import qualified LLM.LLM as L
+import qualified RatLib.LLM as L
     (
       fetchArtist
     , Artist(..)

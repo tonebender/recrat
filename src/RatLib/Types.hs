@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Artist.Types (
+module RatLib.Types (
       Artist(..)
     , Album(..)
 ) where

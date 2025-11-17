@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module LLM.Mistral (
+module RatLib.LLM.Mistral (
       mistral
 ) where
 

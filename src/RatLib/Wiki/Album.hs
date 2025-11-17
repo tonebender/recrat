@@ -4,7 +4,7 @@
 -- This module contains functions for getting and parsing one album's ratings
 -- on Wikipedia
 
-module Wiki.Album (
+module RatLib.Wiki.Album (
       Album (..)
     , fetchAlbum
     , parseAlbum
@@ -23,20 +23,20 @@ import Data.Text (Text)
 import Text.Printf (printf)
 import qualified Data.Text as T
 
-import Wiki.MediaWiki (
+import RatLib.Wiki.MediaWiki (
       searchAndGetWiki
     , parseAlbumInfobox
     , findInfoboxProperty
     , WikiAnchor (WikiAnchor, wikiLabel)
     )
 
-import Wiki.Rating
+import RatLib.Wiki.Rating
     ( Rating(..)
     , RatingBlock(..)
     , parseRatings
     )
 
-import Wiki.Error
+import RatLib.Error
 
 data Album = Album
     { title :: Text

@@ -3,7 +3,7 @@
 
 -- This module contains functions related to parsing ratings for an album on Wikipedia
 
-module Wiki.Rating (
+module RatLib.Wiki.Rating (
       Rating(..)
     , RatingBlock(..)
     , parseRatings
@@ -17,7 +17,7 @@ import Options.Applicative ((<|>))
 import qualified Text.Parsec as P
 import qualified Text.HTMLEntity as HTML (decode')
 
-import Wiki.MediaWiki (
+import RatLib.Wiki.MediaWiki (
       WikiAnchor
     , parseWikiAnchor
     )

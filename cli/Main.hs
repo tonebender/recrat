@@ -8,27 +8,27 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as Tio
 import Options.Applicative
 
-import qualified LLM.LLM as L
+import qualified RatLib.LLM as L
     (
       llmMockRequest
     , fetchArtist
     , showArtist
     )
 
-import Wiki.Album
+import RatLib.Wiki.Album
     (
       fetchAlbum
     , showAlbum
     , filterAlbumByCritic
     )
 
-import qualified Wiki.Artist as W
+import qualified RatLib.Wiki.Artist as W
     (
       fetchArtist
     , showArtist
     )
 
-import Wiki.Error
+import RatLib.Error
 
 -- Type for command line args
 data Inputargs = Inputargs

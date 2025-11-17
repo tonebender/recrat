@@ -3,7 +3,7 @@
 
 -- This module contains all error definitions and messages used by all modules in the Wiki library
 
-module Wiki.Error (
+module RatLib.Error (
       WikiError (..)
     , showError
 ) where

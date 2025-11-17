@@ -5,7 +5,7 @@
 -- one LLM service. Specific stuff go in separate modules, such as LLM.Mistral, that
 -- can be imported and called here.
 
-module LLM.LLM (
+module RatLib.LLM (
       fetchArtist
     , showArtist
     , llmMockRequest
@@ -23,9 +23,9 @@ import Data.Aeson.Lens (key, _String, _Object, values)
 import Data.Maybe (catMaybes, fromJust)
 import Control.Lens ((^.), (^..))
 
-import LLM.Mistral (mistral)
+import RatLib.LLM.Mistral (mistral)
 
-import Artist.Types (Artist(..), Album(..))
+-- import Artist.Types (Artist(..), Album(..))
 
 data Artist = Artist
     { name :: Text
