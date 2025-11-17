@@ -5,13 +5,14 @@
 -- one LLM service. Specific stuff go in separate modules, such as LLM.Mistral, that
 -- can be imported and called here.
 
-module RatLib.LLM (
+module RatLib.LLM
+    (
       fetchArtist
     , showArtist
     , llmMockRequest
     , Album (..)
     , Artist (..)
-) where
+    ) where
 
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -25,18 +26,25 @@ import Control.Lens ((^.), (^..))
 
 import RatLib.LLM.Mistral (mistral)
 
--- import Artist.Types (Artist(..), Album(..))
+import RatLib.Types
+    (
+      Album (..)
+    , Artist (..)
+    )
 
-data Artist = Artist
-    { name :: Text
-    , albums :: [Album]
-    }
+type LAlbum = Album ()
+type LArtist = Artist LAlbum
 
-data Album = Album
-    { title :: Text
-    , year :: Text
-    , description :: Text
-    }
+-- data Artist = Artist
+--     { name :: Text
+--     , albums :: [Album]
+--     }
+-- 
+-- data Album = Album
+--     { title :: Text
+--     , year :: Text
+--     , description :: Text
+--     }
 
 -- | This is the json schema that the response from the LLM is supposed to conform to.
 artistJsonSchema :: Value
@@ -79,11 +87,11 @@ promptTemplate :: Text
 promptTemplate = "\"Please list the 10 best $CATEGORY albums by $ARTIST. Try to list them starting with the most popular and/or critically acclaimed. If the given artist has released fewer than 10 albums, list the ones that exists, or the ones that you think are relevant. Don't make any titles up!\""
 
 -- | Get a Text representation of an Artist variable, for output on the console
-showArtist :: Artist -> Text
+showArtist :: LArtist -> Text
 showArtist artist' = artist'.name <> "\n"
     <> T.replicate (T.length artist'.name) "-" <> "\n"
     <> T.intercalate "\n" (map showAlbum artist'.albums)
-    where showAlbum :: Album -> Text
+    where showAlbum :: LAlbum -> Text
           showAlbum a = "* " <> a.title <> " (" <> a.year <> ")\n  " <> a.description
 
 llmMockRequest :: IO (Maybe Value)
@@ -93,7 +101,7 @@ llmMockRequest = do
 
 -- | Call the desired LLM and return its json response parsed to a Artist.
 -- On error, return a text with the error message.
-fetchArtist :: Text -> Text -> IO (Either Text Artist)
+fetchArtist :: Text -> Text -> IO (Either Text LArtist)
 fetchArtist artistQuery category = do
     eitherJson <- requestLLM mistral artistQuery category 
     case eitherJson of
@@ -120,27 +128,33 @@ requestLLM llmMonad artistQuery category = do
 
 -- | Take a json string with the LLM response (validating to artistJsonSchema above), decode it
 --   and return an Artist variable (itself containing an [Album]).
-parseJsonToArtist :: Text -> Either Text Artist
+parseJsonToArtist :: Text -> Either Text LArtist
 parseJsonToArtist jsonText =
     case eitherDecode (BL.fromStrict $ TE.encodeUtf8 jsonText) :: (Either String Value) of
         Left err -> Left $ T.pack err
         Right jsonValue ->
-            Right $ Artist (jsonValue ^. key "artistName" . _String)
-                           (parseObjectsToAlbums $ jsonValue ^.. key "albums" . values . _Object)
+            let artistName' = jsonValue ^. key "artistName" . _String
+                albums' = parseObjectsToAlbums artistName' $ jsonValue ^.. key "albums" . values . _Object
+            in Right $ Artist artistName' albums' Nothing
 
 -- | Take a list of json (aeson) objects with properties mapping to an Album and return
 --   a list of Album. Note: this silently drops any failed parsings via catMaybes.
-parseObjectsToAlbums :: [Object] -> [Album]
-parseObjectsToAlbums objects = catMaybes $ map (parseMaybe objectToAlbumParser) objects
-    where objectToAlbumParser obj = Album
-            <$> obj .: "title"
-            <*> obj .: "year"
-            <*> obj .: "description"
+parseObjectsToAlbums :: Text -> [Object] -> [LAlbum]
+parseObjectsToAlbums artistName' objects = catMaybes $ map (parseMaybe objectToAlbumParser) objects
+    where
+        objectToAlbumParser obj = do
+            title' <- obj .: "title"
+            year' <- obj .: "year"
+            description' <- obj .: "description"
+            return $ Album title' artistName' year' (Just description') Nothing Nothing
 
 -- | Alternative parse function
-parseObjectsToAlbums2 :: [Value] -> [Album]
+parseObjectsToAlbums2 :: [Value] -> [LAlbum]
 parseObjectsToAlbums2 objects = map objectToAlbumParser2 objects
     where objectToAlbumParser2 obj =
             Album (obj ^. key "title" . _String)
+                  ""
                   (obj ^. key "year" . _String)
-                  (obj ^. key "description" . _String)
+                  (Just $ obj ^. key "description" . _String)
+                  Nothing
+                  Nothing
