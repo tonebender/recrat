@@ -37,7 +37,7 @@ mistralJsonTemplate = fromJust $ decode $ BL.concat [
    ]
 
 userAgent :: BS.ByteString
-userAgent = "recrat/0.1.0.0 (https://github.com/tonebender/recrat) haskell"
+userAgent = "recrat/0.1.0.0 (https://codeberg.org/tonebender/recrat) haskell"
 
 mistralURL :: String
 mistralURL = "https://api.mistral.ai/v1/chat/completions"

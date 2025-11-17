@@ -27,7 +27,7 @@ wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
 userAgent :: ByteString
-userAgent = "recrat/0.1.0.0 (https://github.com/tonebender/recrat) haskell"
+userAgent = "recrat/0.1.0.0 (https://codeberg.org/tonebender/recrat) haskell"
 
 -- This type represents a wikipedia link such as [[Revolver|Revolver_(Beatles_album)]]
 data WikiAnchor = WikiAnchor

@@ -1,12 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module RatLib.Types (
-      Artist(..)
-    , Album(..)
-) where
+module RatLib.Types
+    (
+      Artist (..)
+    , Album (..)
+    ) where
 
 import Data.Text (Text)
+
 
 -- If this is used in the Wiki module, the a variable can be set to an album type
 -- with ratings
