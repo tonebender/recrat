@@ -2,7 +2,6 @@
 
 module Main where
 
--- External modules
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as Tio
@@ -15,16 +14,11 @@ import qualified RatLib.LLM as L
     , showArtist
     )
 
-import RatLib.Wiki.Album
-    (
-      fetchAlbum
+import RatLib.Wiki
+    ( fetchAlbum
     , showAlbum
     , filterAlbumByCritic
-    )
-
-import qualified RatLib.Wiki.Artist as W
-    (
-      fetchArtist
+    , fetchArtist
     , showArtist
     )
 
@@ -110,10 +104,10 @@ wikiPrintAlbum query critic starFormat = do
 -- rated to lowest rated, human readable. On failure, print error message.
 wikiPrintArtist :: Text -> Text -> Text -> Bool -> IO ()
 wikiPrintArtist query critic category starFormat = do
-    eitherArtist <- W.fetchArtist query category
+    eitherArtist <- fetchArtist query category
     case eitherArtist of
         Left err -> Tio.putStrLn $ showError err
-        Right artistObj -> Tio.putStr $ W.showArtist artistObj critic starFormat
+        Right artistObj -> Tio.putStr $ showArtist artistObj critic starFormat
 
 -- | Call an LLM with artist search query and album category in order to get a list
 -- of that artist's best albums, printed to console human readable.

@@ -57,12 +57,13 @@ common warnings
 
 library ratlib
     import:           warnings
-    exposed-modules:  RatLib.Types,
+    exposed-modules:  RatLib.Wiki,
+                      RatLib.Types,
+                      RatLib.Error,
+                      RatLib.LLM
+    other-modules:    RatLib.LLM.Mistral,
                       RatLib.Wiki.Album,
                       RatLib.Wiki.Artist,
-                      RatLib.Error,
-                      RatLib.LLM,
-    other-modules:    RatLib.LLM.Mistral,
                       RatLib.Wiki.MediaWiki,
                       RatLib.Wiki.Rating
     build-depends:    text >= 2.1.1,

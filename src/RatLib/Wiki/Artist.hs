@@ -3,7 +3,8 @@
 
 -- This module contains functions related to getting ratings for an artist's entire discography
 
-module RatLib.Wiki.Artist (
+module RatLib.Wiki.Artist
+    (
       Artist (..)
     , fetchArtist
     , showArtist
@@ -20,21 +21,25 @@ import Data.Text.Internal (Text)
 import Text.Printf (printf)
 import qualified Data.Text as T
 
-import RatLib.Wiki.MediaWiki (
+import RatLib.Wiki.MediaWiki
+    (
       requestWikiPages
     , searchAndGetWiki
     , WikiAnchor (wikiURI)
     , getWikiAnchor
-    , parseWikiAnchor)
+    , parseWikiAnchor
+    )
 
-import RatLib.Wiki.Album (
+import RatLib.Wiki.Album
+    (
       Album (..)
     , parseAlbum
     , averageScore
     , numberOfRatings
     , filterAlbumByCritic
     , ratioToPercent
-    , ratioToStars)
+    , ratioToStars
+    )
 
 import RatLib.Error
 

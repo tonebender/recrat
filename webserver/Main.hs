@@ -13,19 +13,15 @@ import Lucid
 import Network.Wai.Middleware.Static
 import Data.List (find)
 
-import qualified RatLib.Wiki.Artist as W
+import qualified RatLib.Wiki as W
     (
-      fetchArtist
-    , Artist(..)
-    )
-import RatLib.Wiki.Album
-    (
-      Album(..)
+      Album (..)
+    , Artist (..)
     , averageScore
-    , ratioToPercent
+    , fetchArtist
     , numberOfRatings
+    , ratioToPercent
     )
-import RatLib.Error
 
 import qualified RatLib.LLM as L
     (
@@ -33,6 +29,8 @@ import qualified RatLib.LLM as L
     , Artist(..)
     , Album(..)
     )
+
+import RatLib.Error
 
 -- These two record types replace the corresponding ones from LLM,
 -- in order to add an image file name from Wikipedia
@@ -111,8 +109,8 @@ wikiArtistToHtml artist = div_ [class_ "artist wiki"] $ do
                         div_ $ do
                             div_ [class_ "title"] $ toHtml album.title
                             div_ [class_ "year"] $ toHtml album.year
-                            div_ [class_ "score percent"] $ toHtml $ format int (ratioToPercent $ averageScore album)
-                            div_ [class_ "score number"] $ toHtml $ format int (numberOfRatings album)
+                            div_ [class_ "score percent"] $ toHtml $ format int (W.ratioToPercent $ W.averageScore album)
+                            div_ [class_ "score number"] $ toHtml $ format int (W.numberOfRatings album)
                   ) artist.albums
 
 llmArtistToHtml :: LArtist -> Html ()
@@ -155,11 +153,11 @@ htmlPage elements = renderText . doctypehtml_ $ do
             h1_ "Rec Rat"
             sequence_ elements
 
--- | Take a list of albums from the Wiki library and a list of albums from the LLM library, and
--- return a new list of albums, each having all properties from the LLM Album plus imageFilename
--- from the Wiki counterpart. If an image wasn't found (or rather, an llm album wasn't matching
--- a wiki album), just convert the L.Album to an LAlbumWithImage without image file name.
-applyImage :: [Album] -> L.Album -> LAlbumWithImage
+-- | Take a list of albums from the Wiki library and an album from the LLM library, and return a new
+-- album, with all the properties from the LLM Album plus imageFilename from the Wiki counterpart,
+-- if found in the list. If an image wasn't found (the llm album wasn't matching a wiki album),
+-- just convert the L.Album to an LAlbumWithImage without image file name.
+applyImage :: [W.Album] -> L.Album -> LAlbumWithImage
 applyImage wAlbums la = case find (\wa -> T.toCaseFold wa.title == T.toCaseFold la.title) wAlbums of
     Nothing -> LAlbumWithImage la.title la.description la.year "(no image found)"
     Just wikiAlbum -> LAlbumWithImage la.title la.description la.year wikiAlbum.imageFilename

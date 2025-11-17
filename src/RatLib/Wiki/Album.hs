@@ -6,12 +6,12 @@
 
 module RatLib.Wiki.Album (
       Album (..)
-    , fetchAlbum
-    , parseAlbum
-    , filterAlbumByCritic
     , averageScore
-    , numberOfRatings
+    , fetchAlbum
+    , filterAlbumByCritic
     , getRatingsFlat
+    , numberOfRatings
+    , parseAlbum
     , ratioToPercent 
     , ratioToStars
     , showAlbum
@@ -23,16 +23,18 @@ import Data.Text (Text)
 import Text.Printf (printf)
 import qualified Data.Text as T
 
-import RatLib.Wiki.MediaWiki (
-      searchAndGetWiki
+import RatLib.Wiki.MediaWiki
+    (
+      findInfoboxProperty
     , parseAlbumInfobox
-    , findInfoboxProperty
+    , searchAndGetWiki
     , WikiAnchor (WikiAnchor, wikiLabel)
     )
 
 import RatLib.Wiki.Rating
-    ( Rating(..)
-    , RatingBlock(..)
+    (
+      Rating (..)
+    , RatingBlock (..)
     , parseRatings
     )
 
