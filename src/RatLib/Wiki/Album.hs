@@ -5,14 +5,13 @@
 -- on Wikipedia
 
 module RatLib.Wiki.Album (
-      Album (..)
-    , averageScore
+      averageScore
     , fetchAlbum
     , filterAlbumByCritic
     , getRatingsFlat
     , numberOfRatings
     , parseAlbum
-    , ratioToPercent 
+    , ratioToPercent
     , ratioToStars
     , showAlbum
 ) where
@@ -23,30 +22,39 @@ import Data.Text (Text)
 import Text.Printf (printf)
 import qualified Data.Text as T
 
+import RatLib.Types
+    (
+      Album (..)
+    , Rating (..)
+    , RatingBlock (..)
+    , WikiAnchor (WikiAnchor, wikiLabel)
+    )
+
 import RatLib.Wiki.MediaWiki
     (
       findInfoboxProperty
     , parseAlbumInfobox
     , searchAndGetWiki
-    , WikiAnchor (WikiAnchor, wikiLabel)
     )
 
 import RatLib.Wiki.Rating
     (
-      Rating (..)
-    , RatingBlock (..)
-    , parseRatings
+      parseRatings
     )
 
 import RatLib.Error
 
-data Album = Album
-    { title :: Text
-    , artistName :: WikiAnchor
-    , year :: Text
-    , imageFilename :: Text
-    , ratingBlocks :: [RatingBlock]
-    }
+-- For prefixing wikipedia image URLs
+wikiImagePath :: Text
+wikiImagePath = "https://en.wikipedia.org/wiki/Special:FilePath/"
+
+-- data Album = Album
+--     { title :: Text
+--     , artistName :: WikiAnchor
+--     , year :: Text
+--     , imageFilename :: Text
+--     , ratingBlocks :: [RatingBlock]
+--     }
 
 -- | Find and fetch an album page from Wikipedia,
 -- parse its ratings and return an Album object or an error
@@ -69,8 +77,9 @@ parseAlbum wikiContent =
         Nothing -> Nothing  -- Doesn't seem to be an album at all
         Just albName -> Just $ Album
                         albName.wikiLabel
-                        (getArtistName wikiContent)
+                        (wikiLabel $ getArtistName wikiContent)
                         (getAlbumYear wikiContent)
+                        ""  -- description
                         (getImageFilename wikiContent)
                         (parseRatings albName.wikiLabel wikiContent)
     where
@@ -85,14 +94,14 @@ parseAlbum wikiContent =
                                         [] -> ""  -- This also gives empty if the year couldn't be parsed
                                         y:_ -> y
           getImageFilename w = case findInfoboxProperty "cover" (parseAlbumInfobox w) of
-              Nothing -> ""
-              Just fileAnchor -> fileAnchor.wikiLabel
+              Nothing -> Nothing
+              Just fileAnchor -> Just $ wikiImagePath <> fileAnchor.wikiLabel
 
 -- | Create a text with all ratings for an album, plus its artist and title, etc.
 -- starz is whether to show score as stars rather than percentage
 showAlbum :: Album -> Bool -> Text
 showAlbum album starz =
-    (wikiLabel album.artistName) <> " - " <> album.title <> getYear album <> "\n"  -- First row is artistname - albumname
+    album.artistName <> " - " <> album.title <> getYear album <> "\n"  -- First row is artistname - albumname
     <> (T.concat $ map (showRatingBlock (longestCriticName album) starz) $ album.ratingBlocks)
     <> (T.justifyLeft (longestCriticName album) ' ' "Average score")
     <> if starz then "  " <> ratioToStars (averageScore album) 5 <> "\n"
@@ -144,7 +153,7 @@ getRatingsFlat album = concat [rb.ratings | rb <- album.ratingBlocks]
 -- | Get an album but include only ratings whose critic names include the provided text
 filterAlbumByCritic :: Text -> Album -> Album
 filterAlbumByCritic critic album = Album
-    (album.title) (album.artistName) (album.year) (album.imageFilename)
+    album.title album.artistName album.year album.description album.imageURL
     $ map (filterRatings critic) (album.ratingBlocks)
     where
         filterRatings "" rblock = rblock

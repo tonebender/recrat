@@ -12,17 +12,17 @@ module RatLib.Wiki
     , showArtist
     ) where
 
+import RatLib.Types
+
 import RatLib.Wiki.Artist
     (
-      Artist (..)
-    , fetchArtist
+      fetchArtist
     , showArtist
     )
 
 import RatLib.Wiki.Album
     (
-      Album (..)
-    , averageScore
+      averageScore
     , fetchAlbum
     , filterAlbumByCritic
     , numberOfRatings

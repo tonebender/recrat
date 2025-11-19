@@ -9,7 +9,7 @@ module RatLib.LLM
     (
       fetchArtist
     , showArtist
-    , llmMockRequest
+    -- , llmMockRequest
     , Album (..)
     , Artist (..)
     ) where
@@ -17,7 +17,7 @@ module RatLib.LLM
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE (encodeUtf8)
-import qualified Data.ByteString.Lazy as BL (fromStrict, readFile, concat)
+import qualified Data.ByteString.Lazy as BL (fromStrict, concat)
 import Data.Aeson (decode, eitherDecode, Value, Object, (.:))
 import Data.Aeson.Types (parseMaybe)
 import Data.Aeson.Lens (key, _String, _Object, values)
@@ -31,9 +31,6 @@ import RatLib.Types
       Album (..)
     , Artist (..)
     )
-
-type LAlbum = Album ()
-type LArtist = Artist LAlbum
 
 -- data Artist = Artist
 --     { name :: Text
@@ -87,21 +84,21 @@ promptTemplate :: Text
 promptTemplate = "\"Please list the 10 best $CATEGORY albums by $ARTIST. Try to list them starting with the most popular and/or critically acclaimed. If the given artist has released fewer than 10 albums, list the ones that exists, or the ones that you think are relevant. Don't make any titles up!\""
 
 -- | Get a Text representation of an Artist variable, for output on the console
-showArtist :: LArtist -> Text
+showArtist :: Artist -> Text
 showArtist artist' = artist'.name <> "\n"
     <> T.replicate (T.length artist'.name) "-" <> "\n"
     <> T.intercalate "\n" (map showAlbum artist'.albums)
-    where showAlbum :: LAlbum -> Text
+    where showAlbum :: Album -> Text
           showAlbum a = "* " <> a.title <> " (" <> a.year <> ")\n  " <> a.description
 
-llmMockRequest :: IO (Maybe Value)
-llmMockRequest = do
-    contents <- BL.readFile "mock_responseBody_content.json"
-    return $ decode contents
+-- llmMockRequest :: IO (Maybe Value)
+-- llmMockRequest = do
+--     contents <- BL.readFile "mock_responseBody_content.json"
+--     return $ decode contents
 
 -- | Call the desired LLM and return its json response parsed to a Artist.
 -- On error, return a text with the error message.
-fetchArtist :: Text -> Text -> IO (Either Text LArtist)
+fetchArtist :: Text -> Text -> IO (Either Text Artist)
 fetchArtist artistQuery category = do
     eitherJson <- requestLLM mistral artistQuery category 
     case eitherJson of
@@ -128,7 +125,7 @@ requestLLM llmMonad artistQuery category = do
 
 -- | Take a json string with the LLM response (validating to artistJsonSchema above), decode it
 --   and return an Artist variable (itself containing an [Album]).
-parseJsonToArtist :: Text -> Either Text LArtist
+parseJsonToArtist :: Text -> Either Text Artist
 parseJsonToArtist jsonText =
     case eitherDecode (BL.fromStrict $ TE.encodeUtf8 jsonText) :: (Either String Value) of
         Left err -> Left $ T.pack err
@@ -139,22 +136,22 @@ parseJsonToArtist jsonText =
 
 -- | Take a list of json (aeson) objects with properties mapping to an Album and return
 --   a list of Album. Note: this silently drops any failed parsings via catMaybes.
-parseObjectsToAlbums :: Text -> [Object] -> [LAlbum]
+parseObjectsToAlbums :: Text -> [Object] -> [Album]
 parseObjectsToAlbums artistName' objects = catMaybes $ map (parseMaybe objectToAlbumParser) objects
     where
         objectToAlbumParser obj = do
             title' <- obj .: "title"
             year' <- obj .: "year"
             description' <- obj .: "description"
-            return $ Album title' artistName' year' (Just description') Nothing Nothing
+            return $ Album title' artistName' year' description' Nothing []
 
 -- | Alternative parse function
-parseObjectsToAlbums2 :: [Value] -> [LAlbum]
-parseObjectsToAlbums2 objects = map objectToAlbumParser2 objects
-    where objectToAlbumParser2 obj =
-            Album (obj ^. key "title" . _String)
-                  ""
-                  (obj ^. key "year" . _String)
-                  (Just $ obj ^. key "description" . _String)
-                  Nothing
-                  Nothing
+-- parseObjectsToAlbums2 :: [Value] -> [LAlbum]
+-- parseObjectsToAlbums2 objects = map objectToAlbumParser2 objects
+--     where objectToAlbumParser2 obj =
+--             Album (obj ^. key "title" . _String)
+--                   ""
+--                   (obj ^. key "year" . _String)
+--                   (Just $ obj ^. key "description" . _String)
+--                   Nothing
+--                   Nothing

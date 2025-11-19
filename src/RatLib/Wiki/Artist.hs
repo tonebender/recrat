@@ -5,8 +5,7 @@
 
 module RatLib.Wiki.Artist
     (
-      Artist (..)
-    , fetchArtist
+      fetchArtist
     , showArtist
     , filterAlbumsByCritic
     , getAlbums
@@ -21,19 +20,24 @@ import Data.Text.Internal (Text)
 import Text.Printf (printf)
 import qualified Data.Text as T
 
+import RatLib.Types
+    (
+      Artist (..)
+    , Album (..)
+    , WikiAnchor (wikiURI)
+    )
+
 import RatLib.Wiki.MediaWiki
     (
       requestWikiPages
     , searchAndGetWiki
-    , WikiAnchor (wikiURI)
     , getWikiAnchor
     , parseWikiAnchor
     )
 
 import RatLib.Wiki.Album
     (
-      Album (..)
-    , parseAlbum
+      parseAlbum
     , averageScore
     , numberOfRatings
     , filterAlbumByCritic
@@ -43,10 +47,10 @@ import RatLib.Wiki.Album
 
 import RatLib.Error
 
-data Artist = Artist
-    { name :: Text
-    , albums :: [Album]
-    }
+-- data Artist = Artist
+--     { name :: Text
+--     , albums :: [Album]
+--     }
 
 -- | Return a Text with album titles, year, average ratings, number of ratings, with titles
 -- left-justified and stats right-justified. If starFormat is true, stars instead of numbers will
@@ -80,7 +84,7 @@ showArtist artist critic starFormat =
 
 -- | Get the artist but include only ratings whose critic name includes critic
 filterAlbumsByCritic :: Text -> Artist -> Artist
-filterAlbumsByCritic critic artist = Artist artist.name (map (filterAlbumByCritic critic) artist.albums)
+filterAlbumsByCritic critic artist = Artist artist.name (map (filterAlbumByCritic critic) artist.albums) artist.wikiURL
 
 -- | Sort albums in a list according to their average score, and, when score is equal,
 -- according to their number of ratings (more ratings -> higher rank)
@@ -105,13 +109,14 @@ fetchArtist query category = do
         Left err -> return $ Left err
         Right (wikiPageTitle, wikiPageText) -> do  -- Got discography contents and title
             let artistName' = T.replace " discography" "" wikiPageTitle
+            -- TODO: Use getInfoBoxYadaYada to get the wiki page title for the artist
             case parseDiscographyAlbums wikiPageText category of  -- Parse the discography (find album links)
                 [] -> return $ Left $ ErrorNoDiscography artistName'
                 albumTitles -> do
                     eitherAlbums <- getAlbums artistName' [a.wikiURI | a <- albumTitles]  -- Fetch all albums and their ratings
                     case eitherAlbums of
                         Left err -> return $ Left err
-                        Right albums' -> return $ Right $ Artist artistName' albums'
+                        Right albums' -> return $ Right $ Artist artistName' albums' Nothing
 
 -- | Take a list of album page titles on Wikipedia and request all of those pages' contents 
 -- (through the Mediawiki Revisions API, to json). Then get their ratings and return as a list

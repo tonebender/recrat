@@ -5,9 +5,7 @@
 
 module RatLib.Wiki.Rating
     (
-      Rating (..)
-    , RatingBlock (..)
-    , parseRatings
+      parseRatings
     ) where
 
 import Data.Text (Text)
@@ -18,26 +16,16 @@ import Options.Applicative ((<|>))
 import qualified Text.Parsec as P
 import qualified Text.HTMLEntity as HTML (decode')
 
-import RatLib.Wiki.MediaWiki
+import RatLib.Types
     (
-      WikiAnchor
-    , parseWikiAnchor
+      Rating (..)
+    , RatingBlock (..)
     )
 
--- Type for a block of ratings (one infobox) on a Wikipedia album page
-data RatingBlock = RatingBlock
-    { header :: Text
-    , ratings :: [Rating]
-    }
-
--- Type for one review listing on Wikipedia
-data Rating = Rating
-    { ratio :: Double
-    , score :: Double
-    , maxScore :: Double
-    , criticName :: WikiAnchor
-    -- , ref :: Text
-    }
+import RatLib.Wiki.MediaWiki
+    (
+      parseWikiAnchor
+    )
 
 -- | Take an album wiki page (and its title) and find all rating blocks in it and parse them,
 -- returning a list of RatingBlock. If no ratings were found, return an empty list.

@@ -5,26 +5,48 @@ module RatLib.Types
     (
       Artist (..)
     , Album (..)
+    , Rating (..)
+    , RatingBlock (..)
+    , WikiAnchor (..)
     ) where
 
 import Data.Text (Text)
 
 
--- If this is used in the Wiki module, the a variable can be set to an album type
--- with ratings
-data Artist a = Artist
+data Artist = Artist
     { name :: Text
-    , albums :: [a]
+    , albums :: [Album]
     , wikiURL :: Maybe Text
     }
 
--- If this is used for an album with ratings in the Wiki module, r can be set to
--- RatingBlock
-data Album r = Album
+-- Maybe parameterize again but perhaps skip Maybe on ratingBlocks
+data Album = Album
     { title :: Text
-    , artistName :: Text
+    , artistName :: Text  -- Basically only used when viewing album separately (not in Artist)
     , year :: Text
-    , description :: Maybe Text
+    , description :: Text
     , imageURL :: Maybe Text
-    , ratingBlocks :: Maybe [r]
+    , ratingBlocks :: [RatingBlock]
     }
+
+-- Type for a block of ratings (one infobox) on a Wikipedia album page
+data RatingBlock = RatingBlock
+    { header :: Text
+    , ratings :: [Rating]
+    }
+
+-- Type for one review listing on Wikipedia
+data Rating = Rating
+    { ratio :: Double
+    , score :: Double
+    , maxScore :: Double
+    , criticName :: WikiAnchor
+    -- , ref :: Text
+    }
+
+-- This type represents a Wikipedia link such as [[Revolver|Revolver_(Beatles_album)]]
+data WikiAnchor = WikiAnchor
+    { wikiURI :: Text
+    , wikiLabel :: Text
+    } deriving (Show)
+

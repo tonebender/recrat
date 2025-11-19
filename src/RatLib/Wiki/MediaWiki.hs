@@ -1,17 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module RatLib.Wiki.MediaWiki (
-    searchAndGetWiki
+module RatLib.Wiki.MediaWiki
+    (
+      searchAndGetWiki
     , requestWikiPages
     , parseAlbumInfobox
     , findInfoboxProperty
-    , WikiAnchor (..)
     , getWikiAnchor
     , parseWikiAnchor
-) where
-
-import RatLib.Error
+    ) where
 
 import Control.Lens ((^.), (^?), (&), (.~))
 import Data.Aeson (Value)
@@ -23,17 +21,14 @@ import qualified Data.Text as T
 import qualified Network.Wreq as W (getWith, defaults, params, header, responseBody)
 import qualified Text.HTMLEntity as HTML (decode')
 
+import RatLib.Types (WikiAnchor (..))
+import RatLib.Error
+
 wikipediaApiUrl :: String
 wikipediaApiUrl = "https://en.wikipedia.org/w/api.php"
 
 userAgent :: ByteString
 userAgent = "recrat/0.1.0.0 (https://codeberg.org/tonebender/recrat) haskell"
-
--- This type represents a wikipedia link such as [[Revolver|Revolver_(Beatles_album)]]
-data WikiAnchor = WikiAnchor
-    { wikiURI :: Text
-    , wikiLabel :: Text
-    } deriving (Show)
 
 -- | Search for a query on Wikipedia and return the title and contents
 -- of the first page found as a Text tuple, or WikiError otherwise
