@@ -10,8 +10,6 @@ module RatLib.LLM
       fetchArtist
     , showArtist
     -- , llmMockRequest
-    , Album (..)
-    , Artist (..)
     ) where
 
 import Data.Text (Text)
@@ -31,17 +29,6 @@ import RatLib.Types
       Album (..)
     , Artist (..)
     )
-
--- data Artist = Artist
---     { name :: Text
---     , albums :: [Album]
---     }
--- 
--- data Album = Album
---     { title :: Text
---     , year :: Text
---     , description :: Text
---     }
 
 -- | This is the json schema that the response from the LLM is supposed to conform to.
 artistJsonSchema :: Value

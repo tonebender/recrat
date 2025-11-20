@@ -1,8 +1,6 @@
 module RatLib.Wiki
     (
-      Album (..)
-    , Artist (..)
-    , averageScore
+      averageScore
     , fetchAlbum
     , fetchArtist
     , filterAlbumByCritic
@@ -11,8 +9,6 @@ module RatLib.Wiki
     , showAlbum
     , showArtist
     ) where
-
-import RatLib.Types
 
 import RatLib.Wiki.Artist
     (

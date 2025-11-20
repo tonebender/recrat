@@ -12,12 +12,11 @@ import Formatting
 import Lucid
 import Network.Wai.Middleware.Static
 import Data.List (find)
+import Data.Maybe (fromMaybe)
 
 import qualified RatLib.Wiki as W
     (
-      Album (..)
-    , Artist (..)
-    , averageScore
+      averageScore
     , fetchArtist
     , numberOfRatings
     , ratioToPercent
@@ -26,28 +25,11 @@ import qualified RatLib.Wiki as W
 import qualified RatLib.LLM as L
     (
       fetchArtist
-    , Artist(..)
-    , Album(..)
     )
 
 import RatLib.Error
 
--- These two record types replace the corresponding ones from LLM,
--- in order to add an image file name from Wikipedia
-data LAlbumWithImage = LAlbumWithImage
-    { title :: Text
-    , year :: Text
-    , description :: Text
-    , imageFilename :: Text
-    }
-data LArtist = LArtist
-    { name :: Text
-    , albums :: [LAlbumWithImage]
-    }
-
--- For prefixing wikipedia image URLs
-wikiImagePath :: Text
-wikiImagePath = "https://en.wikipedia.org/wiki/Special:FilePath/"
+import RatLib.Types
 
 main :: IO ()
 main = S.scotty 3000 $ do
@@ -86,45 +68,38 @@ handleRequest artist wiki llm = do
     let wikiResult = if wiki  -- If wiki was checked, use the wiki results
         then case eitherWikiArtist of
                 Left err -> [div_ [class_ "artist wiki"] $ toHtml $ showError err]
-                Right artistObj -> [wikiArtistToHtml artistObj]
+                Right artistObj -> [artistToHtml artistObj]
         else []
     llmResult <- do  -- If llm was checked, call the llm and also use the wiki Artist to create a response
         if llm then do
             eitherLlmArtist <- L.fetchArtist artist "studio"
             case (eitherLlmArtist, eitherWikiArtist) of
-                (Left errorText, _) -> return $ [div_ [class_ "artist llm"] $ toHtml errorText]
-                (Right llmArtist, Left _) -> return [llmArtistToHtml $ LArtist llmArtist.name $ map (applyImage []) llmArtist.albums]
-                (Right llmArtist, Right wikiArtist) ->
-                    return [llmArtistToHtml $ LArtist llmArtist.name $ map (applyImage wikiArtist.albums) llmArtist.albums]
+                (Left errorText, _) -> return [div_ [class_ "artist llm"] $ toHtml errorText]
+                (Right llmArtist, Left _) -> return [artistToHtml llmArtist]
+                (Right llmArtist, Right wikiArtist) -> return [artistToHtml $ mergeArtists llmArtist wikiArtist]
         else return []
     return $ wikiResult ++ llmResult
 
-wikiArtistToHtml :: W.Artist -> Html ()
-wikiArtistToHtml artist = div_ [class_ "artist wiki"] $ do
+artistToHtml :: Artist -> Html ()
+artistToHtml artist =
+    div_ [class_ "artist"] $ do
         h2_ $ toHtml artist.name
-        div_ [class_ "albums"] $ do
-            mapM_ (\album -> div_ [class_ "album"] $ do
-                    img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)]
-                    div_ [class_ "albumdata"] $ do
-                        div_ $ do
-                            div_ [class_ "title"] $ toHtml album.title
-                            div_ [class_ "year"] $ toHtml album.year
-                            div_ [class_ "score percent"] $ toHtml $ format int (W.ratioToPercent $ W.averageScore album)
-                            div_ [class_ "score number"] $ toHtml $ format int (W.numberOfRatings album)
-                  ) artist.albums
-
-llmArtistToHtml :: LArtist -> Html ()
-llmArtistToHtml artist = div_ [class_ "artist llm"] $ do
-        h2_ $ toHtml artist.name
-        div_ [class_ "albums"] $ do
-            mapM_ (\album -> div_ [class_ "album"] $ do
-                    img_ [class_ "cover", src_ (wikiImagePath <> album.imageFilename)]
-                    div_ [class_ "albumdata"] $ do
-                        div_ $ do
-                            div_ [class_ "title"] $ toHtml album.title
-                            div_ [class_ "year"] $ toHtml album.year
-                            div_ [class_ "description"] $ toHtml album.description
-                  ) artist.albums
+        div_ [class_ "albums"] $ mapM_ albumToHtml artist.albums
+    where
+        albumToHtml :: Album -> Html ()
+        albumToHtml album =
+            div_ [class_ "album"] $ do
+                img_ [class_ "cover", src_ (fromMaybe "" album.imageURL)]  -- TODO: Handle empty cases
+                div_ [class_ "albumdata"] $ do
+                    div_ $ do
+                        div_ [class_ "title"] $ toHtml album.title
+                        div_ [class_ "year"] $ toHtml album.year
+                        div_ [class_ "description"] $ toHtml album.description
+                        case album.ratingBlocks of
+                            [] -> mempty  -- or: return ()
+                            _  -> do
+                                div_ [class_ "score percent"] $ toHtml $ format int (W.ratioToPercent $ W.averageScore album)
+                                div_ [class_ "score number"] $ toHtml $ format int (W.numberOfRatings album)
 
 indexPage :: Text -> Text -> Bool -> Bool -> Html ()
 indexPage flashMsg artist wiki llm = do
@@ -153,12 +128,14 @@ htmlPage elements = renderText . doctypehtml_ $ do
             h1_ "Rec Rat"
             sequence_ elements
 
--- | Take a list of albums from the Wiki library and an album from the LLM library, and return a new
--- album, with all the properties from the LLM Album plus imageFilename from the Wiki counterpart,
--- if found in the list. If an image wasn't found (the llm album wasn't matching a wiki album),
--- just convert the L.Album to an LAlbumWithImage without image file name.
-applyImage :: [W.Album] -> L.Album -> LAlbumWithImage
-applyImage wAlbums la = case find (\wa -> T.toCaseFold wa.title == T.toCaseFold la.title) wAlbums of
-    Nothing -> LAlbumWithImage la.title la.description la.year "(no image found)"
-    Just wikiAlbum -> LAlbumWithImage la.title la.description la.year wikiAlbum.imageFilename
+-- | Take an artist from LLM and an artist from Wiki and return the LLM artist with the album image URLs from the Wiki
+-- artist (in all cases where the LLM album had a corresponding Wiki album, i.e. same album title)
+mergeArtists :: Artist -> Artist -> Artist
+mergeArtists llmArtist wikiArtist =
+    llmArtist {albums = map (applyImage wikiArtist.albums) llmArtist.albums}
+    where
+        applyImage :: [Album] -> Album -> Album
+        applyImage wikiAlbums la = case find (\wa -> T.toCaseFold wa.title == T.toCaseFold la.title) wikiAlbums of
+            Nothing -> la
+            Just wikiAlbum -> la {imageURL = wikiAlbum.imageURL}
 
