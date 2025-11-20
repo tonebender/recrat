@@ -90,16 +90,16 @@ artistToHtml artist =
         albumToHtml album =
             div_ [class_ "album"] $ do
                 img_ [class_ "cover", src_ (fromMaybe "" album.imageURL)]  -- TODO: Handle empty cases
-                div_ [class_ "albumdata"] $ do
+                div_ [class_ "albumdata"] $ div_ $ do
                     div_ $ do
-                        div_ [class_ "title"] $ toHtml album.title
-                        div_ [class_ "year"] $ toHtml album.year
-                        div_ [class_ "description"] $ toHtml album.description
-                        case album.ratingBlocks of
-                            [] -> mempty  -- or: return ()
-                            _  -> do
-                                div_ [class_ "score percent"] $ toHtml $ format int (W.ratioToPercent $ W.averageScore album)
-                                div_ [class_ "score number"] $ toHtml $ format int (W.numberOfRatings album)
+                        span_ [class_ "title"] $ toHtml album.title
+                        span_ [class_ "year"] $ toHtml $ " " <> album.year
+                    div_ [class_ "description"] $ toHtml album.description
+                    case album.ratingBlocks of
+                        [] -> mempty  -- or: return ()
+                        _  -> do
+                            div_ [class_ "score percent"] $ toHtml $ format int (W.ratioToPercent $ W.averageScore album)
+                            div_ [class_ "score number"] $ toHtml $ "(" <> format int (W.numberOfRatings album) <> ")"
 
 indexPage :: Text -> Text -> Bool -> Bool -> Html ()
 indexPage flashMsg artist wiki llm = do

@@ -2,11 +2,19 @@ main {
     width: 80%;
     max-width: 500px;
     margin: 0 auto;
+    font-family: sans-serif
 }
 
 .album {
     display: flex;
     padding: 10px;
+}
+
+.cover {
+    width: 120px;
+    height: 120px;
+    border: 1px solid #999;
+    margin-right: 10px;
 }
 
 .albumdata {
@@ -15,9 +23,21 @@ main {
     justify-content: center;
 }
 
-.cover {
-    width: 120px;
-    height: 120px;
-    border: 1px solid #999;
-    margin-right: 5px;
+.title {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.year {
+    font-size: 1.2em;
+    margin-left: 4px;
+}
+
+.score.percent {
+    font-size: 1.4em;
+    margin-top: 4px;
+}
+
+.score.number {
+    font-size: 0.8em;
 }
