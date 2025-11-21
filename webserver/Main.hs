@@ -48,7 +48,7 @@ main = S.scotty 3000 $ do
             (artist', False, False) -> S.html
                 $ htmlPage [indexPage "Please choose Wikipedia and/or Mistral AI sources" artist' False False]
             (artist', wiki', llm') -> do
-                elementList <- S.liftIO $ handleRequest artist' wiki' llm'
+                elementList <- S.liftIO $ getArtists artist' wiki' llm'
                 S.html $ htmlPage elementList
 
 -- | Check if a list of query parameters has a certain parameter.
@@ -57,49 +57,49 @@ hasQueryParam :: [S.Param] -> Text -> Bool
 hasQueryParam paramList paramName = filter (\(p, _) -> p == paramName) paramList /= []
 
 -- | Take an artist name and a boolean each for wiki and LLM and call the right backend functions
--- for retrieving artists
--- NOTE: Because all AIs tested turned out to be wholly unable to find correct album
--- cover URLs, in case llm was the chosen source, we get the llm results plus the
--- whole discography via the wiki library, then use the llm album records but with
--- image file names from the corresponding wiki albums.
-handleRequest :: Text -> Bool -> Bool -> IO [Html ()]
-handleRequest artist wiki llm = do
-    eitherWikiArtist <- W.fetchArtist artist "studio"  -- (used by both wiki and llm)
+-- for retrieving artists. Return a list of html elements, where the first one is an h2 header.
+-- The wiki artist is always fetched because we use it to get the artist name (for the header)
+-- and album images, even for the llm results.
+getArtists :: Text -> Bool -> Bool -> IO [Html ()]
+getArtists artistQuery wiki llm = do
+    eitherWikiArtist <- W.fetchArtist artistQuery "studio"  -- Used by both wiki and llm
+    let wikiArtistHeader = case eitherWikiArtist of  -- Will be placed above all results
+            Left _ -> h2_ "Artist results"  -- Generic header on error
+            Right artistObj -> h2_ $ toHtml artistObj.name
     let wikiResult = if wiki  -- If wiki was checked, use the wiki results
         then case eitherWikiArtist of
-                Left err -> [div_ [class_ "artist wiki"] $ toHtml $ showError err]
-                Right artistObj -> [artistToHtml artistObj]
-        else []
-    llmResult <- do  -- If llm was checked, call the llm and also use the wiki Artist to create a response
-        if llm then do
-            eitherLlmArtist <- L.fetchArtist artist "studio"
-            case (eitherLlmArtist, eitherWikiArtist) of
-                (Left errorText, _) -> return [div_ [class_ "artist llm"] $ toHtml errorText]
-                (Right llmArtist, Left _) -> return [artistToHtml llmArtist]
-                (Right llmArtist, Right wikiArtist) -> return [artistToHtml $ mergeArtists llmArtist wikiArtist]
-        else return []
-    return $ wikiResult ++ llmResult
+            Left err -> div_ [class_ "artist wiki"] $ toHtml $ showError err
+            Right artistObj -> artistToHtml artistObj
+        else mempty
+    llmResult <- if llm then do  -- If llm was checked, call the llm and also use the wiki Artist to fill in images
+        eitherLlmArtist <- L.fetchArtist artistQuery "studio"
+        case (eitherLlmArtist, eitherWikiArtist) of
+            (Left errorText, _) -> return $ div_ [class_ "artist llm"] $ toHtml errorText
+            (Right llmArtist, Left _) -> return $ artistToHtml llmArtist
+            (Right llmArtist, Right wikiArtist) -> return $ artistToHtml $ mergeArtists llmArtist wikiArtist
+        else return mempty
+    return $ wikiArtistHeader:wikiResult:llmResult:[]
 
 artistToHtml :: Artist -> Html ()
 artistToHtml artist =
     div_ [class_ "artist"] $ do
         h2_ $ toHtml artist.name
         div_ [class_ "albums"] $ mapM_ albumToHtml artist.albums
-    where
-        albumToHtml :: Album -> Html ()
-        albumToHtml album =
-            div_ [class_ "album"] $ do
-                img_ [class_ "cover", src_ (fromMaybe "" album.imageURL)]  -- TODO: Handle empty cases
-                div_ [class_ "albumdata"] $ div_ $ do
-                    div_ $ do
-                        span_ [class_ "title"] $ toHtml album.title
-                        span_ [class_ "year"] $ toHtml $ " " <> album.year
-                    div_ [class_ "description"] $ toHtml album.description
-                    case album.ratingBlocks of
-                        [] -> mempty  -- or: return ()
-                        _  -> do
-                            div_ [class_ "score percent"] $ toHtml $ format int (W.ratioToPercent $ W.averageScore album)
-                            div_ [class_ "score number"] $ toHtml $ "(" <> format int (W.numberOfRatings album) <> ")"
+
+albumToHtml :: Album -> Html ()
+albumToHtml album =
+    div_ [class_ "album"] $ do
+        img_ [class_ "cover", src_ (fromMaybe "" album.imageURL)]  -- TODO: Handle empty cases
+        div_ [class_ "albumdata"] $ div_ $ do
+            div_ $ do
+                span_ [class_ "title"] $ toHtml album.title
+                span_ [class_ "year"] $ toHtml $ " " <> album.year
+            div_ [class_ "description"] $ toHtml album.description
+            case album.ratingBlocks of
+                [] -> mempty  -- or: return ()
+                _  -> div_ [class_ "score"] $ do
+                    span_ [class_ "percent"] $ toHtml $ format int (W.ratioToPercent $ W.averageScore album)
+                    span_ [class_ "number"] $ toHtml $ " (" <> format int (W.numberOfRatings album) <> ")"
 
 indexPage :: Text -> Text -> Bool -> Bool -> Html ()
 indexPage flashMsg artist wiki llm = do
