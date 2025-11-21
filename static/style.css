@@ -30,14 +30,22 @@ main {
 
 .year {
     font-size: 1.2em;
+    color: #777;
     margin-left: 4px;
 }
 
-.score.percent {
-    font-size: 1.4em;
+.description {
+    color: #777;
+    font-size: 0.9em;
     margin-top: 4px;
 }
 
-.score.number {
-    font-size: 0.8em;
+.percent {
+    font-size: 1.5em;
+    margin-top: 4px;
+}
+
+.number {
+    font-size: 0.7em;
+    color: #777;
 }
