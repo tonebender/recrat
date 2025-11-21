@@ -39,16 +39,16 @@ main = S.scotty 3000 $ do
         queryList <- S.queryParams
         let wiki = queryList `hasQueryParam` "wikipedia"
             llm = queryList `hasQueryParam` "llm"
-            artist = case maybeArtist of
+            artistQuery = case maybeArtist of
                 Nothing -> ""
                 Just a -> a
-        case (artist, wiki, llm) of
-            ("", False, False) -> S.html $ htmlPage [indexPage "" "" False False]  -- Nothing provided, just show index page
-            ("", w, l) -> S.html $ htmlPage [indexPage "No artist specified" "" w l]
-            (artist', False, False) -> S.html
-                $ htmlPage [indexPage "Please choose Wikipedia and/or Mistral AI sources" artist' False False]
-            (artist', wiki', llm') -> do
-                elementList <- S.liftIO $ getArtists artist' wiki' llm'
+        case (artistQuery, wiki, llm) of
+            ("", False, False) -> S.html $ htmlPage $ indexPage "" "" False False  -- Nothing provided, just show index page
+            ("", w, l) -> S.html $ htmlPage $ indexPage "No artist specified" "" w l
+            (artistQuery', False, False) -> S.html
+                $ htmlPage $ indexPage "Please choose Wikipedia and/or Mistral AI sources" artistQuery' False False
+            (artistQuery', wiki', llm') -> do
+                elementList <- S.liftIO $ getArtists artistQuery' wiki' llm'
                 S.html $ htmlPage elementList
 
 -- | Check if a list of query parameters has a certain parameter.
@@ -60,30 +60,33 @@ hasQueryParam paramList paramName = filter (\(p, _) -> p == paramName) paramList
 -- for retrieving artists. Return a list of html elements, where the first one is an h2 header.
 -- The wiki artist is always fetched because we use it to get the artist name (for the header)
 -- and album images, even for the llm results.
-getArtists :: Text -> Bool -> Bool -> IO [Html ()]
+getArtists :: Text -> Bool -> Bool -> IO (Html ())
 getArtists artistQuery wiki llm = do
-    eitherWikiArtist <- W.fetchArtist artistQuery "studio"  -- Used by both wiki and llm
-    let wikiArtistHeader = case eitherWikiArtist of  -- Will be placed above all results
-            Left _ -> h2_ "Artist results"  -- Generic header on error
+    eitherWikiArtist <- W.fetchArtist artistQuery "studio"  -- Wiki results are used by both wiki and llm
+    let artistHeaderHtml = case eitherWikiArtist of         -- Use artist name as header above all results
+            Left _ -> h2_ "Artist results"                  -- Generic header on wiki error
             Right artistObj -> h2_ $ toHtml artistObj.name
-    let wikiResult = if wiki  -- If wiki was checked, use the wiki results
+    let wikiHtml = if wiki                                -- If wiki was checked, use the wiki results
         then case eitherWikiArtist of
-            Left err -> div_ [class_ "artist wiki"] $ toHtml $ showError err
-            Right artistObj -> artistToHtml artistObj
+            Left err -> div_ [class_ "source"] $ toHtml $ showError err
+            Right artistObj -> sourceToHtml artistObj "Wikipedia"
         else mempty
-    llmResult <- if llm then do  -- If llm was checked, call the llm and also use the wiki Artist to fill in images
+    llmHtml <- if llm then do  -- If llm was checked, call the llm and also (if possible) use the wiki Artist to fill in images
         eitherLlmArtist <- L.fetchArtist artistQuery "studio"
         case (eitherLlmArtist, eitherWikiArtist) of
-            (Left errorText, _) -> return $ div_ [class_ "artist llm"] $ toHtml errorText
-            (Right llmArtist, Left _) -> return $ artistToHtml llmArtist
-            (Right llmArtist, Right wikiArtist) -> return $ artistToHtml $ mergeArtists llmArtist wikiArtist
+            (Left errorText, _) -> return $ div_ [class_ "source"] $ toHtml errorText  -- LLM failed
+            (Right llmArtist, Left _) -> return $ sourceToHtml llmArtist "Mistral AI"  -- LLM worked, but wiki failed
+            (Right llmArtist, Right wikiArtist) -> return $ sourceToHtml (mergeArtists llmArtist wikiArtist) "Mistral AI"
         else return mempty
-    return $ wikiArtistHeader:wikiResult:llmResult:[]
+    return $ div_ [class_ "artist"] $ do
+        artistHeaderHtml
+        wikiHtml
+        llmHtml
 
-artistToHtml :: Artist -> Html ()
-artistToHtml artist =
-    div_ [class_ "artist"] $ do
-        h2_ $ toHtml artist.name
+sourceToHtml :: Artist -> Text -> Html ()
+sourceToHtml artist sourceHeader =
+    div_ [class_ "source"] $ do
+        h3_ $ toHtml sourceHeader
         div_ [class_ "albums"] $ mapM_ albumToHtml artist.albums
 
 albumToHtml :: Album -> Html ()
@@ -116,9 +119,9 @@ indexPage flashMsg artist wiki llm = do
     p_ [id_ "loading", style_ "display: none;"] "Searching ..."
     script_ "const showLoading = () => { document.getElementById('loading').style.display = 'block'; }"
 
--- | Take a list of Html elements and return a text with the web page, with head, title and other
+-- | Take an Html element container and return a text with the web page, with head, title and other
 -- basic stuff, plus these elements added to it
-htmlPage :: [Html ()] -> LazyText
+htmlPage :: Html () -> LazyText
 htmlPage elements = renderText . doctypehtml_ $ do
     head_ $ do
         title_ "Rec Rat"
@@ -126,7 +129,7 @@ htmlPage elements = renderText . doctypehtml_ $ do
     body_ $ do
         main_ $ do
             h1_ "Rec Rat"
-            sequence_ elements
+            elements
 
 -- | Take an artist from LLM and an artist from Wiki and return the LLM artist with the album image URLs from the Wiki
 -- artist (in all cases where the LLM album had a corresponding Wiki album, i.e. same album title)
