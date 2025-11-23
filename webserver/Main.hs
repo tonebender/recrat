@@ -7,7 +7,7 @@ module Main where
 import qualified Web.Scotty as S
 import Data.Text (Text)
 import Data.Text.Lazy (LazyText)
-import qualified Data.Text as T (length, toCaseFold)
+import qualified Data.Text as T (length, toCaseFold, replace)
 import Formatting
 import Lucid
 import Network.Wai.Middleware.Static
@@ -65,28 +65,34 @@ getArtists artistQuery wiki llm = do
     eitherWikiArtist <- W.fetchArtist artistQuery "studio"  -- Wiki results are used by both wiki and llm
     let artistHeaderHtml = case eitherWikiArtist of         -- Use artist name as header above all results
             Left _ -> h2_ "Artist results"                  -- Generic header on wiki error
-            Right artistObj -> h2_ $ toHtml artistObj.name
+            Right artistObj -> h2_ $ toHtml $ "Albums by " <> artistObj.name
     let wikiHtml = if wiki                                -- If wiki was checked, use the wiki results
         then case eitherWikiArtist of
             Left err -> div_ [class_ "source"] $ toHtml $ showError err
-            Right artistObj -> sourceToHtml artistObj "Wikipedia"
+            Right artistObj -> sourceToHtml artistObj "Wikipedia" "Ranked by reviews listed on Wikipedia."
         else mempty
     llmHtml <- if llm then do  -- If llm was checked, call the llm and also (if possible) use the wiki Artist to fill in images
         eitherLlmArtist <- L.fetchArtist artistQuery "studio"
         case (eitherLlmArtist, eitherWikiArtist) of
             (Left errorText, _) -> return $ div_ [class_ "source"] $ toHtml errorText  -- LLM failed
-            (Right llmArtist, Left _) -> return $ sourceToHtml llmArtist "Mistral AI"  -- LLM worked, but wiki failed
-            (Right llmArtist, Right wikiArtist) -> return $ sourceToHtml (mergeArtists llmArtist wikiArtist) "Mistral AI"
+            (Right llmArtist, Left _) ->  -- LLM worked, but wiki failed
+                return $ sourceToHtml llmArtist "Mistral AI" "Best albums according to Mistral's LLM."  
+            (Right llmArtist, Right wikiArtist) ->
+                return $ sourceToHtml (mergeArtists llmArtist wikiArtist) "Mistral AI" "Best albums according to Mistral's LLM."
         else return mempty
     return $ div_ [class_ "artist"] $ do
         artistHeaderHtml
+        div_ [id_ "source-links"] $ do
+            if wiki then a_ [href_ "#Wikipedia"] "Wikipedia" else mempty
+            if llm then a_ [href_ "#MistralAI"] "Mistral AI" else mempty
         wikiHtml
         llmHtml
 
-sourceToHtml :: Artist -> Text -> Html ()
-sourceToHtml artist sourceHeader =
-    div_ [class_ "source"] $ do
+sourceToHtml :: Artist -> Text -> Text -> Html ()
+sourceToHtml artist sourceHeader intro =
+    div_ [class_ "source", id_ $ T.replace " " "" sourceHeader] $ do
         h3_ $ toHtml sourceHeader
+        div_ [class_ "description"] $ toHtml intro
         div_ [class_ "albums"] $ mapM_ albumToHtml artist.albums
 
 albumToHtml :: Album -> Html ()
@@ -130,6 +136,7 @@ htmlPage elements = renderText . doctypehtml_ $ do
         main_ $ do
             h1_ "Rec Rat"
             elements
+            -- script_ [src_ "/recrat.js"] ("" :: Text)  -- Silly!
 
 -- | Take an artist from LLM and an artist from Wiki and return the LLM artist with the album image URLs from the Wiki
 -- artist (in all cases where the LLM album had a corresponding Wiki album, i.e. same album title)
