@@ -9,8 +9,7 @@ import Options.Applicative
 
 import qualified RatLib.LLM as L
     (
-      llmMockRequest
-    , fetchArtist
+      fetchArtist
     , showArtist
     )
 

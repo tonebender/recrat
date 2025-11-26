@@ -34,6 +34,7 @@ import RatLib.Wiki.MediaWiki
     (
       findInfoboxProperty
     , parseAlbumInfobox
+    , parseWikiAnchor
     , searchAndGetWiki
     )
 
@@ -75,27 +76,28 @@ parseAlbum :: Text -> Maybe Album
 parseAlbum wikiContent =
     case findInfoboxProperty "name" (parseAlbumInfobox wikiContent) of
         Nothing -> Nothing  -- Doesn't seem to be an album at all
-        Just albName -> Just $ Album
-                        albName.wikiLabel
+        Just albName -> let albWA = parseWikiAnchor albName in
+                        Just $ Album
+                        albWA.wikiLabel
                         (wikiLabel $ getArtistName wikiContent)
                         (getAlbumYear wikiContent)
                         ""  -- description
                         (getImageFilename wikiContent)
-                        (parseRatings albName.wikiLabel wikiContent)
+                        (parseRatings albWA.wikiLabel wikiContent)
     where
           getArtistName w = case findInfoboxProperty "artist" (parseAlbumInfobox w) of
               Nothing -> WikiAnchor "" "(no artist name)"
-              Just artName -> artName
+              Just artName -> parseWikiAnchor artName
           getAlbumYear w = case findInfoboxProperty "released" (parseAlbumInfobox w) of
               Nothing -> ""  -- Silently return empty if no release year was found
-              Just year' -> parseYearEntry $ year'.wikiLabel
+              Just year' -> parseYearEntry year'
           parseYearEntry str = let subStrings = if T.isPrefixOf "{{" str then T.splitOn "|" str else T.splitOn " " str in
                                     case filter (\s -> T.length s == 4) $ map (T.takeWhile (`T.elem` "0123456789")) subStrings of
                                         [] -> ""  -- This also gives empty if the year couldn't be parsed
                                         y:_ -> y
           getImageFilename w = case findInfoboxProperty "cover" (parseAlbumInfobox w) of
               Nothing -> Nothing
-              Just fileAnchor -> Just $ wikiImagePath <> fileAnchor.wikiLabel
+              Just fileAnchor -> Just $ wikiImagePath <> fileAnchor
 
 -- | Create a text with all ratings for an album, plus its artist and title, etc.
 -- starz is whether to show score as stars rather than percentage

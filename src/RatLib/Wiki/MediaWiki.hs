@@ -90,10 +90,10 @@ requestWikiPages titles = do
 -- | Take a list of (Text, Text) and find the tuple whose first variable
 -- equals query (caseless), then return its second variable (the value)
 -- as a WikiAnchor; return Nothing if not found
-findInfoboxProperty :: Text -> [(Text, Text)] -> Maybe WikiAnchor
+findInfoboxProperty :: Text -> [(Text, Text)] -> Maybe Text
 findInfoboxProperty query props = case (listToMaybe $ dropWhile (\e -> T.toCaseFold (fst e) /= T.toCaseFold query) props) of
     Nothing -> Nothing
-    Just (_, val) -> Just $ parseWikiAnchor val
+    Just (_, val) -> Just val
 
 -- | Get the first {{Infobox album ...}} in the specified wiki page text and return all its
 -- "|Key = Value" lines as a list of (Text, Text) tuples
@@ -103,8 +103,8 @@ parseAlbumInfobox text =
         [] -> []
         a:_ -> case T.splitOn "\n}}" a of  -- End of infobox
             [] -> []
-            b:_ -> catMaybes $ map parseInfoboxLine $ filter (T.isInfixOf "=") $ T.lines b
-                where parseInfoboxLine line = case map T.strip $ T.splitOn "=" $ T.dropWhile (`T.elem` "| ") line of
+            b:_ -> catMaybes $ map parseInfoboxLine $ filter (T.isInfixOf " = ") $ T.lines b
+                where parseInfoboxLine line = case map T.strip $ T.splitOn " = " $ T.dropWhile (`T.elem` "| ") line of
                         ky:vl:_ -> Just (ky, vl)
                         _:_ -> Nothing
                         [] -> Nothing
