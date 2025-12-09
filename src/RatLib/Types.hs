@@ -26,6 +26,7 @@ data Album = Album
     , year :: Text
     , description :: Text
     , imageURL :: Maybe Text
+    , url :: Maybe Text
     , ratingBlocks :: [RatingBlock]
     }
 

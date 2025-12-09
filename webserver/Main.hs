@@ -96,7 +96,7 @@ sourceToHtml artist sourceHeader intro =
 
 albumToHtml :: Album -> Html ()
 albumToHtml album =
-    div_ [class_ "album"] $ do
+    albumContainer album $ do
         img_ [class_ "cover", src_ (fromMaybe "" album.imageURL)]  -- TODO: Handle empty cases
         div_ [class_ "albumdata"] $ div_ $ do
             div_ $ do
@@ -108,6 +108,13 @@ albumToHtml album =
                 _  -> div_ [class_ "score"] $ do
                     span_ [class_ "percent"] $ toHtml $ format int (W.ratioToPercent $ W.averageScore album)
                     span_ [class_ "number"] $ toHtml $ " (" <> format int (W.numberOfRatings album) <> ")"
+    where
+        -- | Create a div and optionally wrap it in an anchor with the album's URL if found in the Album
+        albumContainer :: Album -> Html () -> Html ()
+        albumContainer alb elements =
+            case alb.url of
+                Nothing -> div_ [class_ "album"] elements
+                Just albumUrl -> a_ [href_ albumUrl] $ div_ [class_ "album"] elements
 
 indexPage :: Text -> Text -> Bool -> Bool -> Html ()
 indexPage flashMsg artist wiki llm = do

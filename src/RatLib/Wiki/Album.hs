@@ -45,17 +45,11 @@ import RatLib.Wiki.Rating
 
 import RatLib.Error
 
--- For prefixing wikipedia image URLs
-wikiImagePath :: Text
-wikiImagePath = "https://en.wikipedia.org/wiki/Special:FilePath/"
+wikiBaseUrl :: Text
+wikiBaseUrl = "https://en.wikipedia.org/wiki/"
 
--- data Album = Album
---     { title :: Text
---     , artistName :: WikiAnchor
---     , year :: Text
---     , imageFilename :: Text
---     , ratingBlocks :: [RatingBlock]
---     }
+wikiImagePath :: Text
+wikiImagePath = wikiBaseUrl <> "Special:FilePath/"
 
 -- | Find and fetch an album page from Wikipedia,
 -- parse its ratings and return an Album object or an error
@@ -67,7 +61,7 @@ fetchAlbum query = do
         Right (wTitle, wText) -> do
             case parseAlbum wText of  -- Get all album ratings from this album's wikipedia page
                 Nothing -> return $ Left $ ErrorPageNotAlbum wTitle
-                Just albm -> return $ Right albm
+                Just albm -> return $ Right $ albm {url = Just wTitle}
 
 -- | Get an Album with ratings out of a wiki page text.
 -- If there's no album info box with a name property, return Nothing to indicate it's probably not a music album page.
@@ -83,6 +77,7 @@ parseAlbum wikiContent =
                         (getAlbumYear wikiContent)
                         ""  -- description
                         (getImageFilename wikiContent)
+                        Nothing  -- url, will be added later
                         (parseRatings albWA.wikiLabel wikiContent)
     where
           getArtistName w = case findInfoboxProperty "artist" (parseAlbumInfobox w) of
@@ -155,7 +150,7 @@ getRatingsFlat album = concat [rb.ratings | rb <- album.ratingBlocks]
 -- | Get an album but include only ratings whose critic names include the provided text
 filterAlbumByCritic :: Text -> Album -> Album
 filterAlbumByCritic critic album = Album
-    album.title album.artistName album.year album.description album.imageURL
+    album.title album.artistName album.year album.description album.imageURL album.url
     $ map (filterRatings critic) (album.ratingBlocks)
     where
         filterRatings "" rblock = rblock

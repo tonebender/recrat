@@ -136,7 +136,7 @@ parseObjectsToAlbums artistName' objects = catMaybes $ map (parseMaybe objectToA
             title' <- obj .: "title"
             year' <- obj .: "year"
             description' <- obj .: "description"
-            return $ Album title' artistName' year' description' Nothing []
+            return $ Album title' artistName' year' description' Nothing Nothing []
 
 -- | Alternative parse function
 -- parseObjectsToAlbums2 :: [Value] -> [LAlbum]
@@ -149,7 +149,7 @@ parseObjectsToAlbums artistName' objects = catMaybes $ map (parseMaybe objectToA
 --                   Nothing
 --                   Nothing
 
--- | Take an artist from LLM and an artist from Wiki and return the LLM artist with the album image URLs from the Wiki
+-- | Take an artist from LLM and an artist from Wiki and return the LLM artist with the URLs and image URLs from the Wiki
 -- artist (in all cases where the LLM album had a corresponding Wiki album, i.e. same album title)
 mergeArtists :: Artist -> Artist -> Artist
 mergeArtists llmArtist wikiArtist =
@@ -158,5 +158,5 @@ mergeArtists llmArtist wikiArtist =
         applyImage :: [Album] -> Album -> Album
         applyImage wikiAlbums la = case find (\wa -> T.toCaseFold wa.title == T.toCaseFold la.title) wikiAlbums of
             Nothing -> la
-            Just wikiAlbum -> la {imageURL = wikiAlbum.imageURL}
+            Just wikiAlbum -> la {imageURL = wikiAlbum.imageURL, url = wikiAlbum.url}
 

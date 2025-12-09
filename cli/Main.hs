@@ -113,7 +113,7 @@ wikiPrintArtist query critic category starFormat = do
 -- On fail, print error message.
 llmPrintArtist :: Text -> Text -> IO ()
 llmPrintArtist artistQuery category = do
-    eitherArtist <- L.fetchArtist artistQuery category
+    eitherArtist <- L.fetchArtist artistQuery category Nothing
     case eitherArtist of
         Left err -> Tio.putStrLn err
         Right art -> Tio.putStrLn $ L.showArtist art
