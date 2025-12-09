@@ -7,11 +7,10 @@ module Main where
 import qualified Web.Scotty as S
 import Data.Text (Text)
 import Data.Text.Lazy (LazyText)
-import qualified Data.Text as T (length, toCaseFold, replace)
+import qualified Data.Text as T (length, replace)
 import Formatting
 import Lucid
 import Network.Wai.Middleware.Static
-import Data.List (find)
 import Data.Maybe (fromMaybe)
 
 import qualified RatLib.Wiki as W
@@ -66,19 +65,19 @@ getArtists artistQuery wiki llm = do
     let artistHeaderHtml = case eitherWikiArtist of         -- Use artist name as header above all results
             Left _ -> h2_ "Artist results"                  -- Generic header on wiki error
             Right artistObj -> h2_ $ toHtml $ "Albums by " <> artistObj.name
-    let wikiHtml = if wiki                                -- If wiki was checked, use the wiki results
+    let wikiHtml = if wiki                                  -- If wiki was checked, use the wiki results
         then case eitherWikiArtist of
             Left err -> div_ [class_ "source"] $ toHtml $ showError err
             Right artistObj -> sourceToHtml artistObj "Wikipedia" "Ranked by reviews listed on Wikipedia."
         else mempty
-    llmHtml <- if llm then do  -- If llm was checked, call the llm and also (if possible) use the wiki Artist to fill in images
-        eitherLlmArtist <- L.fetchArtist artistQuery "studio"
-        case (eitherLlmArtist, eitherWikiArtist) of
-            (Left errorText, _) -> return $ div_ [class_ "source"] $ toHtml errorText  -- LLM failed
-            (Right llmArtist, Left _) ->  -- LLM worked, but wiki failed
-                return $ sourceToHtml llmArtist "Mistral AI" "Best albums according to Mistral's LLM."  
-            (Right llmArtist, Right wikiArtist) ->
-                return $ sourceToHtml (mergeArtists llmArtist wikiArtist) "Mistral AI" "Best albums according to Mistral's LLM."
+    llmHtml <- if llm then do  -- If llm was checked, call the llm and maybe also use the wiki Artist to fill in images
+        eitherLlmArtist <- case eitherWikiArtist of
+            Left _ -> return =<< L.fetchArtist artistQuery "studio" Nothing  -- LLM only
+            Right wikiArtistObj -> return =<< L.fetchArtist artistQuery "studio" (Just wikiArtistObj)  -- LLM + wiki data
+        case eitherLlmArtist of
+            Left errorText -> return $ div_ [class_ "source"] $ toHtml errorText  -- LLM failed
+            Right llmArtist ->
+                return $ sourceToHtml llmArtist "Mistral AI" "Best albums according to Mistral's LLM."
         else return mempty
     return $ div_ [class_ "artist"] $ do
         artistHeaderHtml
@@ -137,15 +136,4 @@ htmlPage elements = renderText . doctypehtml_ $ do
             h1_ "Rec Rat"
             elements
             -- script_ [src_ "/recrat.js"] ("" :: Text)  -- Silly!
-
--- | Take an artist from LLM and an artist from Wiki and return the LLM artist with the album image URLs from the Wiki
--- artist (in all cases where the LLM album had a corresponding Wiki album, i.e. same album title)
-mergeArtists :: Artist -> Artist -> Artist
-mergeArtists llmArtist wikiArtist =
-    llmArtist {albums = map (applyImage wikiArtist.albums) llmArtist.albums}
-    where
-        applyImage :: [Album] -> Album -> Album
-        applyImage wikiAlbums la = case find (\wa -> T.toCaseFold wa.title == T.toCaseFold la.title) wikiAlbums of
-            Nothing -> la
-            Just wikiAlbum -> la {imageURL = wikiAlbum.imageURL}
 

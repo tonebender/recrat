@@ -19,6 +19,7 @@ import qualified Data.ByteString.Lazy as BL (fromStrict, concat)
 import Data.Aeson (decode, eitherDecode, Value, Object, (.:))
 import Data.Aeson.Types (parseMaybe)
 import Data.Aeson.Lens (key, _String, _Object, values)
+import Data.List (find)
 import Data.Maybe (catMaybes, fromJust)
 import Control.Lens ((^.), (^..))
 
@@ -84,20 +85,25 @@ showArtist artist' = artist'.name <> "\n"
 --     return $ decode contents
 
 -- | Call the desired LLM and return its json response parsed to a Artist.
+-- artistQuery is the artist name to ask for, category is "studio", "live" or such.
+-- maybeWikiArtist is an optional Artist to merge with the Artist that we fetch here,
+-- to get image URLs and possibly other things.
 -- On error, return a text with the error message.
-fetchArtist :: Text -> Text -> IO (Either Text Artist)
-fetchArtist artistQuery category = do
+fetchArtist :: Text -> Text -> (Maybe Artist) -> IO (Either Text Artist)
+fetchArtist artistQuery category maybeWikiArtist = do
     eitherJson <- requestLLM mistral artistQuery category 
     case eitherJson of
         Left err -> return $ Left err
         Right jsonText -> case parseJsonToArtist jsonText of
             Left err -> return $ Left $ "Error parsing artist/album info from LLM: " <> err
-            Right art -> return $ Right art
+            Right llmArtist-> case maybeWikiArtist of
+                Nothing -> return $ Right llmArtist
+                Just wikiArtist -> return $ Right $ mergeArtists llmArtist wikiArtist
 
 -- | Call the desired LLM function, passed here as llmMonad (which in itself takes two 
---   Value arguments - json schema and prompt).
---   artistQuery (e.g. "Aerosmith") and category (e.g. "studio") complete the prompt to the llm.
---   Returns the json response (modeled by the aforementioned schema) from the LLM as Text.
+-- Value arguments - json schema and prompt).
+-- artistQuery (e.g. "Aerosmith") and category (e.g. "studio") complete the prompt to the llm.
+-- Returns the json response (modeled by the aforementioned schema) from the LLM as Text.
 requestLLM :: (Value -> Value -> IO (Maybe Text)) -> Text -> Text -> IO (Either Text Text)
 requestLLM llmMonad artistQuery category = do
     let promptText = BL.fromStrict $ TE.encodeUtf8
@@ -111,7 +117,7 @@ requestLLM llmMonad artistQuery category = do
                 Just jsonText -> return $ Right jsonText
 
 -- | Take a json string with the LLM response (validating to artistJsonSchema above), decode it
---   and return an Artist variable (itself containing an [Album]).
+-- and return an Artist variable (itself containing an [Album]).
 parseJsonToArtist :: Text -> Either Text Artist
 parseJsonToArtist jsonText =
     case eitherDecode (BL.fromStrict $ TE.encodeUtf8 jsonText) :: (Either String Value) of
@@ -122,7 +128,7 @@ parseJsonToArtist jsonText =
             in Right $ Artist artistName' albums' Nothing
 
 -- | Take a list of json (aeson) objects with properties mapping to an Album and return
---   a list of Album. Note: this silently drops any failed parsings via catMaybes.
+-- a list of Album. Note: this silently drops any failed parsings via catMaybes.
 parseObjectsToAlbums :: Text -> [Object] -> [Album]
 parseObjectsToAlbums artistName' objects = catMaybes $ map (parseMaybe objectToAlbumParser) objects
     where
@@ -142,3 +148,15 @@ parseObjectsToAlbums artistName' objects = catMaybes $ map (parseMaybe objectToA
 --                   (Just $ obj ^. key "description" . _String)
 --                   Nothing
 --                   Nothing
+
+-- | Take an artist from LLM and an artist from Wiki and return the LLM artist with the album image URLs from the Wiki
+-- artist (in all cases where the LLM album had a corresponding Wiki album, i.e. same album title)
+mergeArtists :: Artist -> Artist -> Artist
+mergeArtists llmArtist wikiArtist =
+    llmArtist {albums = map (applyImage wikiArtist.albums) llmArtist.albums}
+    where
+        applyImage :: [Album] -> Album -> Album
+        applyImage wikiAlbums la = case find (\wa -> T.toCaseFold wa.title == T.toCaseFold la.title) wikiAlbums of
+            Nothing -> la
+            Just wikiAlbum -> la {imageURL = wikiAlbum.imageURL}
+
